@@ -1,0 +1,12 @@
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using SimpleChdDrive.Core.Logging;
+global using SimpleChdDrive.Core.Models;
+global using SimpleChdDrive.Core.Parsers;
+global using SimpleChdDrive.Core.Services;
+global using SimpleChdDrive.Core.Views;
+global using SimpleChdDrive.Services;

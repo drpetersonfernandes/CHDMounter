@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
@@ -6,6 +6,7 @@
         <UseWPF>true</UseWPF>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
         <IsPackable>false</IsPackable>
@@ -16,8 +17,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
         <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
-        <ApplicationIcon>Icon\chd.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,7 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DokanNet" Version="2.3.0.3" />
+        <PackageReference Include="winfsp.net" Version="2.2.26194" />
     </ItemGroup>
 
 </Project>

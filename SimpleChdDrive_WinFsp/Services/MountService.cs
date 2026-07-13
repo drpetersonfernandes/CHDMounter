@@ -1,0 +1,96 @@
+using Fsp;
+
+namespace SimpleChdDrive_WinFsp.Services;
+
+public class MountService : IMountService, IDisposable
+{
+    private readonly ILoggingService _loggingService;
+    private readonly ISettingsService _settingsService;
+    private FileSystemHost _host;
+    private ChdFs _currentFs;
+    private ChdContainer _container;
+
+    public bool IsMounted { get; private set; }
+    public string MountPoint { get; private set; } = "";
+
+    public MountService(ILoggingService loggingService, ISettingsService settingsService)
+    {
+        _loggingService = loggingService;
+        _settingsService = settingsService;
+    }
+
+    public bool CanMount()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp")
+                            ?? Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp");
+            if (key == null)
+            { _loggingService.LogError("WinFsp not found."); return false; }
+            _loggingService.Log("WinFsp detected.");
+            return true;
+        }
+        catch (Exception ex)
+        { _loggingService.LogError($"WinFsp detection failed: {ex.Message}"); return false; }
+    }
+
+    public void Mount(string chdPath, string mountPoint, ConsoleType consoleType)
+    {
+        if (IsMounted) throw new InvalidOperationException("Already mounted.");
+
+        _loggingService.Log($"Opening and parsing CHD: {chdPath} as {consoleType} (WinFsp)...");
+
+        _container = new ChdContainer(chdPath);
+        if (!_container.MountAndParse(consoleType))
+        {
+            _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
+            _container.Dispose();
+            _container = null!;
+            return;
+        }
+
+        _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
+
+        MountPoint = mountPoint ?? PickDriveLetter();
+        _loggingService.Log($"Mounting at {MountPoint} (WinFsp)...");
+
+        _currentFs = new ChdFs(_container, _loggingService);
+        _host = new FileSystemHost(_currentFs);
+        _host.Mount(MountPoint, null, true, 0);
+
+        IsMounted = true;
+        _loggingService.Log($"Mounted at {MountPoint} (WinFsp).");
+    }
+
+    public void Unmount()
+    {
+        if (!IsMounted) return;
+
+        _loggingService.Log($"Unmounting {MountPoint} (WinFsp)...");
+        if (_host != null)
+        {
+            try { _host.Unmount(); }
+            catch (Exception ex) { _loggingService.LogError($"Error: {ex.Message}"); }
+        }
+
+        _host?.Dispose();
+        _host = null!;
+        _currentFs?.Dispose();
+        _currentFs = null!;
+        _container?.Dispose();
+        _container = null!;
+        IsMounted = false;
+        MountPoint = "";
+    }
+
+    private static string PickDriveLetter()
+    {
+        var drives = DriveInfo.GetDrives().Select(d => d.Name[0]).ToHashSet();
+        for (char c = 'M'; c <= 'Q'; c++)
+            if (!drives.Contains(c))
+                return $"{c}:";
+        return "Z:";
+    }
+
+    public void Dispose() => Unmount();
+}

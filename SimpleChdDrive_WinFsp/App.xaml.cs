@@ -1,10 +1,10 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
 using SimpleChdDrive.Core.Logging;
-using SimpleChdDrive.Services;
+using SimpleChdDrive_WinFsp.Services;
 
-namespace SimpleCHDDrive;
+namespace SimpleCHDDrive_WinFsp;
 
 public partial class App
 {
@@ -33,6 +33,8 @@ public partial class App
             DiagnosticLogger.Log($"  OS: {RuntimeInformation.OSDescription}");
             DiagnosticLogger.Log($"  Framework: {RuntimeInformation.FrameworkDescription}");
 
+            EnsureWinFspOnPath();
+
             RegisterServices();
 
             _originalConsoleOut = Console.Out;
@@ -42,7 +44,7 @@ public partial class App
             Console.SetError(_logTextWriter);
 
             var loggingService = ServiceProvider.Get<ILoggingService>();
-            loggingService.Log("SimpleChdDrive - CHD Virtual Drive Mounter (Dokan)");
+            loggingService.Log("SimpleChdDrive - CHD Virtual Drive Mounter (WinFsp)");
             loggingService.Log("Supports mounting CHD (Compressed Hunks of Data) files as virtual drives");
             loggingService.Log("");
             if (DiagnosticLogger.LogFilePath != null)
@@ -51,9 +53,9 @@ public partial class App
                 loggingService.Log("");
             }
 
-            loggingService.Log("Usage: SimpleChdDrive.exe <chd_file> <console_type> [mount_point]");
-            loggingService.Log("Example: SimpleChdDrive.exe game.chd ps2 M");
-            loggingService.Log("Example: SimpleChdDrive.exe game.chd xbox N");
+            loggingService.Log("Usage: SimpleChdDrive_WinFsp.exe <chd_file> <console_type> [mount_point]");
+            loggingService.Log("Example: SimpleChdDrive_WinFsp.exe game.chd ps2 M");
+            loggingService.Log("Example: SimpleChdDrive_WinFsp.exe game.chd xbox N");
             loggingService.Log("Run without args to open the UI and select filesystem type.");
             loggingService.Log("");
 
@@ -72,6 +74,48 @@ public partial class App
             }
 
             throw;
+        }
+    }
+
+    private static void EnsureWinFspOnPath()
+    {
+        try
+        {
+            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+            if (currentPath.Contains("WinFsp", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            string binDir = null;
+
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp")
+                            ?? Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp");
+            var sxsDir = key?.GetValue("SxsDir") as string;
+            if (!string.IsNullOrEmpty(sxsDir))
+            {
+                var sxsBin = Path.Combine(sxsDir, "bin");
+                if (Directory.Exists(sxsBin))
+                    binDir = sxsBin;
+            }
+
+            if (binDir == null)
+            {
+                var installDir = key?.GetValue("InstallDir") as string;
+                if (!string.IsNullOrEmpty(installDir))
+                {
+                    var installBin = Path.Combine(installDir, "bin");
+                    if (Directory.Exists(installBin))
+                        binDir = installBin;
+                }
+            }
+
+            if (binDir == null)
+                return;
+
+            Environment.SetEnvironmentVariable("PATH", binDir + ";" + currentPath, EnvironmentVariableTarget.Process);
+            DiagnosticLogger.Log($"  WinFsp PATH set to: {binDir}");
+        }
+        catch
+        {
         }
     }
 
