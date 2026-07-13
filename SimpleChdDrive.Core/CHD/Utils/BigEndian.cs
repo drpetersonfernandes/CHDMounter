@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace CHDSharpLib.Utils;
+﻿namespace SimpleChdDrive.Core.CHD.Utils;
 
 
 public static class BigEndian
@@ -29,7 +26,7 @@ public static class BigEndian
     }
     public static UInt64 ReadUInt48BE(this BinaryReader binRdr)
     {
-        return (UInt64)(binRdr.ReadByte() << 40 | binRdr.ReadByte() << 32 | binRdr.ReadByte() << 24 | binRdr.ReadByte() << 16 | binRdr.ReadByte() << 8 | binRdr.ReadByte() << 0);
+        return (UInt64)((binRdr.ReadByte() << 40) | (binRdr.ReadByte() << 32) | (binRdr.ReadByte() << 24) | (binRdr.ReadByte() << 16) | (binRdr.ReadByte() << 8) | (binRdr.ReadByte() << 0));
     }
 
     public static UInt64 ReadUInt64BE(this BinaryReader binRdr)
@@ -44,7 +41,7 @@ public static class BigEndian
 
     public static byte[] ReadBytesRequired(this BinaryReader binRdr, int byteCount)
     {
-        byte[] result = binRdr.ReadBytes(byteCount);
+        var result = binRdr.ReadBytes(byteCount);
 
         if (result.Length != byteCount)
             throw new EndOfStreamException(string.Format("{0} bytes required from stream, but only {1} returned.", byteCount, result.Length));
@@ -62,16 +59,16 @@ public static class BigEndian
     }
     public static uint ReadUInt24BE(this byte[] arr, int offset)
     {
-        return ((uint)arr[offset + 0] << 16) | ((uint)arr[offset + 1] << 8) | (uint)arr[offset + 2];
+        return ((uint)arr[offset + 0] << 16) | ((uint)arr[offset + 1] << 8) | arr[offset + 2];
     }
     public static uint ReadUInt32BE(this byte[] arr, int offset)
     {
-        return ((uint)arr[offset + 0] << 24) | ((uint)arr[offset + 1] << 16) | ((uint)arr[offset + 2] << 8) | (uint)arr[offset + 3];
+        return ((uint)arr[offset + 0] << 24) | ((uint)arr[offset + 1] << 16) | ((uint)arr[offset + 2] << 8) | arr[offset + 3];
     }
     public static ulong ReadUInt48BE(this byte[] arr, int offset)
     {
         return ((ulong)arr[offset + 0] << 40) | ((ulong)arr[offset + 1] << 32) |
-               ((ulong)arr[offset + 2] << 24) | ((ulong)arr[offset + 3] << 16) | ((ulong)arr[offset + 4] << 8) | (ulong)arr[offset + 5];
+               ((ulong)arr[offset + 2] << 24) | ((ulong)arr[offset + 3] << 16) | ((ulong)arr[offset + 4] << 8) | arr[offset + 5];
     }
 
     public static void PutUInt16BE(this byte[] arr, int offset, uint value)

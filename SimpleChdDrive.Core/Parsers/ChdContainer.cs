@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using System.Text;
+using SimpleChdDrive.Core.CHD;
 
 namespace SimpleChdDrive.Core.Parsers;
 
@@ -17,7 +17,7 @@ public class ChdContainer
     private bool _poolShutdown;
     private readonly string _chdPath;
 
-    private CHDFile _primaryChd;
+    private ChdFile _primaryChd;
     private bool _cueBinEnabled;
     private string _cueBinText = "";
     private ulong _cueBinSize;
@@ -30,13 +30,16 @@ public class ChdContainer
     public uint HunkBytes { get; private set; }
     public ConsoleType ConsoleType { get; set; } = ConsoleType.Unknown;
 
-    public ChdContainer(string chdPath) => _chdPath = chdPath;
+    public ChdContainer(string chdPath)
+    {
+        _chdPath = chdPath;
+    }
 
     public bool Open(ConsoleType consoleType)
     {
         ConsoleType = consoleType;
 
-        chd_error err = CHDFile.Open(_chdPath, out var chd);
+        var err = ChdFile.Open(_chdPath, out var chd);
         if (err != chd_error.CHDERR_NONE)
             return false;
 
@@ -86,7 +89,7 @@ public class ChdContainer
         _entryMap.Clear();
 
         var rootEntry = new FileEntry { Name = "\\", Lba = rootNode.Lba, Size = rootNode.Size, IsDirectory = true };
-        uint rootHandle = RegisterEntry(rootEntry, InvalidHandle);
+        var rootHandle = RegisterEntry(rootEntry, InvalidHandle);
 
         foreach (var child in rootNode.Children)
             AddFsNodeRecursive(child, rootHandle, "\\");
@@ -103,11 +106,11 @@ public class ChdContainer
         foreach (var ext in node.Extents)
             entry.Extents.Add(new FileExtent { Lba = ext.Lba, Size = ext.Size });
 
-        uint handle = RegisterEntry(entry, parentHandle);
+        var handle = RegisterEntry(entry, parentHandle);
 
         if (entry.IsDirectory)
         {
-            string currentPath = parentPath == "\\" ? $"\\{node.Name}" : $"{parentPath}\\{node.Name}";
+            var currentPath = parentPath == "\\" ? $"\\{node.Name}" : $"{parentPath}\\{node.Name}";
             foreach (var child in node.Children)
                 AddFsNodeRecursive(child, handle, currentPath);
         }
@@ -117,7 +120,7 @@ public class ChdContainer
     {
         _entries.Add(entry);
         _parentHandles.Add(parent);
-        uint handle = (uint)(_entries.Count - 1);
+        var handle = (uint)(_entries.Count - 1);
         _entryMap[ResolveEntryKey(handle)] = handle;
         return handle;
     }
@@ -125,7 +128,7 @@ public class ChdContainer
     private string ResolveEntryKey(uint handle)
     {
         var parts = new List<string>();
-        uint current = handle;
+        var current = handle;
         while (current != InvalidHandle)
         {
             parts.Add(_entries[(int)current].Name);
@@ -138,31 +141,49 @@ public class ChdContainer
             if (part == "\\") { sb.Append("\\"); }
             else { if (sb.Length > 0 && sb[^1] != '\\') sb.Append('\\'); sb.Append(part); }
         }
-        string path = sb.ToString().ToLowerInvariant();
-        if (path.Length > 1 && path[^1] == '\\') path = path[..^1];
-        if (string.IsNullOrEmpty(path)) path = "\\";
+        var path = sb.ToString().ToLowerInvariant();
+        if (path.Length > 1 && path[^1] == '\\')
+        {
+            path = path[..^1];
+        }
+
+        if (string.IsNullOrEmpty(path))
+        {
+            path = "\\";
+        }
+
         return path;
     }
 
     public FileEntry FindFile(string path)
     {
-        string key = MakeEntryKey(path);
-        return _entryMap.TryGetValue(key, out uint handle) ? _entries[(int)handle] : null;
+        var key = MakeEntryKey(path);
+        return _entryMap.TryGetValue(key, out var handle) ? _entries[(int)handle] : null;
     }
 
     private static string MakeEntryKey(string path)
     {
         if (string.IsNullOrEmpty(path) || path is "\\" or "/") return "\\";
-        string result = path.Replace('/', '\\').ToLowerInvariant();
-        if (result[0] != '\\') result = '\\' + result;
-        while (result.Length > 1 && result[^1] == '\\') result = result[..^1];
+
+        var result = path.Replace('/', '\\').ToLowerInvariant();
+        if (result[0] != '\\')
+        {
+            result = '\\' + result;
+        }
+
+        while (result.Length > 1 && result[^1] == '\\')
+        {
+            result = result[..^1];
+        }
+
         return result;
     }
 
     public IEnumerable<FileEntry> ListDirectory(string path)
     {
-        string key = MakeEntryKey(path);
-        if (!_entryMap.TryGetValue(key, out uint handle)) yield break;
+        var key = MakeEntryKey(path);
+        if (!_entryMap.TryGetValue(key, out var handle)) yield break;
+
         for (uint i = 0; i < _parentHandles.Count; i++)
             if (_parentHandles[(int)i] == handle)
                 yield return _entries[(int)i];
@@ -173,16 +194,17 @@ public class ChdContainer
         if (entry.IsDirectory || offset >= entry.Size)
             return 0;
 
-        ulong remaining = entry.Size - offset;
-        int bytesToRead = (int)(remaining < (ulong)count ? remaining : (ulong)count);
+        var remaining = entry.Size - offset;
+        var bytesToRead = (int)(remaining < (ulong)count ? remaining : (ulong)count);
 
         if (_cueBinEnabled)
         {
-            string lowerName = entry.Name.ToLowerInvariant();
+            var lowerName = entry.Name.ToLowerInvariant();
             if (lowerName == _cueBinStemName + ".cue")
             {
                 if (offset >= (ulong)_cueBinText.Length) return 0;
-                int cueRead = Math.Min(bytesToRead, _cueBinText.Length - (int)offset);
+
+                var cueRead = Math.Min(bytesToRead, _cueBinText.Length - (int)offset);
                 Encoding.ASCII.GetBytes(_cueBinText, (int)offset, cueRead, buffer, bufOffset);
                 return cueRead;
             }
@@ -201,14 +223,14 @@ public class ChdContainer
 
         try
         {
-            int totalRead = 0;
+            var totalRead = 0;
             if (!entry.IsInterleaved)
             {
                 while (totalRead < bytesToRead)
                 {
-                    ulong curOff = offset + (ulong)totalRead;
-                    uint baseLba = entry.Lba;
-                    ulong offsetInExtent = curOff;
+                    var curOff = offset + (ulong)totalRead;
+                    var baseLba = entry.Lba;
+                    var offsetInExtent = curOff;
                     if (entry.Extents.Count > 0)
                     {
                         ulong extentStart = 0;
@@ -219,28 +241,31 @@ public class ChdContainer
                             extentStart += ext.Size;
                         }
                     }
-                    uint secNum = baseLba + (uint)(offsetInExtent / SectorSize);
-                    uint secOff = (uint)(offsetInExtent % SectorSize);
-                    byte[] sec = new byte[SectorSize];
+                    var secNum = baseLba + (uint)(offsetInExtent / SectorSize);
+                    var secOff = (uint)(offsetInExtent % SectorSize);
+                    var sec = new byte[SectorSize];
                     if (!reader.ReadSector(secNum, sec)) break;
-                    int chunk = Math.Min((int)(SectorSize - secOff), bytesToRead - totalRead);
+
+                    var chunk = Math.Min((int)(SectorSize - secOff), bytesToRead - totalRead);
                     Array.Copy(sec, (int)secOff, buffer, bufOffset + totalRead, chunk);
                     totalRead += chunk;
                 }
             }
             else
             {
-                uint psec = entry.Lba;
+                var psec = entry.Lba;
                 uint scanned = 0;
                 while (totalRead < bytesToRead && scanned < 500000)
                 {
                     scanned++;
-                    byte fn = reader.GetSubheaderFileNumber(psec);
+                    var fn = reader.GetSubheaderFileNumber(psec);
                     psec++;
                     if (fn != entry.FileNumber) continue;
-                    byte[] sec = new byte[SectorSize];
+
+                    var sec = new byte[SectorSize];
                     if (!reader.ReadSector(psec - 1, sec)) break;
-                    int toCopy = Math.Min((int)SectorSize, bytesToRead - totalRead);
+
+                    var toCopy = Math.Min((int)SectorSize, bytesToRead - totalRead);
                     Array.Copy(sec, 0, buffer, bufOffset + totalRead, toCopy);
                     totalRead += toCopy;
                 }
@@ -258,7 +283,7 @@ public class ChdContainer
         _cueBinEnabled = true;
         _cueBinStemName = Path.GetFileNameWithoutExtension(_chdPath);
 
-        uint rawSize = cooked2048 ? 2048u : Math.Min(_primaryChd!.UnitBytes, 2352u);
+        var rawSize = cooked2048 ? 2048u : Math.Min(_primaryChd!.UnitBytes, 2352u);
         _cueBinRawSectorSize = rawSize;
 
         uint cumulativeFrames = 0;
@@ -266,12 +291,12 @@ public class ChdContainer
         var sb = new StringBuilder();
         sb.AppendLine($"FILE \"{_cueBinStemName}.bin\" BINARY");
 
-        int trackNum = 0;
+        var trackNum = 0;
         foreach (var t in tracks)
         {
             trackNum++;
-            string mode = t.IsDataTrack
-                ? (t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? $"MODE2/{rawSize}" : $"MODE1/{rawSize}")
+            var mode = t.IsDataTrack
+                ? t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? $"MODE2/{rawSize}" : $"MODE1/{rawSize}"
                 : "AUDIO";
 
             sb.AppendLine($"  TRACK {trackNum:D2} {mode}");
@@ -313,9 +338,9 @@ public class ChdContainer
 
     private static string SectorToMsf(uint sectors)
     {
-        uint m = sectors / (75 * 60);
-        uint s = (sectors / 75) % 60;
-        uint f = sectors % 75;
+        var m = sectors / (75 * 60);
+        var s = sectors / 75 % 60;
+        var f = sectors % 75;
         return $"{m:D2}:{s:D2}:{f:D2}";
     }
 
@@ -329,8 +354,8 @@ public class ChdContainer
 
         try
         {
-            ulong currentOffset = offset;
-            int totalRead = 0;
+            var currentOffset = offset;
+            var totalRead = 0;
 
             while (totalRead < bytesToRead)
             {
@@ -340,7 +365,7 @@ public class ChdContainer
 
                 foreach (var t in tracks)
                 {
-                    ulong trackBytes = (ulong)t.Frames * _cueBinRawSectorSize;
+                    var trackBytes = (ulong)t.Frames * _cueBinRawSectorSize;
                     if (currentOffset >= cumulative && currentOffset < cumulative + trackBytes)
                     {
                         targetTrack = t;
@@ -353,16 +378,16 @@ public class ChdContainer
                 if (targetTrack == null) break;
 
                 reader.SetTrack(targetTrack, true);
-                ulong offsetInTrack = currentOffset - trackByteOffset;
-                uint frameInTrack = (uint)(offsetInTrack / _cueBinRawSectorSize);
-                uint byteInFrame = (uint)(offsetInTrack % _cueBinRawSectorSize);
-                uint logicalLba = targetTrack.StartLBA + frameInTrack;
+                var offsetInTrack = currentOffset - trackByteOffset;
+                var frameInTrack = (uint)(offsetInTrack / _cueBinRawSectorSize);
+                var byteInFrame = (uint)(offsetInTrack % _cueBinRawSectorSize);
+                var logicalLba = targetTrack.StartLBA + frameInTrack;
 
-                if (reader.ReadRawSector(logicalLba, out byte[] rawSector) && rawSector != null)
+                if (reader.ReadRawSector(logicalLba, out var rawSector) && rawSector != null)
                 {
-                    uint dataOffset = _cueBinRawSectorSize == 2048 ? reader.SectorHeaderOffset : reader.SyncOffset;
-                    int available = (int)(_cueBinRawSectorSize - byteInFrame);
-                    int toCopy = Math.Min(available, bytesToRead - totalRead);
+                    var dataOffset = _cueBinRawSectorSize == 2048 ? reader.SectorHeaderOffset : reader.SyncOffset;
+                    var available = (int)(_cueBinRawSectorSize - byteInFrame);
+                    var toCopy = Math.Min(available, bytesToRead - totalRead);
 
                     if (dataOffset + byteInFrame + toCopy <= rawSector.Length)
                         Array.Copy(rawSector, dataOffset + byteInFrame, buffer, bufOffset + totalRead, toCopy);
@@ -372,7 +397,10 @@ public class ChdContainer
                     totalRead += toCopy;
                     currentOffset += (uint)toCopy;
                 }
-                else break;
+                else
+                {
+                    break;
+                }
             }
             return totalRead;
         }
@@ -382,7 +410,8 @@ public class ChdContainer
     private int ReadRawChdBytes(ulong offset, byte[] buffer, int bufOffset, int bytesToRead)
     {
         if (_primaryChd == null) return 0;
-        chd_error err = _primaryChd.Read(offset, buffer, bufOffset, bytesToRead);
+
+        var err = _primaryChd.Read(offset, buffer, bufOffset, bytesToRead);
         return err == chd_error.CHDERR_NONE ? bytesToRead : 0;
     }
 

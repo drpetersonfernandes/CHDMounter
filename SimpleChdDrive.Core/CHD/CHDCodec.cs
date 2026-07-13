@@ -1,32 +1,31 @@
-﻿using CHDReaderTest.Flac.FlacDeps;
-using CUETools.Codecs.Flake;
+﻿using SimpleChdDrive.Core.CHD.Flac;
+using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 
-namespace CHDSharpLib
+namespace SimpleChdDrive.Core.CHD;
+
+internal class ChdCodec
 {
-    internal class CHDCodec
-    {
-        internal AudioPCMConfig FLAC_settings = null;
-        internal AudioDecoder FLAC_audioDecoder = null;
-        internal AudioBuffer FLAC_audioBuffer = null;
+    internal AudioPCMConfig FlacSettings;
+    internal AudioDecoder FlacAudioDecoder;
+    internal AudioBuffer FlacAudioBuffer;
 
 
-        internal AudioPCMConfig AVHUFF_settings = null;
-        internal AudioDecoder AVHUFF_audioDecoder = null;
+    internal AudioPCMConfig AvhuffSettings;
+    internal AudioDecoder AvhuffAudioDecoder;
 
 
-        internal byte[] bSector = null;
-        internal byte[] bSubcode = null;
+    internal byte[] BSector;
+    internal byte[] BSubcode;
 
-        internal byte[] blzma = null;
+    internal byte[] Blzma;
 
-        internal ZstdSharp.Decompressor bZstd = null;
+    internal ZstdSharp.Decompressor BZstd;
 
-        internal ushort[] bHuffman = null;
-        internal ushort[] bHuffmanHi = null;
-        internal ushort[] bHuffmanLo = null;
+    internal ushort[] BHuffman;
+    internal ushort[] BHuffmanHi;
+    internal ushort[] BHuffmanLo;
 
-        internal ushort[] bHuffmanY = null;
-        internal ushort[] bHuffmanCB = null;
-        internal ushort[] bHuffmanCR = null;
-    }
+    internal ushort[] BHuffmanY;
+    internal ushort[] BHuffmanCb;
+    internal ushort[] BHuffmanCr;
 }

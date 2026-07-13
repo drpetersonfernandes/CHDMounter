@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 namespace SimpleChdDrive.Core.Logging;
 
 public class ErrorLoggerStatic

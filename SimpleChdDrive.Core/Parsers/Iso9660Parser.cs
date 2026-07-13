@@ -14,7 +14,10 @@ public class Iso9660Parser
         _reader = reader;
     }
 
-    public void SetLbaOffset(int offset) => _lbaOffset = offset;
+    public void SetLbaOffset(int offset)
+    {
+        _lbaOffset = offset;
+    }
 
     public bool Parse(FsNode rootNode, TrackInfo track = null)
     {
@@ -24,22 +27,22 @@ public class Iso9660Parser
         _isHighSierra = false;
         _isJoliet = false;
 
-        uint trackStartLba = track?.StartLBA ?? 0;
-        uint effectiveTrackStart = _lbaOffset < 0 ? 45000u : trackStartLba;
+        var trackStartLba = track?.StartLBA ?? 0;
+        var effectiveTrackStart = _lbaOffset < 0 ? 45000u : trackStartLba;
 
         uint[] vdOffsets = [16, 17, 166, 167]; // 16+150, 17+150
         uint pvdLba = 0;
-        bool foundPvd = false;
+        var foundPvd = false;
         byte[] bestVdData = null;
-        byte[] sectorData = new byte[2048];
+        var sectorData = new byte[2048];
 
-        foreach (uint offset in vdOffsets)
+        foreach (var offset in vdOffsets)
         {
             if (_reader.ReadSector(effectiveTrackStart + offset, sectorData) && sectorData.Length >= 16)
             {
-                byte type = sectorData[0];
-                bool isIso = CheckMagic(sectorData, 1, "CD001");
-                bool isHs = CheckMagic(sectorData, 9, "CDROM");
+                var type = sectorData[0];
+                var isIso = CheckMagic(sectorData, 1, "CD001");
+                var isHs = CheckMagic(sectorData, 9, "CDROM");
 
                 if (isIso || isHs)
                 {
@@ -51,13 +54,13 @@ public class Iso9660Parser
 
         if (!foundPvd && effectiveTrackStart != 0)
         {
-            foreach (uint offset in vdOffsets)
+            foreach (var offset in vdOffsets)
             {
                 if (_reader.ReadSector(offset, sectorData) && sectorData.Length >= 16)
                 {
-                    byte type = sectorData[0];
-                    bool isIso = CheckMagic(sectorData, 1, "CD001");
-                    bool isHs = CheckMagic(sectorData, 9, "CDROM");
+                    var type = sectorData[0];
+                    var isIso = CheckMagic(sectorData, 1, "CD001");
+                    var isHs = CheckMagic(sectorData, 9, "CDROM");
                     if (isIso || isHs)
                     {
                         if (type == 2 && isIso) { pvdLba = offset; effectiveTrackStart = 0; _reader.SetTrack(null); _isHighSierra = false; _isJoliet = true; foundPvd = true; bestVdData = sectorData; break; }
@@ -73,8 +76,8 @@ public class Iso9660Parser
             {
                 if (_reader.ReadSector(effectiveTrackStart + i, sectorData) && sectorData.Length >= 16)
                 {
-                    byte type = sectorData[0];
-                    if ((type == 1 || type == 2) && (CheckMagic(sectorData, 1, "CD001") || CheckMagic(sectorData, 9, "CDROM")))
+                    var type = sectorData[0];
+                    if (type is 1 or 2 && (CheckMagic(sectorData, 1, "CD001") || CheckMagic(sectorData, 9, "CDROM")))
                     { pvdLba = effectiveTrackStart + i; _isHighSierra = CheckMagic(sectorData, 9, "CDROM"); _isJoliet = type == 2; foundPvd = true; bestVdData = sectorData; break; }
                 }
             }
@@ -83,9 +86,9 @@ public class Iso9660Parser
         if (!foundPvd)
             return false;
 
-        int rootOff = _isHighSierra ? 180 : 156;
-        uint rootRelLba = LeU32(bestVdData!, rootOff + 2);
-        uint rootSize = LeU32(bestVdData!, rootOff + 10);
+        var rootOff = _isHighSierra ? 180 : 156;
+        var rootRelLba = LeU32(bestVdData!, rootOff + 2);
+        var rootSize = LeU32(bestVdData!, rootOff + 10);
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
@@ -98,42 +101,53 @@ public class Iso9660Parser
 
     public bool ParseDirectory(FsNode dirNode, uint trackStart)
     {
-        uint sectorsToRead = (uint)((dirNode.Size + 2047) / 2048);
-        byte[] sectorData = new byte[2048];
+        var sectorsToRead = (uint)((dirNode.Size + 2047) / 2048);
+        var sectorData = new byte[2048];
 
         for (uint i = 0; i < sectorsToRead; i++)
         {
-            uint currentLba = dirNode.Lba + i;
+            var currentLba = dirNode.Lba + i;
             if (!_reader.ReadSector(currentLba, sectorData))
                 break;
 
             uint pos = 0;
             while (pos < 2048)
             {
-                byte recordLen = sectorData[pos];
+                var recordLen = sectorData[pos];
                 if (recordLen == 0) break;
-                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen; if ((pos & 1) != 0) pos++; continue; }
 
-                uint relLba = LeU32(sectorData, (int)(pos + 2));
+                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen; if ((pos & 1) != 0)
+                    {
+                        pos++;
+                    }
+
+                    continue; }
+
+                var relLba = LeU32(sectorData, (int)(pos + 2));
                 ulong extentSize = LeU32(sectorData, (int)(pos + 10));
 
-                int flagsOff = _isHighSierra ? 24 : 25;
-                byte flags = sectorData[pos + flagsOff];
-                bool isDir = (flags & 0x02) != 0;
-                bool isMulti = (flags & 0x80) != 0;
+                var flagsOff = _isHighSierra ? 24 : 25;
+                var flags = sectorData[pos + flagsOff];
+                var isDir = (flags & 0x02) != 0;
+                var isMulti = (flags & 0x80) != 0;
 
-                int nameLenOff = _isHighSierra ? 31 : 32;
-                byte nameLen = sectorData[pos + nameLenOff];
-                int nameOff = _isHighSierra ? 32 : 33;
+                var nameLenOff = _isHighSierra ? 31 : 32;
+                var nameLen = sectorData[pos + nameLenOff];
+                var nameOff = _isHighSierra ? 32 : 33;
 
                 if (nameOff + nameLen > recordLen || pos + nameOff + nameLen > 2048)
-                { pos += recordLen; if ((pos & 1) != 0) pos++; continue; }
+                { pos += recordLen; if ((pos & 1) != 0)
+                    {
+                        pos++;
+                    }
 
-                string name = DecodeName(sectorData, (int)pos + nameOff, nameLen);
+                    continue; }
+
+                var name = DecodeName(sectorData, (int)pos + nameOff, nameLen);
 
                 if (name != "." && name != "..")
                 {
-                    uint absoluteLba = trackStart + relLba;
+                    var absoluteLba = trackStart + relLba;
 
                     if (dirNode.Children.Count > 0 && dirNode.Children[^1].IsMultiExtent && !dirNode.Children[^1].IsDirectory
                         && dirNode.Children[^1].Name == name)
@@ -152,7 +166,10 @@ public class Iso9660Parser
                 }
 
                 pos += recordLen;
-                if ((pos & 1) != 0) pos++;
+                if ((pos & 1) != 0)
+                {
+                    pos++;
+                }
             }
         }
         return true;
@@ -163,10 +180,19 @@ public class Iso9660Parser
         if (_isJoliet) return DecodeUtf16Be(data, offset, nameLen);
         if (nameLen == 1 && data[offset] == 0x00) return ".";
         if (nameLen == 1 && data[offset] == 0x01) return "..";
+
         var name = Encoding.ASCII.GetString(data, offset, nameLen);
-        int semi = name.IndexOf(';');
-        if (semi >= 0) name = name[..semi];
-        if (name.EndsWith('.')) name = name[..^1];
+        var semi = name.IndexOf(';');
+        if (semi >= 0)
+        {
+            name = name[..semi];
+        }
+
+        if (name.EndsWith('.'))
+        {
+            name = name[..^1];
+        }
+
         return name;
     }
 
@@ -174,15 +200,17 @@ public class Iso9660Parser
     {
         if (len == 1 && data[offset] == 0x00) return ".";
         if (len == 1 && data[offset] == 0x01) return "..";
+
         var sb = new StringBuilder();
-        for (int i = 0; i + 1 < len; i += 2)
+        for (var i = 0; i + 1 < len; i += 2)
         {
-            ushort u16 = (ushort)((data[offset + i] << 8) | data[offset + i + 1]);
+            var u16 = (ushort)((data[offset + i] << 8) | data[offset + i + 1]);
             if (u16 == 0) break;
+
             sb.Append(Utf16ToChar(u16));
         }
         var name = sb.ToString();
-        int semi = name.IndexOf(';');
+        var semi = name.IndexOf(';');
         return semi >= 0 ? name[..semi] : name;
     }
 
@@ -190,12 +218,17 @@ public class Iso9660Parser
     {
         if (u16 < 0x80) return ((char)u16).ToString();
         if (u16 < 0x800) return $"{(char)(0xC0 | (u16 >> 6))}{(char)(0x80 | (u16 & 0x3F))}";
+
         return $"{(char)(0xE0 | (u16 >> 12))}{(char)(0x80 | ((u16 >> 6) & 0x3F))}{(char)(0x80 | (u16 & 0x3F))}";
     }
 
     private static bool CheckMagic(byte[] data, int offset, string magic)
-        => Encoding.ASCII.GetString(data, offset, magic.Length) == magic;
+    {
+        return Encoding.ASCII.GetString(data, offset, magic.Length) == magic;
+    }
 
     private static uint LeU32(byte[] data, int offset)
-        => (uint)(data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    {
+        return (uint)(data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    }
 }

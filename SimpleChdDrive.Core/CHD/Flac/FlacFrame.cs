@@ -1,98 +1,97 @@
-﻿using CHDReaderTest.Flac.FlacDeps;
+﻿using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 
-namespace CUETools.Codecs.Flake
+namespace SimpleChdDrive.Core.CHD.Flac;
+
+public unsafe class FlacFrame
 {
-    unsafe public class FlacFrame
+    public int Blocksize;
+    public int BsCode0, BsCode1;
+    public ChannelMode ChMode;
+    //public int ch_order0, ch_order1;
+    public byte Crc8;
+    public readonly FlacSubframeInfo[] Subframes;
+    public int FrameNumber;
+    public FlacSubframe Current;
+    public float* WindowBuffer;
+    public int NSeg;
+
+    public BitWriter Writer;
+    public int WriterOffset;
+
+    public FlacFrame(int subframesCount)
     {
-        public int blocksize;
-        public int bs_code0, bs_code1;
-        public ChannelMode ch_mode;
-        //public int ch_order0, ch_order1;
-        public byte crc8;
-        public FlacSubframeInfo[] subframes;
-        public int frame_number;
-        public FlacSubframe current;
-        public float* window_buffer;
-        public int nSeg = 0;
-
-        public BitWriter writer = null;
-        public int writer_offset = 0;
-
-        public FlacFrame(int subframes_count)
+        Subframes = new FlacSubframeInfo[subframesCount];
+        for (var ch = 0; ch < subframesCount; ch++)
         {
-            subframes = new FlacSubframeInfo[subframes_count];
-            for (int ch = 0; ch < subframes_count; ch++)
-                subframes[ch] = new FlacSubframeInfo();
-            current = new FlacSubframe();
+            Subframes[ch] = new FlacSubframeInfo();
         }
 
-        public void InitSize(int bs, bool vbs)
+        Current = new FlacSubframe();
+    }
+
+    public void InitSize(int bs, bool vbs)
+    {
+        Blocksize = bs;
+        var i = 15;
+        if (!vbs)
         {
-            blocksize = bs;
-            int i = 15;
-            if (!vbs)
+            for (i = 0; i < 15; i++)
             {
-                for (i = 0; i < 15; i++)
+                if (bs == FlakeConstants.flac_blocksizes[i])
                 {
-                    if (bs == FlakeConstants.flac_blocksizes[i])
-                    {
-                        bs_code0 = i;
-                        bs_code1 = -1;
-                        break;
-                    }
-                }
-            }
-            if (i == 15)
-            {
-                if (blocksize <= 256)
-                {
-                    bs_code0 = 6;
-                    bs_code1 = blocksize - 1;
-                }
-                else
-                {
-                    bs_code0 = 7;
-                    bs_code1 = blocksize - 1;
+                    BsCode0 = i;
+                    BsCode1 = -1;
+                    break;
                 }
             }
         }
-
-        public void ChooseBestSubframe(int ch)
+        if (i == 15)
         {
-            if (current.size >= subframes[ch].best.size)
-                return;
-            FlacSubframe tmp = subframes[ch].best;
-            subframes[ch].best = current;
-            current = tmp;
-        }
-
-        public void SwapSubframes(int ch1, int ch2)
-        {
-            FlacSubframeInfo tmp = subframes[ch1];
-            subframes[ch1] = subframes[ch2];
-            subframes[ch2] = tmp;
-        }
-
-        /// <summary>
-        /// Swap subframes according to channel mode.
-        /// It is assumed that we have 4 subframes,
-        /// 0 is right, 1 is left, 2 is middle, 3 is difference
-        /// </summary>
-        public void ChooseSubframes()
-        {
-            switch (ch_mode)
+            if (Blocksize <= 256)
             {
-                case ChannelMode.MidSide:
-                    SwapSubframes(0, 2);
-                    SwapSubframes(1, 3);
-                    break;
-                case ChannelMode.RightSide:
-                    SwapSubframes(0, 3);
-                    break;
-                case ChannelMode.LeftSide:
-                    SwapSubframes(1, 3);
-                    break;
+                BsCode0 = 6;
+                BsCode1 = Blocksize - 1;
             }
+            else
+            {
+                BsCode0 = 7;
+                BsCode1 = Blocksize - 1;
+            }
+        }
+    }
+
+    public void ChooseBestSubframe(int ch)
+    {
+        if (Current.Size >= Subframes[ch].best.Size)
+            return;
+
+        (Subframes[ch].best, Current) = (Current, Subframes[ch].best);
+    }
+
+    public void SwapSubframes(int ch1, int ch2)
+    {
+        (Subframes[ch1], Subframes[ch2]) = (Subframes[ch2], Subframes[ch1]);
+    }
+
+    /// <summary>
+    /// Swap subframes according to channel mode.
+    /// It is assumed that we have 4 subframes,
+    /// 0 is right, 1 is left, 2 is middle, 3 is difference
+    /// </summary>
+    public void ChooseSubframes()
+    {
+        switch (ChMode)
+        {
+            case ChannelMode.MidSide:
+                SwapSubframes(0, 2);
+                SwapSubframes(1, 3);
+                break;
+            case ChannelMode.RightSide:
+                SwapSubframes(0, 3);
+                break;
+            case ChannelMode.LeftSide:
+                SwapSubframes(1, 3);
+                break;
         }
     }
 }

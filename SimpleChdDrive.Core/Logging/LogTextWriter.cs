@@ -23,7 +23,7 @@ public class LogTextWriter : TextWriter
         _originalWriter.WriteLine(value);
         try
         {
-            var loggingService = Services.ServiceProvider.TryGet<Services.ILoggingService>();
+            var loggingService = ServiceProvider.TryGet<ILoggingService>();
             if (value != null)
                 loggingService?.Log(value);
         }

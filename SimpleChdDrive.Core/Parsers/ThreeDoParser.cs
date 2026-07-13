@@ -16,12 +16,14 @@ public class ThreeDoParser
         _reader.Reset();
         _reader.SetTrack(track, true);
 
-        byte[] sectorData = new byte[2048];
-        uint trackStart = track?.StartLBA ?? 0;
-        bool foundVh = false;
+        var sectorData = new byte[2048];
+        var trackStart = track?.StartLBA ?? 0;
+        var foundVh = false;
 
         if (_reader.ReadSector(trackStart, sectorData) && CheckMagic(sectorData, 0, OperaMagic))
+        {
             foundVh = true;
+        }
 
         if (!foundVh)
         {
@@ -34,13 +36,19 @@ public class ThreeDoParser
 
         if (!foundVh) return false;
 
-        uint blockSize = Be24(sectorData, 0x4D);
-        if (blockSize == 0) blockSize = 2048;
+        var blockSize = Be24(sectorData, 0x4D);
+        if (blockSize == 0)
+        {
+            blockSize = 2048;
+        }
 
         uint avatarsCount = sectorData[0x0F];
-        if (avatarsCount > 8) avatarsCount = 7;
+        if (avatarsCount > 8)
+        {
+            avatarsCount = 7;
+        }
 
-        uint rootDirBlock = Be24(sectorData, 0x11);
+        var rootDirBlock = Be24(sectorData, 0x11);
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
@@ -52,41 +60,45 @@ public class ThreeDoParser
 
     private bool ParseDirectory(uint dirBlock, uint blockSize, FsNode parentNode, uint trackStart)
     {
-        byte[] sectorData = new byte[2048];
-        uint currentBlock = dirBlock;
-        uint baseBlockLocation = dirBlock;
+        var sectorData = new byte[2048];
+        var currentBlock = dirBlock;
+        var baseBlockLocation = dirBlock;
         var visited = new HashSet<uint>();
 
         while (true)
         {
             if (visited.Contains(currentBlock)) break;
+
             visited.Add(currentBlock);
 
-            uint currentLba = trackStart + currentBlock * (blockSize / 2048);
+            var currentLba = trackStart + currentBlock * (blockSize / 2048);
             if (!_reader.ReadSector(currentLba, sectorData)) return false;
 
-            uint firstEntryOffset = Be16(sectorData, 0x12);
-            if (firstEntryOffset == 0 || firstEntryOffset >= 2048) firstEntryOffset = 0x14;
+            var firstEntryOffset = Be16(sectorData, 0x12);
+            if (firstEntryOffset is 0 or >= 2048)
+            {
+                firstEntryOffset = 0x14;
+            }
 
-            uint nextBlockOffset = Be16(sectorData, 0x02);
+            var nextBlockOffset = Be16(sectorData, 0x02);
 
-            uint pos = firstEntryOffset;
+            var pos = firstEntryOffset;
             while (pos + 72 <= 2048)
             {
-                uint flags = Be32(sectorData, (int)pos);
-                bool isLast = (flags & 0x80000000) != 0;
+                var flags = Be32(sectorData, (int)pos);
+                var isLast = (flags & 0x80000000) != 0;
 
                 if (flags == 0 && sectorData[pos + 0x20] == 0) break;
 
-                bool isDir = (flags & 0x07) == 0x07;
+                var isDir = (flags & 0x07) == 0x07;
 
-                string name = System.Text.Encoding.ASCII.GetString(sectorData, (int)pos + 0x20, 32).TrimEnd('\0');
+                var name = System.Text.Encoding.ASCII.GetString(sectorData, (int)pos + 0x20, 32).TrimEnd('\0');
 
-                uint byteCount = Be24(sectorData, (int)pos + 0x11);
+                var byteCount = Be24(sectorData, (int)pos + 0x11);
                 uint avCnt = sectorData[pos + 0x43];
                 if (avCnt > 255) break;
 
-                uint extent = Be24(sectorData, (int)pos + 0x45);
+                var extent = Be24(sectorData, (int)pos + 0x45);
 
                 var child = new FsNode
                 {
@@ -106,15 +118,27 @@ public class ThreeDoParser
             }
 
             if (nextBlockOffset == 0xFFFF) break;
+
             currentBlock = baseBlockLocation + nextBlockOffset;
         }
         return true;
     }
 
     private static bool CheckMagic(byte[] d, int o, byte[] m)
-    { for (int i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; } return true; }
+    { for (var i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; } return true; }
 
-    private static uint Be24(byte[] d, int o) => (uint)((d[o] << 16) | (d[o + 1] << 8) | d[o + 2]);
-    private static uint Be16(byte[] d, int o) => (uint)((d[o] << 8) | d[o + 1]);
-    private static uint Be32(byte[] d, int o) => (uint)((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]);
+    private static uint Be24(byte[] d, int o)
+    {
+        return (uint)((d[o] << 16) | (d[o + 1] << 8) | d[o + 2]);
+    }
+
+    private static uint Be16(byte[] d, int o)
+    {
+        return (uint)((d[o] << 8) | d[o + 1]);
+    }
+
+    private static uint Be32(byte[] d, int o)
+    {
+        return (uint)((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]);
+    }
 }

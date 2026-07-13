@@ -1,9 +1,9 @@
-﻿namespace CHDSharpLib.Utils;
+﻿namespace SimpleChdDrive.Core.CHD.Utils;
 
 internal class HuffmanDecoderRLE : HuffmanDecoder
 {
-    private int rlecount = 0;
-    private uint prevdata = 0;
+    private int rlecount;
+    private uint prevdata;
 
     public HuffmanDecoderRLE(uint numcodes, byte maxbits, BitStream bitbuf, ushort[] buffLookup) : base(numcodes, maxbits, bitbuf, buffLookup)
     { }
@@ -28,7 +28,7 @@ internal class HuffmanDecoderRLE : HuffmanDecoder
         }
 
         // fetch the data and process
-        uint data = base.DecodeOne();
+        var data = base.DecodeOne();
         if (data < 0x100)
         {
             prevdata += data;
@@ -48,6 +48,7 @@ internal class HuffmanDecoderRLE : HuffmanDecoder
             return 1;
         if (code <= 0x107)
             return 8 + (code - 0x100);
+
         return 16 << (code - 0x108);
     }
 }

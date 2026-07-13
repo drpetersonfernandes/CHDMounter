@@ -1,49 +1,49 @@
+using SimpleChdDrive.Core.CHD;
+
 namespace SimpleChdDrive.Core.Parsers;
 
 public class SectorReader
 {
-    private readonly CHDFile _chd;
-    private List<TrackInfo> _tracks = [];
-    private TrackInfo _currentTrack;
-    private int _lbaOffset;
+    private readonly ChdFile _chd;
     private bool _trackLocked;
 
     private uint _cachedHunkNum = 0xFFFFFFFF;
     private byte[] _cachedHunk = [];
     private bool _cachedHunkSwapped;
 
-    private uint _sectorHeaderOffset;
     private bool _isOffsetDetected;
     private uint _offsetDetectedHunk = 0xFFFFFFFF;
     private TrackInfo _offsetDetectedTrack;
     private readonly Dictionary<int, uint> _trackOffsetCache = [];
-    private uint _foundSyncOffset;
 
     private static readonly byte[] SyncPattern = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00];
     private const int SectorSize = 2048;
 
-    public uint SectorHeaderOffset => _sectorHeaderOffset;
-    public uint SyncOffset => _foundSyncOffset;
-    public int LbaOffset { get => _lbaOffset; set => _lbaOffset = value; }
+    public uint SectorHeaderOffset { get; private set; }
+
+    public uint SyncOffset { get; private set; }
+
+    public int LbaOffset { get; set; }
+
     public uint HunkBytes => _chd.HunkBytes;
     public uint UnitBytes => _chd.UnitBytes;
     public uint TotalBytes => (uint)_chd.TotalBytes;
 
-    public SectorReader(CHDFile chd)
+    public SectorReader(ChdFile chd)
     {
         _chd = chd;
-        _tracks = ParseTracksWithLBA(chd);
+        Tracks = ParseTracksWithLBA(chd);
     }
 
     public void SetTrack(TrackInfo track, bool locked = false)
     {
-        _currentTrack = track;
+        CurrentTrack = track;
         _trackLocked = locked;
     }
 
-    public TrackInfo CurrentTrack => _currentTrack;
+    public TrackInfo CurrentTrack { get; private set; }
 
-    public List<TrackInfo> Tracks => _tracks;
+    public List<TrackInfo> Tracks { get; } = [];
 
     public void Reset()
     {
@@ -51,21 +51,21 @@ public class SectorReader
         _cachedHunk = [];
         _cachedHunkSwapped = false;
         _isOffsetDetected = false;
-        _sectorHeaderOffset = 0;
-        _foundSyncOffset = 0;
+        SectorHeaderOffset = 0;
+        SyncOffset = 0;
         _offsetDetectedHunk = 0xFFFFFFFF;
         _offsetDetectedTrack = null;
-        _lbaOffset = 0;
+        LbaOffset = 0;
         _trackLocked = false;
         _trackOffsetCache.Clear();
     }
 
     public bool ReadSector(uint lba, byte[] outBuffer, int outOffset = 0)
     {
-        if (!PrepareHunk(lba, out uint rawOffset))
+        if (!PrepareHunk(lba, out var rawOffset))
             return false;
 
-        int sourceIndex = (int)(rawOffset + _sectorHeaderOffset);
+        var sourceIndex = (int)(rawOffset + SectorHeaderOffset);
         if (sourceIndex + SectorSize > _cachedHunk.Length)
             return false;
 
@@ -78,16 +78,17 @@ public class SectorReader
         var buffer = new byte[SectorSize];
         if (ReadSector(lba, buffer))
             return buffer;
+
         return null;
     }
 
     public bool ReadRawSector(uint lba, out byte[] rawSector)
     {
         rawSector = null;
-        if (!PrepareHunk(lba, out uint rawOffset))
+        if (!PrepareHunk(lba, out var rawOffset))
             return false;
 
-        int unitBytes = (int)_chd.UnitBytes;
+        var unitBytes = (int)_chd.UnitBytes;
         if (rawOffset + unitBytes > _cachedHunk.Length)
             return false;
 
@@ -98,14 +99,14 @@ public class SectorReader
 
     public byte GetSubheaderFileNumber(uint lba)
     {
-        if (!PrepareHunk(lba, out uint rawOffset))
+        if (!PrepareHunk(lba, out var rawOffset))
             return 0xFF;
 
-        int unitBytes = (int)_chd.UnitBytes;
+        var unitBytes = (int)_chd.UnitBytes;
         if (unitBytes < 2352)
             return 0xFF;
 
-        int subheaderOffset = (int)rawOffset + 16;
+        var subheaderOffset = (int)rawOffset + 16;
         if (subheaderOffset + 1 > _cachedHunk.Length)
             return 0xFF;
 
@@ -116,21 +117,21 @@ public class SectorReader
     {
         rawOffsetInHunk = 0;
 
-        uint hunkBytes = _chd.HunkBytes;
-        uint unitBytes = _chd.UnitBytes;
+        var hunkBytes = _chd.HunkBytes;
+        var unitBytes = _chd.UnitBytes;
         if (hunkBytes == 0 || unitBytes == 0)
             return false;
 
-        uint sectorsPerHunk = hunkBytes / unitBytes;
+        var sectorsPerHunk = hunkBytes / unitBytes;
         uint chdFrame = 0;
-        bool found = false;
+        var found = false;
 
-        if (_trackLocked && _currentTrack != null)
+        if (_trackLocked && CurrentTrack != null)
         {
-            long relative = (long)lba - _currentTrack.StartLBA;
-            if (relative >= 0 && relative < _currentTrack.Frames)
+            var relative = (long)lba - CurrentTrack.StartLBA;
+            if (relative >= 0 && relative < CurrentTrack.Frames)
             {
-                chdFrame = _currentTrack.ChdOffset + (uint)relative;
+                chdFrame = CurrentTrack.ChdOffset + (uint)relative;
                 found = true;
             }
             else
@@ -140,23 +141,23 @@ public class SectorReader
         }
         else
         {
-            uint adjustedLba = (uint)((long)lba + _lbaOffset);
+            var adjustedLba = (uint)(lba + LbaOffset);
 
-            if (_currentTrack != null && adjustedLba >= _currentTrack.StartLBA &&
-                adjustedLba < _currentTrack.StartLBA + _currentTrack.Frames)
+            if (CurrentTrack != null && adjustedLba >= CurrentTrack.StartLBA &&
+                adjustedLba < CurrentTrack.StartLBA + CurrentTrack.Frames)
             {
-                chdFrame = _currentTrack.ChdOffset + (adjustedLba - _currentTrack.StartLBA);
+                chdFrame = CurrentTrack.ChdOffset + (adjustedLba - CurrentTrack.StartLBA);
                 found = true;
             }
 
-            if (!found && _tracks.Count > 0)
+            if (!found && Tracks.Count > 0)
             {
-                foreach (var track in _tracks)
+                foreach (var track in Tracks)
                 {
                     if (adjustedLba >= track.StartLBA && adjustedLba < track.StartLBA + track.Frames)
                     {
                         chdFrame = track.ChdOffset + (adjustedLba - track.StartLBA);
-                        _currentTrack = track;
+                        CurrentTrack = track;
                         found = true;
                         break;
                     }
@@ -166,14 +167,14 @@ public class SectorReader
             if (!found)
             {
                 chdFrame = adjustedLba;
-                _currentTrack = null!;
+                CurrentTrack = null!;
             }
         }
 
-        uint hunkNum = chdFrame / sectorsPerHunk;
-        uint sectorInHunk = chdFrame % sectorsPerHunk;
+        var hunkNum = chdFrame / sectorsPerHunk;
+        var sectorInHunk = chdFrame % sectorsPerHunk;
 
-        bool needsSwap = _currentTrack?.TrackType == "AUDIO";
+        var needsSwap = CurrentTrack?.TrackType == "AUDIO";
 
         if (hunkNum != _cachedHunkNum || _cachedHunkSwapped != needsSwap)
         {
@@ -184,7 +185,7 @@ public class SectorReader
 
             if (needsSwap)
             {
-                for (int i = 0; i + 1 < buffer.Length; i += 2)
+                for (var i = 0; i + 1 < buffer.Length; i += 2)
                 {
                     (buffer[i + 1], buffer[i]) = (buffer[i], buffer[i + 1]);
                 }
@@ -198,16 +199,16 @@ public class SectorReader
 
         rawOffsetInHunk = sectorInHunk * unitBytes;
 
-        int trackIdx = _currentTrack?.Index ?? -1;
-        if (!_isOffsetDetected || hunkNum != _offsetDetectedHunk || _currentTrack != _offsetDetectedTrack)
+        var trackIdx = CurrentTrack?.Index ?? -1;
+        if (!_isOffsetDetected || hunkNum != _offsetDetectedHunk || CurrentTrack != _offsetDetectedTrack)
         {
-            if (_trackOffsetCache.TryGetValue(trackIdx, out uint cachedOffset))
+            if (_trackOffsetCache.TryGetValue(trackIdx, out var cachedOffset))
             {
-                _sectorHeaderOffset = cachedOffset;
-                bool isMode2 = _currentTrack != null &&
-                    (_currentTrack.TrackType.Contains("MODE2") || _currentTrack.TrackType.Contains("CDI"));
-                uint headerSize = isMode2 ? 24u : 16u;
-                _foundSyncOffset = _sectorHeaderOffset >= headerSize ? _sectorHeaderOffset - headerSize : 0;
+                SectorHeaderOffset = cachedOffset;
+                var isMode2 = CurrentTrack != null &&
+                              (CurrentTrack.TrackType.Contains("MODE2") || CurrentTrack.TrackType.Contains("CDI"));
+                var headerSize = isMode2 ? 24u : 16u;
+                SyncOffset = SectorHeaderOffset >= headerSize ? SectorHeaderOffset - headerSize : 0;
             }
             else if (unitBytes >= 2352)
             {
@@ -215,14 +216,14 @@ public class SectorReader
             }
             else
             {
-                _foundSyncOffset = 0;
-                _sectorHeaderOffset = 0;
-                _trackOffsetCache[trackIdx] = _sectorHeaderOffset;
+                SyncOffset = 0;
+                SectorHeaderOffset = 0;
+                _trackOffsetCache[trackIdx] = SectorHeaderOffset;
             }
 
             _isOffsetDetected = true;
             _offsetDetectedHunk = hunkNum;
-            _offsetDetectedTrack = _currentTrack;
+            _offsetDetectedTrack = CurrentTrack;
         }
 
         return true;
@@ -230,17 +231,17 @@ public class SectorReader
 
     private void DetectSectorOffset(uint rawOffsetInHunk, int trackIdx)
     {
-        uint unitBytes = _chd.UnitBytes;
-        int searchRange = (int)Math.Min(128, unitBytes - 16);
-        int foundSyncOffset = -1;
+        var unitBytes = _chd.UnitBytes;
+        var searchRange = (int)Math.Min(128, unitBytes - 16);
+        var foundSyncOffset = -1;
 
-        for (int i = 0; i < searchRange; i++)
+        for (var i = 0; i < searchRange; i++)
         {
             if ((int)(rawOffsetInHunk + i + 12) > _cachedHunk.Length)
                 break;
 
-            bool match = true;
-            for (int j = 0; j < 12; j++)
+            var match = true;
+            for (var j = 0; j < 12; j++)
             {
                 if (_cachedHunk[rawOffsetInHunk + i + j] != SyncPattern[j])
                 {
@@ -257,23 +258,23 @@ public class SectorReader
 
         if (foundSyncOffset >= 0)
         {
-            uint absoluteSync = rawOffsetInHunk + (uint)foundSyncOffset;
-            _foundSyncOffset = (uint)foundSyncOffset;
-            _sectorHeaderOffset = (uint)(foundSyncOffset + (_cachedHunk[absoluteSync + 15] == 2 ? 24 : 16));
-            _trackOffsetCache[trackIdx] = _sectorHeaderOffset;
+            var absoluteSync = rawOffsetInHunk + (uint)foundSyncOffset;
+            SyncOffset = (uint)foundSyncOffset;
+            SectorHeaderOffset = (uint)(foundSyncOffset + (_cachedHunk[absoluteSync + 15] == 2 ? 24 : 16));
+            _trackOffsetCache[trackIdx] = SectorHeaderOffset;
         }
         else
         {
-            bool isCooked = false;
+            var isCooked = false;
             uint cookedOffset = 0;
             uint[] candidateOffsets = [0, 16, 24, 96, 112, 120];
 
-            foreach (uint candidate in candidateOffsets)
+            foreach (var candidate in candidateOffsets)
             {
                 if (rawOffsetInHunk + candidate + 16 > _cachedHunk.Length)
                     continue;
 
-                int checkOff = (int)(rawOffsetInHunk + candidate);
+                var checkOff = (int)(rawOffsetInHunk + candidate);
                 if (CheckSignature(checkOff, "CD001", 1) ||
                     CheckSignature(checkOff, "CDROM", 9) ||
                     CheckSignature(checkOff, "BE001", 1))
@@ -284,8 +285,8 @@ public class SectorReader
                 }
 
                 byte[] operaMagic = [0x01, 0x5A, 0x5A, 0x5A, 0x5A, 0x5A, 0x01];
-                bool operaMatch = true;
-                for (int k = 0; k < 7; k++)
+                var operaMatch = true;
+                for (var k = 0; k < 7; k++)
                 {
                     if (_cachedHunk[checkOff + k] != operaMagic[k])
                     { operaMatch = false; break; }
@@ -300,17 +301,17 @@ public class SectorReader
 
             if (isCooked)
             {
-                _foundSyncOffset = cookedOffset;
-                _sectorHeaderOffset = cookedOffset;
-                _trackOffsetCache[trackIdx] = _sectorHeaderOffset;
+                SyncOffset = cookedOffset;
+                SectorHeaderOffset = cookedOffset;
+                _trackOffsetCache[trackIdx] = SectorHeaderOffset;
             }
             else
             {
-                uint fallbackOffset = GetSectorDataOffset(_currentTrack);
-                bool fallbackIsZero = true;
+                var fallbackOffset = GetSectorDataOffset(CurrentTrack);
+                var fallbackIsZero = true;
                 if (fallbackOffset > 0 && (int)(rawOffsetInHunk + fallbackOffset + 64) <= _cachedHunk.Length)
                 {
-                    for (int z = 0; z < 64; z++)
+                    for (var z = 0; z < 64; z++)
                     {
                         if (_cachedHunk[rawOffsetInHunk + fallbackOffset + z] != 0)
                         { fallbackIsZero = false; break; }
@@ -319,14 +320,14 @@ public class SectorReader
 
                 if (fallbackIsZero)
                 {
-                    _foundSyncOffset = 0;
-                    _sectorHeaderOffset = 0;
+                    SyncOffset = 0;
+                    SectorHeaderOffset = 0;
                 }
                 else
                 {
-                    _foundSyncOffset = fallbackOffset;
-                    _sectorHeaderOffset = fallbackOffset;
-                    _trackOffsetCache[trackIdx] = _sectorHeaderOffset;
+                    SyncOffset = fallbackOffset;
+                    SectorHeaderOffset = fallbackOffset;
+                    _trackOffsetCache[trackIdx] = SectorHeaderOffset;
                 }
             }
         }
@@ -334,11 +335,11 @@ public class SectorReader
 
     private bool CheckSignature(int offset, string signature, int offsetInSignature)
     {
-        byte[] sig = System.Text.Encoding.ASCII.GetBytes(signature);
+        var sig = System.Text.Encoding.ASCII.GetBytes(signature);
         if (offset + offsetInSignature + sig.Length > _cachedHunk.Length)
             return false;
 
-        for (int i = 0; i < sig.Length; i++)
+        for (var i = 0; i < sig.Length; i++)
         {
             if (_cachedHunk[offset + offsetInSignature + i] != sig[i])
                 return false;
@@ -352,44 +353,45 @@ public class SectorReader
         if (!track.IsDataTrack) return 0;
         if (track.TrackType.Contains("MODE2") || track.TrackType.Contains("MODE_2")) return 24;
         if (track.TrackType.Contains("CDI")) return 24;
+
         return 16;
     }
 
-    public static List<TrackInfo> ParseTracksWithLBA(CHDFile chd)
+    public static List<TrackInfo> ParseTracksWithLBA(ChdFile chd)
     {
         var tracks = new List<TrackInfo>();
         var metadata = chd.ReadMetadata();
 
-        bool hasTrackMetadata = false;
+        var hasTrackMetadata = false;
 
         foreach (var entry in metadata)
         {
-            uint tag = entry.Tag;
-            char t0 = (char)((tag >> 24) & 0xFF);
-            char t1 = (char)((tag >> 16) & 0xFF);
-            char t2 = (char)((tag >> 8) & 0xFF);
-            char t3 = (char)(tag & 0xFF);
+            var tag = entry.Tag;
+            var t0 = (char)((tag >> 24) & 0xFF);
+            var t1 = (char)((tag >> 16) & 0xFF);
+            var t2 = (char)((tag >> 8) & 0xFF);
+            var t3 = (char)(tag & 0xFF);
 
-            bool isTrackMeta = (t0 == 'C' && t1 == 'H' &&
-                ((t2 == 'T' && (t3 == '2' || t3 == 'R')) || (t2 == 'G' && (t3 == 'D' || t3 == 'T'))));
+            var isTrackMeta = t0 == 'C' && t1 == 'H' &&
+                              ((t2 == 'T' && t3 is '2' or 'R') || (t2 == 'G' && t3 is 'D' or 'T'));
 
             if (!isTrackMeta || string.IsNullOrEmpty(entry.Value))
                 continue;
 
             hasTrackMetadata = true;
-            int trackIndex = tracks.Count + 1;
-            string metaValue = entry.Value;
+            var trackIndex = tracks.Count + 1;
+            var metaValue = entry.Value;
 
             uint frames = 0;
             uint pregap = 0;
             uint postgap = 0;
             uint padFrames = 0;
-            string typeStr = "";
-            string subtypeStr = "";
-            string pgtypeStr = "";
-            string pgsubStr = "";
-            int parsedTrackNum = 0;
-            bool parsed = TryParseTrackMetadata(metaValue, ref parsedTrackNum, ref typeStr, ref subtypeStr,
+            var typeStr = "";
+            var subtypeStr = "";
+            var pgtypeStr = "";
+            var pgsubStr = "";
+            var parsedTrackNum = 0;
+            var parsed = TryParseTrackMetadata(metaValue, ref parsedTrackNum, ref typeStr, ref subtypeStr,
                 ref frames, ref padFrames, ref pregap, ref pgtypeStr, ref pgsubStr, ref postgap);
 
             if (!parsed || frames == 0)
@@ -410,16 +412,16 @@ public class SectorReader
         if (!hasTrackMetadata || tracks.Count == 0)
             return tracks;
 
-        bool isGdrom = false;
+        var isGdrom = false;
         foreach (var entry in metadata)
         {
-            uint tag = entry.Tag;
-            char t0 = (char)((tag >> 24) & 0xFF);
-            char t1 = (char)((tag >> 16) & 0xFF);
-            char t2 = (char)((tag >> 8) & 0xFF);
-            char t3 = (char)(tag & 0xFF);
+            var tag = entry.Tag;
+            var t0 = (char)((tag >> 24) & 0xFF);
+            var t1 = (char)((tag >> 16) & 0xFF);
+            var t2 = (char)((tag >> 8) & 0xFF);
+            var t3 = (char)(tag & 0xFF);
 
-            if (t0 == 'C' && t1 == 'H' && t2 == 'G' && (t3 == 'D' || t3 == 'T'))
+            if (t0 == 'C' && t1 == 'H' && t2 == 'G' && t3 is 'D' or 'T')
             {
                 isGdrom = true;
                 break;
@@ -436,28 +438,36 @@ public class SectorReader
         if (!isGdrom && tracks.Count >= 3)
         {
             uint totalFrames = 0;
-            foreach (var t in tracks) totalFrames += t.Frames;
+            foreach (var t in tracks)
+            {
+                totalFrames += t.Frames;
+            }
+
             if (totalFrames >= 500000 && totalFrames <= 560000)
+            {
                 isGdrom = true;
+            }
         }
 
         uint currentFileFrame = 0;
         uint currentLogicalLBA = 150;
         const uint GdHighDensityLba = 45000;
 
-        for (int i = 0; i < tracks.Count; i++)
+        for (var i = 0; i < tracks.Count; i++)
         {
             var track = tracks[i];
-            int trackNum = i + 1;
+            var trackNum = i + 1;
 
             if (isGdrom && trackNum >= 3 && currentLogicalLBA < GdHighDensityLba)
+            {
                 currentLogicalLBA = GdHighDensityLba;
+            }
 
             track.StartLBA = currentLogicalLBA;
             track.ChdOffset = currentFileFrame;
 
             currentLogicalLBA += track.Frames;
-            uint padded = (track.Frames + 3) / 4 * 4;
+            var padded = (track.Frames + 3) / 4 * 4;
             currentFileFrame += padded;
         }
 
@@ -465,28 +475,32 @@ public class SectorReader
         {
             if (!track.IsDataTrack && track.TrackType == "AUDIO" && track.Frames > 16 && chd.UnitBytes > 0)
             {
-                uint sectorsPerHunk = chd.HunkBytes / chd.UnitBytes;
+                var sectorsPerHunk = chd.HunkBytes / chd.UnitBytes;
                 if (sectorsPerHunk > 0)
                 {
-                    uint hunkNum = track.ChdOffset / sectorsPerHunk;
-                    uint offsetInHunk = (track.ChdOffset % sectorsPerHunk) * chd.UnitBytes;
+                    var hunkNum = track.ChdOffset / sectorsPerHunk;
+                    var offsetInHunk = track.ChdOffset % sectorsPerHunk * chd.UnitBytes;
 
                     var firstHunk = new byte[chd.HunkBytes];
                     if (chd.ReadHunk(hunkNum, firstHunk) == chd_error.CHDERR_NONE &&
                         (int)(offsetInHunk + 12) <= firstHunk.Length)
                     {
-                        byte[] swappedSync = new byte[12];
-                        for (int j = 0; j < 12; j++)
+                        var swappedSync = new byte[12];
+                        for (var j = 0; j < 12; j++)
+                        {
                             swappedSync[j] = firstHunk[offsetInHunk + (j ^ 1)];
+                        }
 
-                        bool match = true;
-                        for (int j = 0; j < 12; j++)
+                        var match = true;
+                        for (var j = 0; j < 12; j++)
                         {
                             if (swappedSync[j] != SyncPattern[j])
                             { match = false; break; }
                         }
                         if (match)
+                        {
                             track.IsDataTrack = true;
+                        }
                     }
                 }
             }
@@ -503,11 +517,11 @@ public class SectorReader
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var part in parts)
         {
-            int colonIdx = part.IndexOf(':');
+            var colonIdx = part.IndexOf(':');
             if (colonIdx > 0)
             {
-                string key = part[..colonIdx];
-                string value = part[(colonIdx + 1)..];
+                var key = part[..colonIdx];
+                var value = part[(colonIdx + 1)..];
                 map[key] = value;
             }
         }

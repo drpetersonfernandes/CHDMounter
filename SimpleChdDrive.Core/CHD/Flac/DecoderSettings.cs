@@ -1,37 +1,34 @@
-﻿using CHDReaderTest.Flac.FlacDeps;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
+using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
+
 //using Newtonsoft.Json;
 
-namespace CUETools.Codecs.Flake
+namespace SimpleChdDrive.Core.CHD.Flac;
+
+//[JsonObject(MemberSerialization.OptIn)]
+public class DecoderSettings : IAudioDecoderSettings
 {
-    //[JsonObject(MemberSerialization.OptIn)]
-    public class DecoderSettings : IAudioDecoderSettings
+    #region IAudioDecoderSettings implementation
+    [Browsable(false)]
+    public string Extension => "flac";
+
+    [Browsable(false)]
+    public string Name => "cuetools";
+
+    [Browsable(false)]
+    public Type DecoderType => typeof(AudioDecoder);
+
+    [Browsable(false)]
+    public int Priority => 2;
+
+    public IAudioDecoderSettings Clone()
     {
-        #region IAudioDecoderSettings implementation
-        [Browsable(false)]
-        public string Extension => "flac";
+        return MemberwiseClone() as IAudioDecoderSettings;
+    }
+    #endregion
 
-        [Browsable(false)]
-        public string Name => "cuetools";
-
-        [Browsable(false)]
-        public Type DecoderType => typeof(AudioDecoder);
-
-        [Browsable(false)]
-        public int Priority => 2;
-
-        public IAudioDecoderSettings Clone()
-        {
-            return MemberwiseClone() as IAudioDecoderSettings;
-        }
-        #endregion
-
-        public DecoderSettings()
-        {
-            this.Init();
-        }
+    public DecoderSettings()
+    {
+        this.Init();
     }
 }

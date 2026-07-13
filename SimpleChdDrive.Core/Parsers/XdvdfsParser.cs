@@ -23,15 +23,15 @@ public class XdvdfsParser
         _reader.Reset();
         if (_currentTrack != null) _reader.SetTrack(_currentTrack, true);
 
-        byte[] sectorData = new byte[2048];
+        var sectorData = new byte[2048];
         uint volumeOffsetSectors = 0;
         uint rootDirSector = 0;
         uint rootDirExtentSize = 0;
-        bool found = false;
+        var found = false;
 
         uint[] offsets = [32, 129856, 16672, 198176, 0];
 
-        foreach (uint offset in offsets)
+        foreach (var offset in offsets)
         {
             if (_reader.ReadSector(offset, sectorData))
             {
@@ -59,6 +59,7 @@ public class XdvdfsParser
             for (uint offset = 0; offset < 102400; offset++)
             {
                 if (offsets.Contains(offset)) continue;
+
                 if (_reader.ReadSector(offset, sectorData))
                 {
                     if (CheckMagic(sectorData, 0, XdvdfsMagic) && CheckMagic(sectorData, 0x7EC, XdvdfsMagic))
@@ -91,46 +92,50 @@ public class XdvdfsParser
 
         if (dirOffset >= dirExtentSize) return true;
 
-        uint absoluteSector = dirSector + dirOffset / 2048;
-        uint offsetInSector = dirOffset % 2048;
+        var absoluteSector = dirSector + dirOffset / 2048;
+        var offsetInSector = dirOffset % 2048;
 
-        ulong nodeId = ((ulong)absoluteSector << 32) | offsetInSector;
+        var nodeId = ((ulong)absoluteSector << 32) | offsetInSector;
         if (visited.Contains(nodeId)) return true;
+
         visited.Add(nodeId);
 
-        byte[] sectorData = new byte[2048];
+        var sectorData = new byte[2048];
         if (!_reader.ReadSector(absoluteSector, sectorData)) return false;
 
         if (offsetInSector + 14 > 2048)
         {
-            uint nextOffset = dirOffset + (2048 - offsetInSector);
+            var nextOffset = dirOffset + (2048 - offsetInSector);
             return ParseDirectoryTree(dirSector, nextOffset, parentNode, volumeOffsetSectors, dirExtentSize, depth, visited, inLlCompat);
         }
 
-        uint entryOff = offsetInSector;
-        ushort leftSubTree = LeU16(sectorData, (int)entryOff);
-        ushort rightSubTree = LeU16(sectorData, (int)(entryOff + 2));
-        uint startSector = LeU32(sectorData, (int)(entryOff + 4));
-        uint fileSize = LeU32(sectorData, (int)(entryOff + 8));
-        byte attributes = sectorData[entryOff + 12];
-        byte nameLen = sectorData[entryOff + 13];
+        var entryOff = offsetInSector;
+        var leftSubTree = LeU16(sectorData, (int)entryOff);
+        var rightSubTree = LeU16(sectorData, (int)(entryOff + 2));
+        var startSector = LeU32(sectorData, (int)(entryOff + 4));
+        var fileSize = LeU32(sectorData, (int)(entryOff + 8));
+        var attributes = sectorData[entryOff + 12];
+        var nameLen = sectorData[entryOff + 13];
 
         if (leftSubTree == 0xFFFF)
         {
             if (dirOffset == 0) return true;
-            uint nextOffset = dirOffset + (2048 - (dirOffset % 2048));
+
+            var nextOffset = dirOffset + (2048 - dirOffset % 2048);
             if (nextOffset >= dirExtentSize) return true;
+
             return ParseDirectoryTree(dirSector, nextOffset, parentNode, volumeOffsetSectors, dirExtentSize, depth, visited, inLlCompat);
         }
 
         if (offsetInSector + 14 + nameLen > 2048)
         {
-            uint nextOffset = dirOffset + (2048 - offsetInSector);
+            var nextOffset = dirOffset + (2048 - offsetInSector);
             if (nextOffset >= dirExtentSize) return true;
+
             return ParseDirectoryTree(dirSector, nextOffset, parentNode, volumeOffsetSectors, dirExtentSize, depth, visited, inLlCompat);
         }
 
-        bool localLlCompat = inLlCompat;
+        var localLlCompat = inLlCompat;
         if (leftSubTree != 0 && leftSubTree != 0xFFFF)
         {
             localLlCompat = false;
@@ -165,11 +170,19 @@ public class XdvdfsParser
 
     private static bool CheckMagic(byte[] data, int offset, byte[] magic)
     {
-        for (int i = 0; i < magic.Length; i++)
+        for (var i = 0; i < magic.Length; i++)
             if (data[offset + i] != magic[i]) return false;
+
         return true;
     }
 
-    private static ushort LeU16(byte[] d, int o) => (ushort)(d[o] | (d[o + 1] << 8));
-    private static uint LeU32(byte[] d, int o) => (uint)(d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24));
+    private static ushort LeU16(byte[] d, int o)
+    {
+        return (ushort)(d[o] | (d[o + 1] << 8));
+    }
+
+    private static uint LeU32(byte[] d, int o)
+    {
+        return (uint)(d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24));
+    }
 }

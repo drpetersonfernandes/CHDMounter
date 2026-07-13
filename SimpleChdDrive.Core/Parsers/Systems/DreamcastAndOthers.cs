@@ -5,19 +5,32 @@ public class DreamcastParser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public DreamcastParser(SectorReader reader) => _reader = reader;
+    public DreamcastParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.Dreamcast;
-    public string GetConsoleName() => "Dreamcast";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.Dreamcast;
+    }
 
-    public bool Parse(FsNode rootNode) => ParseTrack(rootNode, FindDataTrack());
+    public string GetConsoleName()
+    {
+        return "Dreamcast";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new DreamcastIsoParser(_reader);
 
         var offsets = new int[] { -45000, -45150, -150, 0, 45000, 45150 };
-        foreach (int offset in offsets)
+        foreach (var offset in offsets)
         {
             parser.SetLbaOffset(offset);
             if (parser.Parse(rootNode, track))
@@ -32,6 +45,7 @@ public class DreamcastParser : IConsoleParser
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
+
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
 }
@@ -41,12 +55,25 @@ public class CDiParser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public CDiParser(SectorReader reader) => _reader = reader;
+    public CDiParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.CDi;
-    public string GetConsoleName() => "CD-i";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.CDi;
+    }
 
-    public bool Parse(FsNode rootNode) => ParseTrack(rootNode, FindDataTrack());
+    public string GetConsoleName()
+    {
+        return "CD-i";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
@@ -58,6 +85,7 @@ public class CDiParser : IConsoleParser
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
+
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
 }
@@ -67,12 +95,25 @@ public class ThreeDoConsoleParser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public ThreeDoConsoleParser(SectorReader reader) => _reader = reader;
+    public ThreeDoConsoleParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.ThreeDO;
-    public string GetConsoleName() => "3DO";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.ThreeDO;
+    }
 
-    public bool Parse(FsNode rootNode) => ParseTrack(rootNode, FindDataTrack());
+    public string GetConsoleName()
+    {
+        return "3DO";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
@@ -84,6 +125,7 @@ public class ThreeDoConsoleParser : IConsoleParser
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
+
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
 }
@@ -93,12 +135,25 @@ public class GenericIso9660Parser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public GenericIso9660Parser(SectorReader reader) => _reader = reader;
+    public GenericIso9660Parser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.GenericISO9660;
-    public string GetConsoleName() => "Generic ISO 9660";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.GenericISO9660;
+    }
 
-    public bool Parse(FsNode rootNode) => ParseTrack(rootNode, FindDataTrack());
+    public string GetConsoleName()
+    {
+        return "Generic ISO 9660";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
@@ -110,6 +165,7 @@ public class GenericIso9660Parser : IConsoleParser
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
+
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
 }

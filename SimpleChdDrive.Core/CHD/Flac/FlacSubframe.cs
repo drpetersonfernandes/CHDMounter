@@ -1,23 +1,17 @@
-using CHDReaderTest.Flac.FlacDeps;
+using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 
-namespace CUETools.Codecs.Flake
+namespace SimpleChdDrive.Core.CHD.Flac;
+
+public unsafe class FlacSubframe
 {
-    unsafe public class FlacSubframe
-    {
-        public FlacSubframe()
-        {
-            rc = new RiceContext();
-            coefs = new int[Lpc.MAX_LPC_ORDER];
-        }
-        public SubframeType type;
-        public int order;
-        public int* residual;
-        public RiceContext rc;
-        public uint size;
+    public SubframeType Type { get; set; }
+    public int Order { get; set; }
+    public int* Residual { get; set; }
+    public RiceContext Rc { get; } = new();
+    public uint Size { get; set; }
 
-        public int cbits;
-        public int shift;
-        public int[] coefs;
-        public int window;
-    };
-}
+    public int Cbits { get; set; }
+    public int Shift { get; set; }
+    public int[] Coefs { get; } = new int[Lpc.MAX_LPC_ORDER];
+    public int Window { get; set; }
+};

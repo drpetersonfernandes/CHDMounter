@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace CHDSharpLib.Utils;
+﻿namespace SimpleChdDrive.Core.CHD.Utils;
 
 internal class ArrayPool
 {

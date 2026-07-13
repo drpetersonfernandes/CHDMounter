@@ -378,7 +378,7 @@
                               Fill="{StaticResource TextSecondaryBrush}"
                               HorizontalAlignment="Center" VerticalAlignment="Center"
                               Margin="0,0,8,0" Data="M0,0 L4,4 L8,0 Z" />
-                        <Popup x:Name="popup" AllowsTransparency="True"
+                        <Popup Grid.Column="0" x:Name="popup" AllowsTransparency="True"
                                IsOpen="{TemplateBinding IsDropDownOpen}"
                                Margin="1" Placement="Bottom" PopupAnimation="Slide">
                             <Border x:Name="dropDownBorder"

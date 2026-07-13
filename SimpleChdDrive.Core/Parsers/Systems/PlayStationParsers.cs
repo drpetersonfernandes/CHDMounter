@@ -5,12 +5,25 @@ public class PlayStation1Parser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public PlayStation1Parser(SectorReader reader) => _reader = reader;
+    public PlayStation1Parser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.PS1;
-    public string GetConsoleName() => "PS1";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.PS1;
+    }
 
-    public bool Parse(FsNode rootNode) => ParseTrack(rootNode, FindDataTrack());
+    public string GetConsoleName()
+    {
+        return "PS1";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
@@ -22,6 +35,7 @@ public class PlayStation1Parser : IConsoleParser
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
+
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
 }
@@ -31,12 +45,25 @@ public class PlayStation2Parser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public PlayStation2Parser(SectorReader reader) => _reader = reader;
+    public PlayStation2Parser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.PS2;
-    public string GetConsoleName() => "PS2";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.PS2;
+    }
 
-    public bool Parse(FsNode rootNode) => ParseTrack(rootNode, FindDataTrack());
+    public string GetConsoleName()
+    {
+        return "PS2";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
@@ -48,6 +75,7 @@ public class PlayStation2Parser : IConsoleParser
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
+
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
 }
@@ -57,12 +85,25 @@ public class PlayStation3Parser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public PlayStation3Parser(SectorReader reader) => _reader = reader;
+    public PlayStation3Parser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.PS3;
-    public string GetConsoleName() => "PS3";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.PS3;
+    }
 
-    public bool Parse(FsNode rootNode) => ParseTrack(rootNode, FindDataTrack());
+    public string GetConsoleName()
+    {
+        return "PS3";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
@@ -78,6 +119,7 @@ public class PlayStation3Parser : IConsoleParser
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
+
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
 }
@@ -87,10 +129,20 @@ public class PlayStation3SingleFileParser : IConsoleParser
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
-    public PlayStation3SingleFileParser(SectorReader reader) => _reader = reader;
+    public PlayStation3SingleFileParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
 
-    public ConsoleType GetConsoleType() => ConsoleType.PS3SingleFile;
-    public string GetConsoleName() => "PS3 (Single File)";
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.PS3SingleFile;
+    }
+
+    public string GetConsoleName()
+    {
+        return "PS3 (Single File)";
+    }
 
     public bool Parse(FsNode rootNode)
     {
@@ -107,5 +159,8 @@ public class PlayStation3SingleFileParser : IConsoleParser
         return true;
     }
 
-    public bool ParseTrack(FsNode rootNode, TrackInfo track) => Parse(rootNode);
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
+    {
+        return Parse(rootNode);
+    }
 }

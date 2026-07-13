@@ -5,13 +5,12 @@ namespace SimpleChdDrive.Core.Logging;
 public static class DiagnosticLogger
 {
     private static readonly StringBuilder _buffer = new();
-    private static string _logFilePath;
 
-    public static string LogFilePath => _logFilePath;
+    public static string LogFilePath { get; private set; }
 
     public static void Initialize()
     {
-        _logFilePath = Path.Combine(Path.GetTempPath(), $"SimpleChdDrive_Debug_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        LogFilePath = Path.Combine(Path.GetTempPath(), $"SimpleChdDrive_Debug_{DateTime.Now:yyyyMMdd_HHmmss}.log");
     }
 
     public static void CleanupOldLogs()
@@ -48,9 +47,9 @@ public static class DiagnosticLogger
         _buffer.AppendLine(line);
         System.Diagnostics.Debug.WriteLine($"[DIAG] {message}");
 
-        if (_logFilePath != null)
+        if (LogFilePath != null)
         {
-            try { File.AppendAllText(_logFilePath, line + Environment.NewLine); }
+            try { File.AppendAllText(LogFilePath, line + Environment.NewLine); }
             catch { }
         }
     }
