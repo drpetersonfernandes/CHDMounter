@@ -31,7 +31,7 @@ public unsafe class FlacSubframeInfo
 
         best.Residual = r;
         best.Type = SubframeType.Verbatim;
-        best.Size = AudioSamples.UINT32_MAX;
+        best.Size = AudioSamples.Uint32Max;
         sf.Reset();
         for (var iWindow = 0; iWindow < Lpc.MAX_LPC_WINDOWS; iWindow++)
             lpc_ctx[iWindow].Reset();

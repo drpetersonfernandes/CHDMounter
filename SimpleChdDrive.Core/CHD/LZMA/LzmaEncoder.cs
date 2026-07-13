@@ -7,7 +7,7 @@ internal class Encoder
     enum EMatchFinderType
     {
         BT2,
-        BT4,
+        BT4
     };
 
     const UInt32 kIfinityPrice = 0xFFFFFFF;
@@ -173,7 +173,7 @@ internal class Encoder
         BitEncoder _choice2;
         BitTreeEncoder[] _lowCoder = new BitTreeEncoder[Base.kNumPosStatesEncodingMax];
         BitTreeEncoder[] _midCoder = new BitTreeEncoder[Base.kNumPosStatesEncodingMax];
-        BitTreeEncoder _highCoder = new BitTreeEncoder(Base.kNumHighLenBits);
+        BitTreeEncoder _highCoder = new(Base.kNumHighLenBits);
 
         public LenEncoder()
         {
@@ -310,7 +310,7 @@ internal class Encoder
     };
     Optimal[] _optimum = new Optimal[kNumOpts];
     LZ.BinTree _matchFinder;
-    RangeCoder.Encoder _rangeEncoder = new RangeCoder.Encoder();
+    RangeCoder.Encoder _rangeEncoder = new();
 
     BitEncoder[] _isMatch = new BitEncoder[Base.kNumStates << Base.kNumPosStatesBitsMax];
     BitEncoder[] _isRep = new BitEncoder[Base.kNumStates];
@@ -322,12 +322,12 @@ internal class Encoder
     BitTreeEncoder[] _posSlotEncoder = new BitTreeEncoder[Base.kNumLenToPosStates];
 
     BitEncoder[] _posEncoders = new BitEncoder[Base.kNumFullDistances - Base.kEndPosModelIndex];
-    BitTreeEncoder _posAlignEncoder = new BitTreeEncoder(Base.kNumAlignBits);
+    BitTreeEncoder _posAlignEncoder = new(Base.kNumAlignBits);
 
-    LenPriceTableEncoder _lenEncoder = new LenPriceTableEncoder();
-    LenPriceTableEncoder _repMatchLenEncoder = new LenPriceTableEncoder();
+    LenPriceTableEncoder _lenEncoder = new();
+    LenPriceTableEncoder _repMatchLenEncoder = new();
 
-    LiteralEncoder _literalEncoder = new LiteralEncoder();
+    LiteralEncoder _literalEncoder = new();
 
     UInt32[] _matchDistances = new UInt32[Base.kMatchMaxLen * 2 + 2];
 

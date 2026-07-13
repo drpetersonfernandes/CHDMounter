@@ -10,5 +10,5 @@ public enum StereoMethod
     Search,
     EstimateX,
     EvaluateX,
-    EstimateFixed,
+    EstimateFixed
 }

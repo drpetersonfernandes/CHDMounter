@@ -4,7 +4,7 @@ public interface IAudioSource
 {
     IAudioDecoderSettings Settings { get; }
 
-    AudioPCMConfig PCM { get; }
+    AudioPcmConfig PCM { get; }
     string Path { get; }
 
     TimeSpan Duration { get; }
@@ -19,7 +19,7 @@ public interface IAudioSource
 public interface IAudioTitle
 {
     List<TimeSpan> Chapters { get; }
-    AudioPCMConfig PCM { get; }
+    AudioPcmConfig PCM { get; }
     string Codec { get; }
     string Language { get; }
     int StreamId { get; }
@@ -64,7 +64,7 @@ public class SingleAudioTitle : IAudioTitle
 {
     public SingleAudioTitle(IAudioSource source) { this.source = source; }
     public List<TimeSpan> Chapters => [TimeSpan.Zero, source.Duration];
-    public AudioPCMConfig PCM => source.PCM;
+    public AudioPcmConfig PCM => source.PCM;
     public string Codec => source.Settings.Extension;
     public string Language => "";
     public int StreamId => 0;

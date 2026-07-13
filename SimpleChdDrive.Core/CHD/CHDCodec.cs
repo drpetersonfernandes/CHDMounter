@@ -5,12 +5,12 @@ namespace SimpleChdDrive.Core.CHD;
 
 internal class ChdCodec
 {
-    internal AudioPCMConfig FlacSettings;
+    internal AudioPcmConfig FlacSettings;
     internal AudioDecoder FlacAudioDecoder;
     internal AudioBuffer FlacAudioBuffer;
 
 
-    internal AudioPCMConfig AvhuffSettings;
+    internal AudioPcmConfig AvhuffSettings;
     internal AudioDecoder AvhuffAudioDecoder;
 
 

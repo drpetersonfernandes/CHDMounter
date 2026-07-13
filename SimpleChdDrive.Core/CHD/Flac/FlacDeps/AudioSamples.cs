@@ -1,8 +1,8 @@
 ﻿namespace SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 
-public class AudioSamples
+public static class AudioSamples
 {
-    public const uint UINT32_MAX = 0xffffffff;
+    public const uint Uint32Max = 0xffffffff;
 
     public static unsafe void Interlace(int* res, int* src1, int* src2, int n)
     {

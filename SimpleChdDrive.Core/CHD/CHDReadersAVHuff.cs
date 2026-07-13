@@ -166,7 +166,7 @@ internal static partial class ChdReaders
                     // rate is irrelevant to decoding (see notes in CHDReaders.flac);
                     // bit-depth is fixed at 16. These match how MAME encodes AVHuff
                     // audio, so the values are correct for every AVHuff CHD.
-                    codec.AvhuffSettings ??= new AudioPCMConfig(16, 1, 48000);
+                    codec.AvhuffSettings ??= new AudioPcmConfig(16, 1, 48000);
                     codec.AvhuffAudioDecoder ??= new AudioDecoder(codec.AvhuffSettings); //read the data and decode it in to a 1D array of samples - the buffer seems to want 2D :S
                     var audioBuffer = new AudioBuffer(codec.AvhuffSettings, blockSize); //audio buffer to take decoded samples and read them to bytes.
                     var inPos = (int)buffInOffset;
@@ -283,7 +283,7 @@ internal static partial class ChdReaders
             }
 
             // advance to the next channel's data
-            buffInOffset += (uint)audioChannelCompressedSize[chnum];
+            buffInOffset += audioChannelCompressedSize[chnum]!.Value;
         }
         return chd_error.CHDERR_NONE;
     }

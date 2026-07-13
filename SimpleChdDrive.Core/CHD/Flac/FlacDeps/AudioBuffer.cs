@@ -219,12 +219,17 @@ public class AudioBuffer
     public static void BytesToFlacSamples(byte[] inSamples, int inByteOffset,
         int[,] outSamples, int outSampleOffset, int sampleCount, int channelCount, int bitsPerSample)
     {
-        if (bitsPerSample == 16)
-            BytesToFLACSamples_16(inSamples, inByteOffset, outSamples, outSampleOffset, sampleCount, channelCount);
-        else if (bitsPerSample is > 16 and <= 24)
-            BytesToFLACSamples_24(inSamples, inByteOffset, outSamples, outSampleOffset, sampleCount, channelCount, 24 - bitsPerSample);
-        else
-            throw new Exception("Unsupported bitsPerSample value");
+        switch (bitsPerSample)
+        {
+            case 16:
+                BytesToFLACSamples_16(inSamples, inByteOffset, outSamples, outSampleOffset, sampleCount, channelCount);
+                break;
+            case > 16 and <= 24:
+                BytesToFLACSamples_24(inSamples, inByteOffset, outSamples, outSampleOffset, sampleCount, channelCount, 24 - bitsPerSample);
+                break;
+            default:
+                throw new Exception("Unsupported bitsPerSample value");
+        }
     }
 
     #endregion
@@ -240,7 +245,7 @@ public class AudioBuffer
 
     public int Size { get; private set; }
 
-    public AudioPCMConfig Pcm { get; }
+    public AudioPcmConfig Pcm { get; }
 
     public int ByteLength => Length * Pcm.BlockAlign;
 
@@ -311,21 +316,21 @@ public class AudioBuffer
         }
     }
 
-    public AudioBuffer(AudioPCMConfig pcm, int size)
+    public AudioBuffer(AudioPcmConfig pcm, int size)
     {
         Pcm = pcm;
         Size = size;
         Length = 0;
     }
 
-    public AudioBuffer(AudioPCMConfig pcm, int[,] samples, int length)
+    public AudioBuffer(AudioPcmConfig pcm, int[,] samples, int length)
     {
         Pcm = pcm;
         // assert _samples.GetLength(1) == pcm.ChannelCount
         Prepare(samples, length);
     }
 
-    public AudioBuffer(AudioPCMConfig pcm, byte[] bytes, int length)
+    public AudioBuffer(AudioPcmConfig pcm, byte[] bytes, int length)
     {
         Pcm = pcm;
         Prepare(bytes, length);

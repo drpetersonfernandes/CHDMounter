@@ -8,10 +8,10 @@ namespace SimpleChdDrive.Core.CHD;
 /// </summary>
 public struct MetadataEntry
 {
-    public uint Tag;
-    public uint Index;
-    public string Value;
-    public uint Flags;
+    public uint Tag { get; set; }
+    public uint Index { get; set; }
+    public string Value { get; set; }
+    public uint Flags { get; set; }
 }
 
 /// <summary>
@@ -158,6 +158,7 @@ public sealed class ChdFile : IDisposable
     /// </summary>
     /// <param name="stream">Seekable, readable stream positioned anywhere; it will be seeked as needed.</param>
     /// <param name="leaveOpen">If false, the stream is disposed when this instance is disposed.</param>
+    /// <param name="chdFile"></param>
     public static chd_error Open(Stream stream, bool leaveOpen, out ChdFile chdFile)
     {
         return Open(stream, leaveOpen, null, out chdFile);
@@ -170,7 +171,7 @@ public sealed class ChdFile : IDisposable
     public static chd_error Open(Stream stream, bool leaveOpen, ChdFile parent, out ChdFile chdFile)
     {
         chdFile = null;
-        if (stream == null || !stream.CanRead || !stream.CanSeek)
+        if (stream is not { CanRead: true } || !stream.CanSeek)
             return chd_error.CHDERR_INVALID_PARAMETER;
 
         stream.Seek(0, SeekOrigin.Begin);
@@ -246,9 +247,8 @@ public sealed class ChdFile : IDisposable
 
     private static void LinkSelfBlocks(ChdHeader chd)
     {
-        for (var i = 0; i < chd.Map.Length; i++)
+        foreach (var me in chd.Map)
         {
-            var me = chd.Map[i];
             if (me.Comptype == compression_type.COMPRESSION_SELF)
             {
                 me.SelfMapEntry = chd.Map[me.Offset];
@@ -272,7 +272,7 @@ public sealed class ChdFile : IDisposable
 
         // Parent-referenced hunk: resolve against the parent CHD.
         if (me.Comptype == compression_type.COMPRESSION_PARENT)
-            return ReadParentHunk(hunknum, me, buffer);
+            return ReadParentHunk(me, buffer);
 
         // Resolve the entry that actually holds compressed data (follow SELF links).
         var dataEntry = me;
@@ -321,7 +321,7 @@ public sealed class ChdFile : IDisposable
     // Note: parent map entries carry no per-hunk CRC of their own (the map slot
     // holds the offset instead), so no CRC check is done here - matching libchdr,
     // which only verifies block CRCs for compressed/uncompressed entries.
-    private chd_error ReadParentHunk(uint hunknum, MapEntry me, byte[] buffer)
+    private chd_error ReadParentHunk(MapEntry me, byte[] buffer)
     {
         if (_parent == null)
             return chd_error.CHDERR_REQUIRES_PARENT;
@@ -387,9 +387,7 @@ public sealed class ChdFile : IDisposable
     public chd_error Read(ulong byteOffset, byte[] destination, int destinationOffset, int count)
     {
         if (destination == null || destinationOffset < 0 || count < 0 ||
-            destinationOffset + count > destination.Length)
-            return chd_error.CHDERR_INVALID_PARAMETER;
-        if (byteOffset + (ulong)count > _chd.Totalbytes)
+            destinationOffset + count > destination.Length || byteOffset + (ulong)count > _chd.Totalbytes)
             return chd_error.CHDERR_INVALID_PARAMETER;
 
         _hunkBuffer ??= new byte[_chd.Blocksize];

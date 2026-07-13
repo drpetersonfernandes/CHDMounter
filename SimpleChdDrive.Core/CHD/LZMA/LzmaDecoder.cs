@@ -10,7 +10,7 @@ internal class Decoder
         BitDecoder m_Choice2;
         BitTreeDecoder[] m_LowCoder = new BitTreeDecoder[Base.kNumPosStatesMax];
         BitTreeDecoder[] m_MidCoder = new BitTreeDecoder[Base.kNumPosStatesMax];
-        BitTreeDecoder m_HighCoder = new BitTreeDecoder(Base.kNumHighLenBits);
+        BitTreeDecoder m_HighCoder = new(Base.kNumHighLenBits);
         uint m_NumPosStates;
 
         public void Create(uint numPosStates)
@@ -149,12 +149,12 @@ internal class Decoder
     BitTreeDecoder[] m_PosSlotDecoder = new BitTreeDecoder[Base.kNumLenToPosStates];
     BitDecoder[] m_PosDecoders = new BitDecoder[Base.kNumFullDistances - Base.kEndPosModelIndex];
 
-    BitTreeDecoder m_PosAlignDecoder = new BitTreeDecoder(Base.kNumAlignBits);
+    BitTreeDecoder m_PosAlignDecoder = new(Base.kNumAlignBits);
 
-    LenDecoder m_LenDecoder = new LenDecoder();
-    LenDecoder m_RepLenDecoder = new LenDecoder();
+    LenDecoder m_LenDecoder = new();
+    LenDecoder m_RepLenDecoder = new();
 
-    LiteralDecoder m_LiteralDecoder = new LiteralDecoder();
+    LiteralDecoder m_LiteralDecoder = new();
 
     int m_DictionarySize;
 

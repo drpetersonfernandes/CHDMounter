@@ -87,7 +87,7 @@ internal static partial class ChdReaders
         }
 
         using var memStream = new MemoryStream(buffIn, buffInStart, compsize, false);
-        using LzmaStream compStream = new LzmaStream(properties, memStream, -1, -1, null, false, codec.Blzma);
+        using var compStream = new LzmaStream(properties, memStream, -1, -1, null, false, codec.Blzma);
         var bytesRead = 0;
         while (bytesRead < buffOutLength)
         {
@@ -147,7 +147,7 @@ internal static partial class ChdReaders
         // Both are fixed by the CHD format and validated against each frame header
         // inside DecodeFrame(); the actual per-frame block size is also read from
         // the frame header, so no block-size hint is required here.
-        codec.FlacSettings ??= new AudioPCMConfig(16, 2, 44100);
+        codec.FlacSettings ??= new AudioPcmConfig(16, 2, 44100);
         codec.FlacAudioDecoder ??= new AudioDecoder(codec.FlacSettings);
         codec.FlacAudioBuffer ??= new AudioBuffer(codec.FlacSettings, buffOutLength); //audio buffer to take decoded samples and read them to bytes.
 

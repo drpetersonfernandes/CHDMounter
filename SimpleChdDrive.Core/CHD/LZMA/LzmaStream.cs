@@ -9,8 +9,8 @@ public class LzmaStream : Stream
     private long outputSize;
 
     private int dictionarySize;
-    private OutWindow outWindow = new OutWindow();
-    private RangeCoder.Decoder rangeDecoder = new RangeCoder.Decoder();
+    private OutWindow outWindow = new();
+    private RangeCoder.Decoder rangeDecoder = new();
     private Decoder decoder;
 
     private long position;

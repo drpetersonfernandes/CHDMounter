@@ -1,82 +1,83 @@
 ﻿namespace SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 
-public class AudioPCMConfig
+public class AudioPcmConfig
 {
-    public static readonly AudioPCMConfig RedBook = new AudioPCMConfig(16, 2, 44100);
+    public static readonly AudioPcmConfig RedBook = new(16, 2, 44100);
+    [Flags]
     public enum SpeakerConfig
     {
-        SPEAKER_FRONT_LEFT = 0x1,
-        SPEAKER_FRONT_RIGHT = 0x2,
-        SPEAKER_FRONT_CENTER = 0x4,
-        SPEAKER_LOW_FREQUENCY = 0x8,
-        SPEAKER_BACK_LEFT = 0x10,
-        SPEAKER_BACK_RIGHT = 0x20,
-        SPEAKER_FRONT_LEFT_OF_CENTER = 0x40,
-        SPEAKER_FRONT_RIGHT_OF_CENTER = 0x80,
-        SPEAKER_BACK_CENTER = 0x100,
-        SPEAKER_SIDE_LEFT = 0x200,
-        SPEAKER_SIDE_RIGHT = 0x400,
-        SPEAKER_TOP_CENTER = 0x800,
-        SPEAKER_TOP_FRONT_LEFT = 0x1000,
-        SPEAKER_TOP_FRONT_CENTER = 0x2000,
-        SPEAKER_TOP_FRONT_RIGHT = 0x4000,
-        SPEAKER_TOP_BACK_LEFT = 0x8000,
-        SPEAKER_TOP_BACK_CENTER = 0x10000,
-        SPEAKER_TOP_BACK_RIGHT = 0x20000,
+        SpeakerFrontLeft = 0x1,
+        SpeakerFrontRight = 0x2,
+        SpeakerFrontCenter = 0x4,
+        SpeakerLowFrequency = 0x8,
+        SpeakerBackLeft = 0x10,
+        SpeakerBackRight = 0x20,
+        SpeakerFrontLeftOfCenter = 0x40,
+        SpeakerFrontRightOfCenter = 0x80,
+        SpeakerBackCenter = 0x100,
+        SpeakerSideLeft = 0x200,
+        SpeakerSideRight = 0x400,
+        SpeakerTopCenter = 0x800,
+        SpeakerTopFrontLeft = 0x1000,
+        SpeakerTopFrontCenter = 0x2000,
+        SpeakerTopFrontRight = 0x4000,
+        SpeakerTopBackLeft = 0x8000,
+        SpeakerTopBackCenter = 0x10000,
+        SpeakerTopBackRight = 0x20000,
 
-        DIRECTOUT = 0,
-        KSAUDIO_SPEAKER_MONO = SPEAKER_FRONT_CENTER,
-        KSAUDIO_SPEAKER_STEREO = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        KSAUDIO_SPEAKER_QUAD = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        KSAUDIO_SPEAKER_SURROUND = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_BACK_CENTER,
-        KSAUDIO_SPEAKER_5POINT1 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        KSAUDIO_SPEAKER_5POINT1_SURROUND = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT,
-        KSAUDIO_SPEAKER_7POINT1 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT | SPEAKER_FRONT_LEFT_OF_CENTER | SPEAKER_FRONT_RIGHT_OF_CENTER,
-        KSAUDIO_SPEAKER_7POINT1_SURROUND = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT | SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT,
+        Directout = 0,
+        KsaudioSpeakerMono = SpeakerFrontCenter,
+        KsaudioSpeakerStereo = SpeakerFrontLeft | SpeakerFrontRight,
+        KsaudioSpeakerQuad = SpeakerFrontLeft | SpeakerFrontRight | SpeakerBackLeft | SpeakerBackRight,
+        KsaudioSpeakerSurround = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter | SpeakerBackCenter,
+        KsaudioSpeaker5Point1 = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter | SpeakerLowFrequency | SpeakerBackLeft | SpeakerBackRight,
+        KsaudioSpeaker5Point1Surround = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter | SpeakerLowFrequency | SpeakerSideLeft | SpeakerSideRight,
+        KsaudioSpeaker7Point1 = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter | SpeakerLowFrequency | SpeakerBackLeft | SpeakerBackRight | SpeakerFrontLeftOfCenter | SpeakerFrontRightOfCenter,
+        KsaudioSpeaker7Point1Surround = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter | SpeakerLowFrequency | SpeakerBackLeft | SpeakerBackRight | SpeakerSideLeft | SpeakerSideRight,
 
-        DVDAUDIO_GR1_0 = SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR1_1 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_2 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_3 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_4 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_5 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_6 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_7 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_8 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_9 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_10 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_11 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_12 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
-        DVDAUDIO_GR1_13 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR1_14 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR1_15 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR1_16 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR1_17 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR1_18 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR1_19 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR1_20 = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
+        DvdaudioGr10 = KsaudioSpeakerMono,
+        DvdaudioGr11 = KsaudioSpeakerStereo,
+        DvdaudioGr12 = KsaudioSpeakerStereo,
+        DvdaudioGr13 = KsaudioSpeakerStereo,
+        DvdaudioGr14 = KsaudioSpeakerStereo,
+        DvdaudioGr15 = KsaudioSpeakerStereo,
+        DvdaudioGr16 = KsaudioSpeakerStereo,
+        DvdaudioGr17 = KsaudioSpeakerStereo,
+        DvdaudioGr18 = KsaudioSpeakerStereo,
+        DvdaudioGr19 = KsaudioSpeakerStereo,
+        DvdaudioGr110 = KsaudioSpeakerStereo,
+        DvdaudioGr111 = KsaudioSpeakerStereo,
+        DvdaudioGr112 = KsaudioSpeakerStereo,
+        DvdaudioGr113 = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter,
+        DvdaudioGr114 = DvdaudioGr113,
+        DvdaudioGr115 = DvdaudioGr113,
+        DvdaudioGr116 = DvdaudioGr113,
+        DvdaudioGr117 = DvdaudioGr113,
+        DvdaudioGr118 = KsaudioSpeakerQuad,
+        DvdaudioGr119 = KsaudioSpeakerQuad,
+        DvdaudioGr120 = KsaudioSpeakerQuad,
 
-        DVDAUDIO_GR2_0 = 0,
-        DVDAUDIO_GR2_1 = 0,
-        DVDAUDIO_GR2_2 = SPEAKER_BACK_CENTER,
-        DVDAUDIO_GR2_3 = SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR2_4 = SPEAKER_LOW_FREQUENCY,
-        DVDAUDIO_GR2_5 = SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_CENTER,
-        DVDAUDIO_GR2_6 = SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR2_7 = SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR2_8 = SPEAKER_FRONT_CENTER | SPEAKER_BACK_CENTER,
-        DVDAUDIO_GR2_9 = SPEAKER_FRONT_CENTER | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR2_10 = SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY,
-        DVDAUDIO_GR2_11 = SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_CENTER,
-        DVDAUDIO_GR2_12 = SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR2_13 = SPEAKER_BACK_CENTER,
-        DVDAUDIO_GR2_14 = SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR2_15 = SPEAKER_LOW_FREQUENCY,
-        DVDAUDIO_GR2_16 = SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_CENTER,
-        DVDAUDIO_GR2_17 = SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
-        DVDAUDIO_GR2_18 = SPEAKER_LOW_FREQUENCY,
-        DVDAUDIO_GR2_19 = SPEAKER_FRONT_CENTER,
-        DVDAUDIO_GR2_20 = SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY,
+        DvdaudioGr20 = Directout,
+        DvdaudioGr21 = Directout,
+        DvdaudioGr22 = SpeakerBackCenter,
+        DvdaudioGr23 = SpeakerBackLeft | SpeakerBackRight,
+        DvdaudioGr24 = SpeakerLowFrequency,
+        DvdaudioGr25 = SpeakerLowFrequency | SpeakerBackCenter,
+        DvdaudioGr26 = SpeakerLowFrequency | SpeakerBackLeft | SpeakerBackRight,
+        DvdaudioGr27 = SpeakerFrontCenter,
+        DvdaudioGr28 = SpeakerFrontCenter | SpeakerBackCenter,
+        DvdaudioGr29 = SpeakerFrontCenter | SpeakerBackLeft | SpeakerBackRight,
+        DvdaudioGr210 = SpeakerFrontCenter | SpeakerLowFrequency,
+        DvdaudioGr211 = SpeakerFrontCenter | SpeakerLowFrequency | SpeakerBackCenter,
+        DvdaudioGr212 = SpeakerFrontCenter | SpeakerLowFrequency | SpeakerBackLeft | SpeakerBackRight,
+        DvdaudioGr213 = SpeakerBackCenter,
+        DvdaudioGr214 = DvdaudioGr23,
+        DvdaudioGr215 = SpeakerLowFrequency,
+        DvdaudioGr216 = DvdaudioGr25,
+        DvdaudioGr217 = DvdaudioGr26,
+        DvdaudioGr218 = SpeakerLowFrequency,
+        DvdaudioGr219 = SpeakerFrontCenter,
+        DvdaudioGr220 = DvdaudioGr210
     }
 
     public int BitsPerSample { get; }
@@ -102,28 +103,28 @@ public class AudioPCMConfig
         switch (channelCount)
         {
             case 1:
-                return SpeakerConfig.KSAUDIO_SPEAKER_MONO;
+                return SpeakerConfig.KsaudioSpeakerMono;
             case 2:
-                return SpeakerConfig.KSAUDIO_SPEAKER_STEREO;
+                return SpeakerConfig.KsaudioSpeakerStereo;
             case 3:
-                return SpeakerConfig.KSAUDIO_SPEAKER_STEREO | SpeakerConfig.SPEAKER_LOW_FREQUENCY;
+                return SpeakerConfig.KsaudioSpeakerStereo | SpeakerConfig.SpeakerLowFrequency;
             case 4:
-                return SpeakerConfig.KSAUDIO_SPEAKER_QUAD;
+                return SpeakerConfig.KsaudioSpeakerQuad;
             case 5:
                 //return SpeakerConfig.KSAUDIO_SPEAKER_5POINT1 & ~SpeakerConfig.SPEAKER_LOW_FREQUENCY;
-                return SpeakerConfig.KSAUDIO_SPEAKER_5POINT1_SURROUND & ~SpeakerConfig.SPEAKER_LOW_FREQUENCY;
+                return SpeakerConfig.KsaudioSpeaker5Point1Surround & ~SpeakerConfig.SpeakerLowFrequency;
             case 6:
                 //return SpeakerConfig.KSAUDIO_SPEAKER_5POINT1;
-                return SpeakerConfig.KSAUDIO_SPEAKER_5POINT1_SURROUND;
+                return SpeakerConfig.KsaudioSpeaker5Point1Surround;
             case 7:
-                return SpeakerConfig.KSAUDIO_SPEAKER_5POINT1_SURROUND | SpeakerConfig.SPEAKER_BACK_CENTER;
+                return SpeakerConfig.KsaudioSpeaker5Point1Surround | SpeakerConfig.SpeakerBackCenter;
             case 8:
-                return SpeakerConfig.KSAUDIO_SPEAKER_7POINT1_SURROUND;
+                return SpeakerConfig.KsaudioSpeaker7Point1Surround;
         }
         return (SpeakerConfig)((1 << channelCount) - 1);
     }
 
-    public AudioPCMConfig(int bitsPerSample, int channelCount, int sampleRate, SpeakerConfig channelMask = SpeakerConfig.DIRECTOUT)
+    public AudioPcmConfig(int bitsPerSample, int channelCount, int sampleRate, SpeakerConfig channelMask = SpeakerConfig.Directout)
     {
         BitsPerSample = bitsPerSample;
         ChannelCount = channelCount;

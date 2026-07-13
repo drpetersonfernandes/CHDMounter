@@ -22,5 +22,5 @@ public enum WindowFunction
     Tukey1X = 1 << 17,
     Tukey2X = 1 << 18,
     Tukey3X = 1 << 19,
-    Tukey4X = 1 << 20,
+    Tukey4X = 1 << 20
 }

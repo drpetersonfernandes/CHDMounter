@@ -13,5 +13,5 @@ public enum WindowMethod
     Evaluate2N,
     Evaluate3,
     Evaluate3N,
-    EvaluateN,
+    EvaluateN
 }
