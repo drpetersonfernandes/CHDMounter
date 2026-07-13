@@ -10,4 +10,3 @@ namespace SimpleCHDDrive;
 public partial class App : Application
 {
 }
-
