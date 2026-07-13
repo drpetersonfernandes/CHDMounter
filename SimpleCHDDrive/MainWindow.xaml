@@ -7,6 +7,7 @@
         Title="SimpleChdDrive (Dokan)"
         Height="500" Width="800"
         MinHeight="400" MinWidth="640"
+        WindowStartupLocation="CenterScreen"
         Style="{StaticResource ModernWindowStyle}">
     <Grid>
         <Grid.RowDefinitions>
@@ -18,13 +19,13 @@
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0" Margin="0">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open CHD..." Click="OpenChd_Click" />
+            <MenuItem Header="File">
+                <MenuItem Header="Open CHD..." Click="OpenChd_Click" />
                 <Separator />
-                <MenuItem Header="E_xit" Click="Exit_Click" />
+                <MenuItem Header="Exit" Click="Exit_Click" />
             </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About" Click="About_Click" />
+            <MenuItem Header="Help">
+                <MenuItem Header="About" Click="About_Click" />
             </MenuItem>
         </Menu>
 
@@ -39,7 +40,7 @@
 
             <Label Grid.Column="0" Content="CHD File:" VerticalAlignment="Center" />
             <TextBox Grid.Column="1" x:Name="ChdFilePathTextBox" Margin="6,0" VerticalAlignment="Center" />
-            <Button Grid.Column="2" Content="Browse..." Click="BrowseChd_Click" Width="70" Margin="6,0" />
+            <Button Grid.Column="2" Content="Browse..." Click="BrowseChd_Click" Width="100" Margin="6,0" />
 
             <Label Grid.Column="3" Content="Console:" VerticalAlignment="Center" Margin="12,0,6,0" />
             <ComboBox Grid.Column="4" x:Name="ConsoleTypeComboBox" Width="200"
@@ -53,10 +54,10 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0" x:Name="MountButton" Content="Mount" Width="80"
+            <Button Grid.Column="0" x:Name="MountButton" Content="Mount" Width="100"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Click="Mount_Click" IsEnabled="False" />
-            <Button Grid.Column="1" x:Name="UnmountButton" Content="Unmount" Width="80"
+            <Button Grid.Column="1" x:Name="UnmountButton" Content="Unmount" Width="100"
                     Margin="8,0" IsEnabled="False"
                     Click="Unmount_Click" />
         </Grid>
@@ -69,7 +70,7 @@
             <StatusBarItem>
                 <TextBlock x:Name="StatusText" Text="Ready" />
             </StatusBarItem>
-            <Separator Style="{x:Null}" Width="20" />
+            <Separator Style="{x:Null}" />
             <StatusBarItem HorizontalAlignment="Right">
                 <TextBlock x:Name="DriveLetterText" Text="" />
             </StatusBarItem>

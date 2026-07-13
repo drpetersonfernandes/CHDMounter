@@ -49,7 +49,7 @@ public partial class MainWindow : Window
     {
         var consoles = ParserFactory.GetAllSupportedConsoles();
         ConsoleTypeComboBox.ItemsSource = consoles;
-        ConsoleTypeComboBox.DisplayMemberPath = "Item2";
+        ConsoleTypeComboBox.DisplayMemberPath = "Name";
         ConsoleTypeComboBox.SelectedIndex = 0;
     }
 
@@ -101,7 +101,7 @@ public partial class MainWindow : Window
     {
         foreach (var item in ConsoleTypeComboBox.Items)
         {
-            if (item is (ConsoleType itemType, _) && itemType == type)
+            if (item is ConsoleInfo ci && ci.Type == type)
             {
                 ConsoleTypeComboBox.SelectedItem = item;
                 return;
@@ -174,8 +174,8 @@ public partial class MainWindow : Window
         try
         {
             var type = _selectedConsoleType;
-            if (ConsoleTypeComboBox.SelectedItem is (ConsoleType selType, _))
-                type = selType;
+            if (ConsoleTypeComboBox.SelectedItem is ConsoleInfo sci)
+                type = sci.Type;
 
             await Task.Run(() => _mountService.Mount(_chdPath!, null, type));
 

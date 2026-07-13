@@ -12,15 +12,15 @@ public partial class ConsoleSelectionWindow : Window
 
         var consoles = ParserFactory.GetAllSupportedConsoles();
         ConsoleComboBox.ItemsSource = consoles;
-        ConsoleComboBox.DisplayMemberPath = "Item2";
+        ConsoleComboBox.DisplayMemberPath = "Name";
         ConsoleComboBox.SelectedIndex = 0;
     }
 
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
-        if (ConsoleComboBox.SelectedItem is (ConsoleType type, _))
+        if (ConsoleComboBox.SelectedItem is ConsoleInfo ci)
         {
-            SelectedConsoleType = type;
+            SelectedConsoleType = ci.Type;
             DialogResult = true;
         }
         Close();

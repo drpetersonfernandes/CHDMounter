@@ -370,7 +370,10 @@
                         <ContentPresenter x:Name="contentPresenter" Grid.Column="0"
                                           Margin="{TemplateBinding Padding}"
                                           HorizontalAlignment="Left" VerticalAlignment="Center"
-                                          Content="{TemplateBinding SelectionBoxItem}" />
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" />
                         <Path x:Name="arrow" Grid.Column="1"
                               Fill="{StaticResource TextSecondaryBrush}"
                               HorizontalAlignment="Center" VerticalAlignment="Center"

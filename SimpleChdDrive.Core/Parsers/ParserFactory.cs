@@ -30,31 +30,31 @@ public static class ParserFactory
         };
     }
 
-    public static List<(ConsoleType Type, string Name)> GetAllSupportedConsoles()
+    public static List<ConsoleInfo> GetAllSupportedConsoles()
     {
         return
         [
-            (ConsoleType.Xbox, "Xbox"),
-            (ConsoleType.Xbox360, "Xbox 360"),
-            (ConsoleType.XboxSingleFile, "Xbox (Single File)"),
-            (ConsoleType.PS1, "PS1"),
-            (ConsoleType.PS2, "PS2"),
-            (ConsoleType.PS3, "PS3"),
-            (ConsoleType.PS3SingleFile, "PS3 (Single File)"),
-            (ConsoleType.PSP, "PSP"),
-            (ConsoleType.Dreamcast, "Dreamcast"),
-            (ConsoleType.CDi, "CD-i"),
-            (ConsoleType.ThreeDO, "3DO"),
-            (ConsoleType.AmigaCD32, "Amiga CD32"),
-            (ConsoleType.AmigaCD, "Amiga CD"),
-            (ConsoleType.PcEngineCD, "PC Engine CD"),
-            (ConsoleType.SegaGenesisCD, "Sega Genesis CD"),
-            (ConsoleType.Saturn, "Saturn"),
-            (ConsoleType.NeoGeoCD, "NeoGeo CD"),
-            (ConsoleType.PcFx, "PC-FX"),
-            (ConsoleType.GenericISO9660, "Generic ISO 9660"),
-            (ConsoleType.GenericCueBin, "CUE/BIN (Raw)"),
-            (ConsoleType.GenericCueBin2048, "CUE/BIN (Cooked)"),
+            new(ConsoleType.Xbox, "Xbox"),
+            new(ConsoleType.Xbox360, "Xbox 360"),
+            new(ConsoleType.XboxSingleFile, "Xbox (Single File)"),
+            new(ConsoleType.PS1, "PS1"),
+            new(ConsoleType.PS2, "PS2"),
+            new(ConsoleType.PS3, "PS3"),
+            new(ConsoleType.PS3SingleFile, "PS3 (Single File)"),
+            new(ConsoleType.PSP, "PSP"),
+            new(ConsoleType.Dreamcast, "Dreamcast"),
+            new(ConsoleType.CDi, "CD-i"),
+            new(ConsoleType.ThreeDO, "3DO"),
+            new(ConsoleType.AmigaCD32, "Amiga CD32"),
+            new(ConsoleType.AmigaCD, "Amiga CD"),
+            new(ConsoleType.PcEngineCD, "PC Engine CD"),
+            new(ConsoleType.SegaGenesisCD, "Sega Genesis CD"),
+            new(ConsoleType.Saturn, "Saturn"),
+            new(ConsoleType.NeoGeoCD, "NeoGeo CD"),
+            new(ConsoleType.PcFx, "PC-FX"),
+            new(ConsoleType.GenericISO9660, "Generic ISO 9660"),
+            new(ConsoleType.GenericCueBin, "CUE/BIN (Raw)"),
+            new(ConsoleType.GenericCueBin2048, "CUE/BIN (Cooked)"),
         ];
     }
 }
