@@ -31,7 +31,6 @@ public class Iso9660Parser
         var effectiveTrackStart = _lbaOffset < 0 ? 45000u : trackStartLba;
 
         uint[] vdOffsets = [16, 17, 166, 167]; // 16+150, 17+150
-        uint pvdLba = 0;
         var foundPvd = false;
         byte[]? bestVdData = null;
         var sectorData = new byte[2048];

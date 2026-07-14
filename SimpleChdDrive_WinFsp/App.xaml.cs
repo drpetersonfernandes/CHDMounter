@@ -58,6 +58,8 @@ public partial class App
             loggingService.Log("");
 
             ErrorLoggerStatic.InitializeGlobalExceptionHandlers();
+
+            StatsClient.SendStats();
         }
         catch (Exception ex)
         {

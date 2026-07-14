@@ -10,31 +10,6 @@ internal abstract class Base
     // static byte []kRepNextStates      = {8, 8, 8, 8, 8, 8, 8, 11, 11, 11, 11, 11};
     // static byte []kShortRepNextStates = {9, 9, 9, 9, 9, 9, 9, 11, 11, 11, 11, 11};
 
-    public struct State
-    {
-        public uint Index;
-        public void Init() { Index = 0; }
-        public void UpdateChar()
-        {
-            switch (Index)
-            {
-                case < 4:
-                    Index = 0;
-                    break;
-                case < 10:
-                    Index -= 3;
-                    break;
-                default:
-                    Index -= 6;
-                    break;
-            }
-        }
-        public void UpdateMatch() { Index = (uint)(Index < 7 ? 7 : 10); }
-        public void UpdateRep() { Index = (uint)(Index < 7 ? 8 : 11); }
-        public void UpdateShortRep() { Index = (uint)(Index < 7 ? 9 : 11); }
-        public readonly bool IsCharState() { return Index < 7; }
-    }
-
     public const int KNumPosSlotBits = 6;
     public const int KDicLogSizeMin = 0;
     // public const int kDicLogSizeMax = 30;
