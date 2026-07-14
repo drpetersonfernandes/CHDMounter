@@ -8,8 +8,8 @@ internal class BinTree : InWindow
     private uint _cyclicBufferSize;
     private uint _matchMaxLen;
 
-    private uint[] _son;
-    private uint[] _hash;
+    private uint[] _son = null!;
+    private uint[] _hash = null!;
 
     private uint _cutValue = 0xFF;
     private uint _hashMask;
@@ -152,15 +152,15 @@ internal class BinTree : InWindow
 
         if (_hashArray)
         {
-            var temp = CRC.CRC32Lookup[BufferBase[cur]] ^ BufferBase[cur + 1];
-            hash2Value = temp & (KHash2Size - 1);
-            temp ^= (uint)BufferBase[cur + 2] << 8;
-            hash3Value = temp & (KHash3Size - 1);
-            hashValue = (temp ^ (CRC.CRC32Lookup[BufferBase[cur + 3]] << 5)) & _hashMask;
+            var temp = CRC.CRC32Lookup[BufferBase![cur]] ^ BufferBase[cur + 1];
+                hash2Value = temp & (KHash2Size - 1);
+                temp ^= (uint)BufferBase[cur + 2] << 8;
+                hash3Value = temp & (KHash3Size - 1);
+                hashValue = (temp ^ (CRC.CRC32Lookup[BufferBase[cur + 3]] << 5)) & _hashMask;
         }
         else
         {
-            hashValue = BufferBase[cur] ^ ((uint)BufferBase[cur + 1] << 8);
+                hashValue = BufferBase![cur] ^ ((uint)BufferBase[cur + 1] << 8);
         }
 
         var curMatch = _hash[_kFixHashSize + hashValue];
@@ -293,7 +293,7 @@ internal class BinTree : InWindow
 
             if (_hashArray)
             {
-                var temp = CRC.CRC32Lookup[BufferBase[cur]] ^ BufferBase[cur + 1];
+                var temp = CRC.CRC32Lookup[BufferBase![cur]] ^ BufferBase[cur + 1];
                 var hash2Value = temp & (KHash2Size - 1);
                 _hash[hash2Value] = Pos;
                 temp ^= (uint)BufferBase[cur + 2] << 8;
@@ -303,7 +303,7 @@ internal class BinTree : InWindow
             }
             else
             {
-                hashValue = BufferBase[cur] ^ ((uint)BufferBase[cur + 1] << 8);
+            hashValue = BufferBase![cur] ^ ((uint)BufferBase[cur + 1] << 8);
             }
 
             var curMatch = _hash[_kFixHashSize + hashValue];

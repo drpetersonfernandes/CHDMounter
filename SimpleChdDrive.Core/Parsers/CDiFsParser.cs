@@ -15,7 +15,7 @@ public class CDiFsParser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        _reader.SetTrack(track, true);
+        _reader.SetTrack(track!, true);
         _lbaOffset = 0;
 
         var sectorData = new byte[2048];
@@ -23,7 +23,7 @@ public class CDiFsParser
 
         uint pvdLba = 0;
         var foundVd = false;
-        byte[] bestVdData = null;
+        byte[]? bestVdData = null;
 
         for (uint offset = 0; offset < 100; offset++)
         {

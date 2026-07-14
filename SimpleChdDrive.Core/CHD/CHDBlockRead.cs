@@ -118,7 +118,7 @@ internal static class ChdBlockRead
             me.Offset = me.SelfMapEntry.Offset;
             me.Crc = me.SelfMapEntry.Crc;
             me.Crc16 = me.SelfMapEntry.Crc16;
-            me.SelfMapEntry = null;
+            me.SelfMapEntry = null!;
         });
     }
     internal static int GetWeigth(ChdHeader chd, MapEntry me)
@@ -165,7 +165,7 @@ internal static class ChdBlockRead
             case chdCodec.Chdcodeccdflac: return ChdReaders.Cdflac;
             case chdCodec.Chdcodeccdzstd: return ChdReaders.Cdzstd;
             case chdCodec.Chdcodecavhuff: return ChdReaders.AvHuff;
-            default: return null;
+            default: return null!;
         }
     }
 
@@ -205,7 +205,7 @@ internal static class ChdBlockRead
                     if (mapEntry.UseCount == 0)
                     {
                         arrPool.Return(mapEntry.BuffOutCache);
-                        mapEntry.BuffOutCache = null;
+                        mapEntry.BuffOutCache = null!;
                     }
                     checkCrc = false;
                 }
@@ -233,7 +233,7 @@ internal static class ChdBlockRead
                     if (mapEntry.UseCount == 0)
                     {
                         arrPool.Return(mapEntry.BuffOutCache);
-                        mapEntry.BuffOutCache = null;
+                        mapEntry.BuffOutCache = null!;
                     }
 
                     checkCrc = false;

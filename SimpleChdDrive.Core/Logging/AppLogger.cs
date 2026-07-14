@@ -5,7 +5,7 @@ namespace SimpleChdDrive.Core.Logging;
 
 public static class AppLogger
 {
-    private static ILogger _logger;
+    private static ILogger? _logger;
 
     public static void Initialize(string logFilePath)
     {

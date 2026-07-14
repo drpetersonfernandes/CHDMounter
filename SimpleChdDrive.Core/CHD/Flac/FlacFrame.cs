@@ -15,7 +15,7 @@ public unsafe class FlacFrame
     public float* WindowBuffer;
     public int NSeg;
 
-    public BitWriter Writer;
+    public BitWriter? Writer;
     public int WriterOffset;
 
     public FlacFrame(int subframesCount)

@@ -22,7 +22,7 @@ public static class ServiceProvider
         if (_services.TryGetValue(typeof(T), out var service))
             return (T)service;
 
-        return null;
+        return null!;
     }
 
     public static void DisposeAllServices()

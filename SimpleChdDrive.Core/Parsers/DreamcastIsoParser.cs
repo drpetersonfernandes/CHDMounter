@@ -18,7 +18,7 @@ public class DreamcastIsoParser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        _reader.SetTrack(track, true);
+        _reader.SetTrack(track!, true);
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
@@ -27,12 +27,14 @@ public class DreamcastIsoParser
         var sectorData = new byte[2048];
 
         var volumeStarts = new List<uint>();
-        if (_lbaOffset >= 45000) { volumeStarts.Add(0); volumeStarts.Add(150); }
-        else { volumeStarts.Add(trackStartLba); if (trackStartLba >= 45000) volumeStarts.Add(trackStartLba + 150); }
+        if (_lbaOffset >= 45000) { volumeStarts.Add(0);
+            volumeStarts.Add(150); }
+        else { volumeStarts.Add(trackStartLba);
+            if (trackStartLba >= 45000) volumeStarts.Add(trackStartLba + 150); }
 
         var effectiveStart = volumeStarts[0];
         var foundPvd = false;
-        byte[] bestVdData = null;
+        byte[]? bestVdData = null;
 
         foreach (var startLba in volumeStarts)
         {
@@ -47,8 +49,17 @@ public class DreamcastIsoParser
 
                     if (isIso || isHs)
                     {
-                        if (type == 2 && isIso) { effectiveStart = startLba; _isHighSierra = false; _isJoliet = true; foundPvd = true; bestVdData = sectorData; break; }
-                        if (!foundPvd && type == 1) { effectiveStart = startLba; _isHighSierra = isHs; _isJoliet = false; foundPvd = true; bestVdData = sectorData; }
+                        if (type == 2 && isIso) { effectiveStart = startLba;
+                            _isHighSierra = false;
+                            _isJoliet = true;
+                            foundPvd = true;
+                            bestVdData = sectorData;
+                            break; }
+                        if (!foundPvd && type == 1) { effectiveStart = startLba;
+                            _isHighSierra = isHs;
+                            _isJoliet = false;
+                            foundPvd = true;
+                            bestVdData = sectorData; }
                     }
                 }
             }
@@ -116,7 +127,8 @@ public class DreamcastIsoParser
                 var recordLen = sectorData[pos];
                 if (recordLen == 0) break;
 
-                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen; if ((pos & 1) != 0)
+                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen;
+                    if ((pos & 1) != 0)
                     {
                         pos++;
                     }
@@ -136,7 +148,8 @@ public class DreamcastIsoParser
                 var nameOff = _isHighSierra ? 32 : 33;
 
                 if (nameOff + nameLen > recordLen || (int)pos + nameOff + nameLen > 2048)
-                { pos += recordLen; if ((pos & 1) != 0)
+                { pos += recordLen;
+                    if ((pos & 1) != 0)
                     {
                         pos++;
                     }
@@ -176,8 +189,14 @@ public class DreamcastIsoParser
     private string DecodeName(byte[] data, int offset, byte nameLen)
     {
         if (_isJoliet) return DecodeUtf16Be(data, offset, nameLen);
-        if (nameLen == 1 && data[offset] == 0x00) return ".";
-        if (nameLen == 1 && data[offset] == 0x01) return "..";
+
+        switch (nameLen)
+        {
+            case 1 when data[offset] == 0x00:
+                return ".";
+            case 1 when data[offset] == 0x01:
+                return "..";
+        }
 
         var name = Encoding.ASCII.GetString(data, offset, nameLen);
         var semi = name.IndexOf(';');
@@ -196,8 +215,13 @@ public class DreamcastIsoParser
 
     private static string DecodeUtf16Be(byte[] data, int offset, int len)
     {
-        if (len == 1 && data[offset] == 0x00) return ".";
-        if (len == 1 && data[offset] == 0x01) return "..";
+        switch (len)
+        {
+            case 1 when data[offset] == 0x00:
+                return ".";
+            case 1 when data[offset] == 0x01:
+                return "..";
+        }
 
         var sb = new StringBuilder();
         for (var i = 0; i + 1 < len; i += 2)

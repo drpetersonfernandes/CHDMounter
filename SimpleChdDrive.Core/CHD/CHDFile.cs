@@ -306,7 +306,7 @@ public sealed class ChdFile : IDisposable
         {
             if (loaded)
             {
-                dataEntry.BuffIn = null;
+                dataEntry.BuffIn = null!;
             }
         }
     }

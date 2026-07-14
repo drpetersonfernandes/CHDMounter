@@ -223,7 +223,7 @@ public static class Chd
             md5Check?.TransformFinalBlock(tmp, 0, 0);
             sha1Check?.TransformFinalBlock(tmp, 0, 0);
 
-            if ((haveMd5 && !Util.ByteArrEquals(expectedMd5, md5Check.Hash)) || (haveSha1 && !Util.ByteArrEquals(expectedSha1, sha1Check.Hash)))
+            if ((haveMd5 && !Util.ByteArrEquals(expectedMd5, md5Check!.Hash)) || (haveSha1 && !Util.ByteArrEquals(expectedSha1, sha1Check!.Hash)))
                 return ChdError.Chderrdecompressionerror;
 
             return ChdError.Chderrnone;

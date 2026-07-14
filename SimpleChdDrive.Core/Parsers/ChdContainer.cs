@@ -17,7 +17,7 @@ public class ChdContainer
     private bool _poolShutdown;
     private readonly string _chdPath;
 
-    private ChdFile _primaryChd;
+    private ChdFile? _primaryChd;
     private bool _cueBinEnabled;
     private string _cueBinText = "";
     private ulong _cueBinSize;
@@ -158,7 +158,7 @@ public class ChdContainer
     public FileEntry FindFile(string path)
     {
         var key = MakeEntryKey(path);
-        return _entryMap.TryGetValue(key, out var handle) ? _entries[(int)handle] : null;
+        return _entryMap.TryGetValue(key, out var handle) ? _entries[(int)handle] : null!;
     }
 
     private static string MakeEntryKey(string path)
@@ -360,7 +360,7 @@ public class ChdContainer
             while (totalRead < bytesToRead)
             {
                 ulong cumulative = 0;
-                TrackInfo targetTrack = null;
+                TrackInfo? targetTrack = null;
                 ulong trackByteOffset = 0;
 
                 foreach (var t in tracks)
@@ -419,10 +419,10 @@ public class ChdContainer
     {
         lock (_poolLock)
         {
-            if (_poolShutdown) return null;
+            if (_poolShutdown) return null!;
             if (_availableReaders.TryTake(out var reader)) return reader;
         }
-        return _readerPool.Count > 0 ? _readerPool[0] : null;
+        return _readerPool.Count > 0 ? _readerPool[0] : null!;
     }
 
     private void ReleaseReader(SectorReader reader)

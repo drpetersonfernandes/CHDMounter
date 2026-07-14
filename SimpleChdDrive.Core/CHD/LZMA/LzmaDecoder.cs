@@ -100,7 +100,7 @@ internal class Decoder
             }
         }
 
-        private Decoder2[] _mCoders;
+        private Decoder2[] _mCoders = null!;
         private int _mNumPrevBits;
         private int _mNumPosBits;
         private uint _mPosMask;
@@ -140,7 +140,7 @@ internal class Decoder
         { return _mCoders[GetState(pos, prevByte)].DecodeWithMatchByte(rangeDecoder, matchByte); }
     }
 
-    private OutWindow _mOutWindow;
+    private OutWindow _mOutWindow = null!;
 
     private readonly BitDecoder[] _mIsMatchDecoders = new BitDecoder[Base.KNumStates << Base.KNumPosStatesBitsMax];
     private readonly BitDecoder[] _mIsRepDecoders = new BitDecoder[Base.KNumStates];
@@ -244,7 +244,7 @@ internal class Decoder
     {
         if (_mOutWindow == null)
             CreateDictionary();
-        _mOutWindow.Init(outStream);
+        _mOutWindow!.Init(outStream);
         if (outSize > 0)
             _mOutWindow.SetLimit(outSize);
         else
@@ -261,7 +261,7 @@ internal class Decoder
         if (!rangeDecoder.IsFinished || (inSize > 0 && rangeDecoder.Total != inSize) || _mOutWindow.HasPending)
             throw new DataErrorException();
 
-        _mOutWindow = null;
+        _mOutWindow = null!;
     }
 
 #pragma warning disable CA1502 // Avoid excessive complexity

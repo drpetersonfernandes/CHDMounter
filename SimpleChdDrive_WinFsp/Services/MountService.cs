@@ -6,9 +6,9 @@ public class MountService : IMountService, IDisposable
 {
     private readonly ILoggingService _loggingService;
     private readonly ISettingsService _settingsService;
-    private FileSystemHost _host;
-    private ChdFs _currentFs;
-    private ChdContainer _container;
+    private FileSystemHost _host = null!;
+    private ChdFs _currentFs = null!;
+    private ChdContainer _container = null!;
 
     public bool IsMounted { get; private set; }
     public string MountPoint { get; private set; } = "";
@@ -34,7 +34,7 @@ public class MountService : IMountService, IDisposable
         { _loggingService.LogError($"WinFsp detection failed: {ex.Message}"); return false; }
     }
 
-    public void Mount(string chdPath, string mountPoint, ConsoleType consoleType)
+    public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
     {
         if (IsMounted) throw new InvalidOperationException("Already mounted.");
 

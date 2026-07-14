@@ -23,7 +23,7 @@ public class DecoderSettings : IAudioDecoderSettings
 
     public IAudioDecoderSettings Clone()
     {
-        return MemberwiseClone() as IAudioDecoderSettings;
+        return (IAudioDecoderSettings)MemberwiseClone();
     }
     #endregion
 

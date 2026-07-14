@@ -2,8 +2,8 @@ namespace SimpleChdDrive.Core.CHD.LZMA.LZ;
 
 internal class InWindow
 {
-    protected byte[] BufferBase; // pointer to buffer with data
-    private Stream _stream;
+    protected byte[]? BufferBase; // pointer to buffer with data
+    private Stream? _stream;
     private uint _posLimit; // offset (from _buffer) of first byte when new block reading must be done
     private bool _streamEndWasReached; // if (true) then _streamPos shows real end of stream
 
@@ -31,7 +31,7 @@ internal class InWindow
         // check negative offset ????
         for (uint i = 0; i < numBytes; i++)
         {
-            BufferBase[i] = BufferBase[offset + i];
+            BufferBase![i] = BufferBase[offset + i];
         }
 
         BufferOffset -= offset;
@@ -48,7 +48,7 @@ internal class InWindow
             if (size == 0)
                 return;
 
-            var numReadBytes = _stream?.Read(BufferBase, (int)(BufferOffset + StreamPos), size) ?? 0;
+            var numReadBytes = _stream?.Read(BufferBase!, (int)(BufferOffset + StreamPos), size) ?? 0;
             if (numReadBytes == 0)
             {
                 _posLimit = StreamPos;
@@ -119,7 +119,7 @@ internal class InWindow
         }
     }
 
-    public byte GetIndexByte(int index) { return BufferBase[BufferOffset + Pos + index]; }
+    public byte GetIndexByte(int index) { return BufferBase![BufferOffset + Pos + index]; }
 
     // index + limit have not to exceed _keepSizeAfter;
     public uint GetMatchLen(int index, uint distance, uint limit)
@@ -135,7 +135,7 @@ internal class InWindow
         var pby = BufferOffset + Pos + (uint)index;
 
         uint i;
-        for (i = 0; i < limit && BufferBase[pby + i] == BufferBase[pby + i - distance]; i++) ;
+        for (i = 0; i < limit && BufferBase![pby + i] == BufferBase[pby + i - distance]; i++) ;
         return i;
     }
 

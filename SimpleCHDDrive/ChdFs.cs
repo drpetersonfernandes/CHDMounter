@@ -257,7 +257,7 @@ public class ChdFs : IDokanOperations, IDisposable
 
     public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections, IDokanFileInfo info)
     {
-        security = null;
+        security = null!;
         try
         {
             var entry = _container.FindFile(fileName);

@@ -7,7 +7,7 @@ public class LoggingService : ILoggingService
 {
     private const int MaxEntries = 5000;
     private readonly Dispatcher _dispatcher;
-    private string _lastMessage;
+    private string _lastMessage = "";
     private DateTime _lastMessageTime;
 
     public ObservableCollection<LogEntry> LogEntries { get; } = [];

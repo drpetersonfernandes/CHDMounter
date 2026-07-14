@@ -14,7 +14,7 @@ public class SectorReader
 
     private bool _isOffsetDetected;
     private uint _offsetDetectedHunk = 0xFFFFFFFF;
-    private TrackInfo _offsetDetectedTrack;
+    private TrackInfo _offsetDetectedTrack = null!;
     private readonly Dictionary<int, uint> _trackOffsetCache = [];
 
     private static readonly byte[] SyncPattern = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00];
@@ -42,7 +42,7 @@ public class SectorReader
         _trackLocked = locked;
     }
 
-    public TrackInfo CurrentTrack { get; private set; }
+    public TrackInfo CurrentTrack { get; private set; } = null!;
 
     public List<TrackInfo> Tracks { get; }
 
@@ -55,7 +55,7 @@ public class SectorReader
         SectorHeaderOffset = 0;
         SyncOffset = 0;
         _offsetDetectedHunk = 0xFFFFFFFF;
-        _offsetDetectedTrack = null;
+        _offsetDetectedTrack = null!;
         LbaOffset = 0;
         _trackLocked = false;
         _trackOffsetCache.Clear();
@@ -80,12 +80,12 @@ public class SectorReader
         if (ReadSector(lba, buffer))
             return buffer;
 
-        return null;
+        return null!;
     }
 
     public bool ReadRawSector(uint lba, out byte[] rawSector)
     {
-        rawSector = null;
+        rawSector = null!;
         if (!PrepareHunk(lba, out var rawOffset))
             return false;
 
@@ -224,7 +224,7 @@ public class SectorReader
 
             _isOffsetDetected = true;
             _offsetDetectedHunk = hunkNum;
-            _offsetDetectedTrack = CurrentTrack;
+            _offsetDetectedTrack = CurrentTrack!;
         }
 
         return true;

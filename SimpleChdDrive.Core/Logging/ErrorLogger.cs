@@ -4,7 +4,7 @@ namespace SimpleChdDrive.Core.Logging;
 
 public class ErrorLoggerStatic
 {
-    private static ErrorLogger _instance;
+    private static ErrorLogger? _instance;
     private static readonly ConcurrentQueue<Action> _pendingReports = new();
 
     public static ErrorLogger Instance

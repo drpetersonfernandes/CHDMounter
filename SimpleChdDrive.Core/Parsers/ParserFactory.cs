@@ -25,7 +25,7 @@ public static class ParserFactory
             ConsoleType.NeoGeoCD => new NeoGeoCdParser(reader),
             ConsoleType.PcFx => new PcFxParser(reader),
             ConsoleType.GenericISO9660 => new GenericIso9660Parser(reader),
-            _ => null
+            _ => null!
         };
     }
 

@@ -4,7 +4,7 @@ public class Crc8
 {
     private const ushort Poly8 = 0x07;
 
-    private static ushort[] _table;
+    private static ushort[] _table = null!;
 
     public Crc8()
     {

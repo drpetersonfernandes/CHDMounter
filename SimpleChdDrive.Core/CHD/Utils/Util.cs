@@ -12,7 +12,7 @@ internal static class Util
         return true;
     }
 
-    internal static bool ByteArrEquals(byte[] b0, byte[] b1)
+    internal static bool ByteArrEquals(byte[]? b0, byte[]? b1)
     {
         if (b0 == null || b1 == null)
         {

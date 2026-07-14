@@ -30,12 +30,11 @@ internal class HuffmanDecoder
     private readonly byte maxbits;                   /* maximum bits per code */
     //uint prevdata;                /* value of the previous data (for delta-RLE encoding) */
     //int rleremaining;             /* number of RLE bytes remaining (for delta-RLE encoding) */
-    private readonly ushort[] lookup;                /* pointer to the lookup table */
+    private readonly ushort[] lookup = null!;                /* pointer to the lookup table */
 
-    private readonly node_t[] huffnode;              /* array of nodes */
-    //uint[] datahisto;             /* histogram of data values */
+    private readonly node_t[] huffnode = null!;              /* array of nodes */
 
-    private BitStream bitbuf;
+    private BitStream bitbuf = null!;
 
     private static uint MAKE_LOOKUP(uint code, uint bits) { return (code << 5) | (bits & 0x1f); }
 

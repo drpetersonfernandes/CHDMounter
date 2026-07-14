@@ -15,7 +15,7 @@ public class UdfParser
 
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
-        _reader.SetTrack(track, true);
+        _reader.SetTrack(track!, true);
         var sector = new byte[2048];
 
         if (!_reader.ReadSector(256, sector)) return false;

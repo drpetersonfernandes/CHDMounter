@@ -168,9 +168,9 @@ internal static partial class ChdReaders
                     // audio, so the values are correct for every AVHuff CHD.
                     var audioBuffer = new AudioBuffer(codec.AvhuffSettings, blockSize); //audio buffer to take decoded samples and read them to bytes.
                     var inPos = (int)buffInOffset;
-                    var outPos = (int)audioChannelDestStart[channelNumber];
+                    var outPos = (int)audioChannelDestStart[channelNumber]!;
 
-                    while (outPos < blockSize + audioChannelDestStart[channelNumber])
+                    while (outPos < blockSize + audioChannelDestStart[channelNumber]!)
                     {
                         int read;
                         if ((read = codec.AvhuffAudioDecoder.DecodeFrame(buffIn, inPos, (int)sourceSize)) == 0)
@@ -185,7 +185,7 @@ internal static partial class ChdReaders
                         inPos += read;
                     }
 
-                    for (var i = (int)audioChannelDestStart[channelNumber]; i < blockSize + audioChannelDestStart[channelNumber]; i += 2)
+                    for (var i = (int)audioChannelDestStart[channelNumber]!; i < blockSize + audioChannelDestStart[channelNumber]!; i += 2)
                     {
                         (buffOut[i], buffOut[i + 1]) = (buffOut[i + 1], buffOut[i]);
                     }
@@ -199,8 +199,8 @@ internal static partial class ChdReaders
 
 
         // if we have a non-zero tree size, extract the trees
-        HuffmanDecoder mAudiohiDecoder = null;
-        HuffmanDecoder mAudioloDecoder = null;
+        HuffmanDecoder mAudiohiDecoder = null!;
+        HuffmanDecoder mAudioloDecoder = null!;
         if (treesize != 0)
         {
             var bitbuf = new BitStream(buffIn, (int)buffInOffset, (int)treesize);

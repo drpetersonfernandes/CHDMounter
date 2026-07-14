@@ -234,9 +234,9 @@ public class AudioBuffer
 
     #endregion
 
-    private int[,] _samples;
-    private float[,] _fsamples;
-    private byte[] _bytes;
+    private int[,] _samples = null!;
+    private float[,] _fsamples = null!;
+    private byte[] _bytes = null!;
     private bool _dataInSamples;
     private bool _dataInBytes;
     private bool _dataInFloat;

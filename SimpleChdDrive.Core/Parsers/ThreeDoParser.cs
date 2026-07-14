@@ -16,7 +16,7 @@ public class ThreeDoParser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        _reader.SetTrack(track, true);
+        _reader.SetTrack(track!, true);
 
         var sectorData = new byte[2048];
         var trackStart = track?.StartLBA ?? 0;

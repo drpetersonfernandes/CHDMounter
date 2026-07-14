@@ -10,9 +10,9 @@ public partial class App
 
     private static CancellationTokenSource ShutdownCts { get; } = new();
 
-    private static TextWriter _originalConsoleOut;
-    private static TextWriter _originalConsoleError;
-    private static LogTextWriter _logTextWriter;
+    private static TextWriter? _originalConsoleOut;
+    private static TextWriter? _originalConsoleError;
+    private static LogTextWriter? _logTextWriter;
 
     protected override void OnStartup(StartupEventArgs e)
     {

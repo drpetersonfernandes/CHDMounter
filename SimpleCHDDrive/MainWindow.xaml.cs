@@ -11,7 +11,7 @@ public partial class MainWindow : Window
     private readonly IMountService _mountService;
     private readonly IUserNotificationService _userNotificationService;
 
-    private string _chdPath;
+    private string? _chdPath;
     private ConsoleType _selectedConsoleType = ConsoleType.Unknown;
 
     public MainWindow()
@@ -221,7 +221,7 @@ public partial class MainWindow : Window
         new AboutWindow { Owner = this }.ShowDialog();
     }
 
-    private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         try { _mountService.Unmount(); } catch { }
     }

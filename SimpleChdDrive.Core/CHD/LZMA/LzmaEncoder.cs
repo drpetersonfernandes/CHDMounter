@@ -138,7 +138,7 @@ internal class Encoder
             }
         }
 
-        private Encoder2[] _mCoders;
+        private Encoder2[] _mCoders = null!;
         private int _mNumPrevBits;
         private int _mNumPosBits;
         private uint _mPosMask;
@@ -313,7 +313,7 @@ internal class Encoder
     }
 
     private readonly Optimal[] _optimum = new Optimal[KNumOpts];
-    private BinTree _matchFinder;
+    private BinTree _matchFinder = null!;
     private readonly RangeCoder.Encoder _rangeEncoder = new();
 
     private readonly BitEncoder[] _isMatch = new BitEncoder[Base.KNumStates << Base.KNumPosStatesBitsMax];
@@ -364,7 +364,7 @@ internal class Encoder
 
     private long _nowPos64;
     private bool _finished;
-    private Stream _inStream;
+    private Stream _inStream = null!;
 
     private EMatchFinderType _matchFinderType = EMatchFinderType.Bt4;
     private bool _writeEndMark;
@@ -1135,7 +1135,7 @@ internal class Encoder
         {
             _matchFinder.SetStream(_inStream);
             _needReleaseMfStream = true;
-            _inStream = null;
+            _inStream = null!;
         }
 
         if (_finished)
@@ -1567,7 +1567,7 @@ internal class Encoder
                     if (_matchFinder != null && matchFinderIndexPrev != _matchFinderType)
                     {
                         _dictionarySizePrev = 0xFFFFFFFF;
-                        _matchFinder = null;
+                        _matchFinder = null!;
                     }
                     break;
                 }

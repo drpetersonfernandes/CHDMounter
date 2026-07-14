@@ -4,7 +4,7 @@ internal class Encoder
 {
     public const uint kTopValue = 1 << 24;
 
-    private Stream Stream;
+    private Stream Stream = null!;
 
     public ulong Low;
     public uint Range;
@@ -20,7 +20,7 @@ internal class Encoder
 
     public void ReleaseStream()
     {
-        Stream = null;
+        Stream = null!;
     }
 
     public void Init()
@@ -128,7 +128,7 @@ internal class Decoder
     public uint Range;
     public uint Code;
     // public Buffer.InBuffer Stream = new Buffer.InBuffer(1 << 16);
-    public Stream Stream;
+    public Stream Stream = null!;
     public long Total;
 
     public void Init(Stream stream)
@@ -149,7 +149,7 @@ internal class Decoder
     public void ReleaseStream()
     {
         // Stream.ReleaseStream();
-        Stream = null;
+        Stream = null!;
     }
 
     public void CloseStream()

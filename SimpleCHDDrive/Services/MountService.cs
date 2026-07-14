@@ -8,9 +8,9 @@ public class MountService : IMountService, IDisposable
 {
     private readonly ILoggingService _loggingService;
     private readonly ISettingsService _settingsService;
-    private DokanInstance _dokanInstance;
-    private ChdFs _currentFs;
-    private ChdContainer _container;
+    private DokanInstance? _dokanInstance;
+    private ChdFs? _currentFs;
+    private ChdContainer? _container;
 
     public bool IsMounted { get; private set; }
     public string MountPoint { get; private set; } = "";
@@ -39,7 +39,7 @@ public class MountService : IMountService, IDisposable
         }
     }
 
-    public void Mount(string chdPath, string mountPoint, ConsoleType consoleType)
+    public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
     {
         if (IsMounted)
             throw new InvalidOperationException("Already mounted.");
@@ -51,7 +51,7 @@ public class MountService : IMountService, IDisposable
         {
             _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
             _container.Dispose();
-            _container = null!;
+            _container = null;
             return;
         }
 
@@ -86,11 +86,11 @@ public class MountService : IMountService, IDisposable
             catch (Exception ex) { _loggingService.LogError($"Error during unmount: {ex.Message}"); }
         }
 
-        _dokanInstance = null!;
+        _dokanInstance = null;
         _currentFs?.Dispose();
-        _currentFs = null!;
+        _currentFs = null;
         _container?.Dispose();
-        _container = null!;
+        _container = null;
         IsMounted = false;
         MountPoint = "";
     }

@@ -26,17 +26,17 @@ namespace SimpleChdDrive.Core.CHD.Flac;
 
 public class AudioDecoder : IAudioSource
 {
-    private readonly int[] _residualBuffer;
+    private readonly int[] _residualBuffer = null!;
 
-    private readonly byte[] _framesBuffer;
+    private readonly byte[] _framesBuffer = null!;
     private int _framesBufferLength, _framesBufferOffset;
     private long _firstFrameOffset;
 
-    private SeekPoint[] _seekTable;
+    private SeekPoint[] _seekTable = null!;
 
     private readonly Crc8 _crc8;
-    private readonly FlacFrame _frame;
-    private readonly BitReader _framereader;
+    private readonly FlacFrame _frame = null!;
+    private readonly BitReader _framereader = null!;
 
     private uint _minBlockSize;
     private uint _maxBlockSize;
@@ -46,11 +46,11 @@ public class AudioDecoder : IAudioSource
     private int _samplesInBuffer, _samplesBufferOffset;
     private long _sampleOffset;
 
-    private readonly Stream _io;
+    private readonly Stream _io = null!;
 
     public bool DoCrc { get; set; } = true;
 
-    public int[] Samples { get; }
+    public int[] Samples { get; } = null!;
 
     public AudioDecoder(DecoderSettings settings, string? path, Stream? io = null)
     {
@@ -59,11 +59,11 @@ public class AudioDecoder : IAudioSource
         if (path != null)
         {
             Path = path;
-            _io = io;
+            _io = io!;
         }
         else
         {
-            _io = io;
+            _io = io!;
         }
 
         _crc8 = new Crc8();
@@ -107,8 +107,8 @@ public class AudioDecoder : IAudioSource
         _framereader = new BitReader();
     }
 
-    private readonly DecoderSettings _mSettings;
-    public IAudioDecoderSettings Settings => _mSettings;
+    private readonly DecoderSettings? _mSettings;
+    public IAudioDecoderSettings Settings => _mSettings!;
 
     public void Close()
     {
@@ -176,9 +176,9 @@ public class AudioDecoder : IAudioSource
         }
     }
 
-    public AudioPcmConfig Pcm { get; private set; }
+    public AudioPcmConfig Pcm { get; private set; } = null!;
 
-    public string Path { get; }
+    public string Path { get; } = null!;
 
     private unsafe void Interlace(AudioBuffer buff, int offset, int count)
     {

@@ -22,7 +22,7 @@ public class Iso9660Parser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        _reader.SetTrack(track, true);
+        _reader.SetTrack(track!, true);
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
@@ -33,7 +33,7 @@ public class Iso9660Parser
         uint[] vdOffsets = [16, 17, 166, 167]; // 16+150, 17+150
         uint pvdLba = 0;
         var foundPvd = false;
-        byte[] bestVdData = null;
+        byte[]? bestVdData = null;
         var sectorData = new byte[2048];
 
         foreach (var offset in vdOffsets)
@@ -74,7 +74,7 @@ public class Iso9660Parser
                     {
                         if (type == 2 && isIso) { pvdLba = offset;
                             effectiveTrackStart = 0;
-                            _reader.SetTrack(null);
+                            _reader.SetTrack(null!);
                             _isHighSierra = false;
                             _isJoliet = true;
                             foundPvd = true;
@@ -82,7 +82,7 @@ public class Iso9660Parser
                             break; }
                         if (!foundPvd && (type == 1 || isHs)) { pvdLba = offset;
                             effectiveTrackStart = 0;
-                            _reader.SetTrack(null);
+                            _reader.SetTrack(null!);
                             _isHighSierra = isHs;
                             _isJoliet = false;
                             foundPvd = true;

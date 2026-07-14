@@ -5,7 +5,7 @@ namespace SimpleChdDrive.Core.Parsers;
 public class XdvdfsParser
 {
     private readonly SectorReader _reader;
-    private TrackInfo _currentTrack;
+    private TrackInfo? _currentTrack;
 
     public XdvdfsParser(SectorReader reader)
     {

@@ -12,9 +12,9 @@ public partial class App
 
     internal static CancellationTokenSource ShutdownCts { get; } = new();
 
-    private static TextWriter _originalConsoleOut;
-    private static TextWriter _originalConsoleError;
-    private static LogTextWriter _logTextWriter;
+    private static TextWriter _originalConsoleOut = null!;
+    private static TextWriter _originalConsoleError = null!;
+    private static LogTextWriter _logTextWriter = null!;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -85,7 +85,7 @@ public partial class App
             if (currentPath.Contains("WinFsp", StringComparison.OrdinalIgnoreCase))
                 return;
 
-            string binDir = null;
+            string? binDir = null;
 
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp")
                             ?? Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp");

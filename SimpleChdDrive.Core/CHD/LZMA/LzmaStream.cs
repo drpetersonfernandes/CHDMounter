@@ -4,14 +4,14 @@ namespace SimpleChdDrive.Core.CHD.LZMA;
 
 public class LzmaStream : Stream
 {
-    private readonly Stream _inputStream;
+    private readonly Stream _inputStream = null!;
     private readonly long _inputSize;
     private readonly long _outputSize;
 
     private readonly int _dictionarySize;
     private readonly OutWindow _outWindow = new();
     private readonly RangeCoder.Decoder _rangeDecoder = new();
-    private Decoder _decoder;
+    private Decoder _decoder = null!;
 
     private long _position;
     private bool _endReached;
@@ -25,7 +25,7 @@ public class LzmaStream : Stream
     private bool _needDictReset = true;
     private bool _needProps = true;
 
-    private readonly Encoder _encoder;
+    private readonly Encoder _encoder = null!;
 
     public LzmaStream(byte[] properties, Stream inputStream)
         : this(properties, inputStream, -1, -1, null, properties.Length < 5)
@@ -88,7 +88,7 @@ public class LzmaStream : Stream
     {
     }
 
-    public LzmaStream(LzmaEncoderProperties properties, bool isLzma2, Stream presetDictionary, Stream outputStream)
+    public LzmaStream(LzmaEncoderProperties properties, bool isLzma2, Stream? presetDictionary, Stream outputStream)
     {
         _isLzma2 = isLzma2;
         _availableBytes = 0;
@@ -103,7 +103,7 @@ public class LzmaStream : Stream
         _encoder.WriteCoderProperties(propStream);
         Properties = propStream.ToArray();
 
-        _encoder.SetStreams(null, outputStream, -1, -1);
+        _encoder.SetStreams(null!, outputStream, -1, -1);
         if (presetDictionary != null)
             _encoder.Train(presetDictionary);
     }
@@ -124,7 +124,7 @@ public class LzmaStream : Stream
         {
             if (_encoder != null)
             {
-                _position = _encoder.Code(null, true);
+                _position = _encoder.Code(null!, true);
             }
         }
         base.Dispose(disposing);

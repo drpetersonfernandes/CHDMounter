@@ -379,7 +379,7 @@ internal static class ChdHeaders
             rawmap[rawmapIndex] = (byte)map[blockIndex].Comptype;
             rawmap.PutUInt24BE(rawmapIndex + 1, map[blockIndex].Length);
             rawmap.PutUInt48BE(rawmapIndex + 4, map[blockIndex].Offset);
-            rawmap.PutUInt16BE(rawmapIndex + 10, (uint)map[blockIndex].Crc16);
+            rawmap.PutUInt16BE(rawmapIndex + 10, (uint)map[blockIndex].Crc16!);
         }
         if (CRC16.calc(rawmap, (int)totalBlocks * 12) != mapcrc)
             return ChdError.Chderrdecompressionerror;

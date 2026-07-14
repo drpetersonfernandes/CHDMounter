@@ -7,7 +7,7 @@ public static class DiagnosticLogger
 {
     private static readonly StringBuilder _buffer = new();
 
-    public static string LogFilePath { get; private set; }
+    public static string? LogFilePath { get; private set; }
 
     public static void Initialize()
     {
