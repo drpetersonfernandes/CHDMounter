@@ -105,7 +105,7 @@ public unsafe class BitReader
             _haveBitsM += 8;
             var b = *_bptrM++;
             _cacheM |= (ulong)b << (64 - _haveBitsM);
-            _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ b]);
+            _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ b]);
         }
     }
 
@@ -188,7 +188,7 @@ public unsafe class BitReader
             _cacheM <<= 8;
             var b = *_bptrM++;
             _cacheM |= (ulong)b << (64 - _haveBitsM);
-            _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ b]);
+            _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ b]);
             result = _cacheM >> 56;
         }
         val += ByteToUnaryTable[result];
@@ -214,7 +214,7 @@ public unsafe class BitReader
         var n = _haveBitsM >> 3;
         for (var i = 0; i < n; i++)
         {
-            crc = (ushort)((crc << 8) ^ Crc16.table[(crc >> 8) ^ (byte)(_cacheM >> (56 - (i << 3)))]);
+            crc = (ushort)((crc << 8) ^ Crc16.Table[(crc >> 8) ^ (byte)(_cacheM >> (56 - (i << 3)))]);
         }
 
         return Crc16.Subtract(_crc16M, crc, n);
@@ -288,7 +288,7 @@ public unsafe class BitReader
     {
         Fill();
         fixed (byte* unaryTable = ByteToUnaryTable)
-        fixed (ushort* t = Crc16.table)
+        fixed (ushort* t = Crc16.Table)
         {
             var mask = (1U << k) - 1;
             var bptr = _bptrM;

@@ -17,31 +17,34 @@ public interface IAudioDecoderSettings
 
 public static class IAudioDecoderSettingsExtensions
 {
-    public static bool HasBrowsableAttributes(this IAudioDecoderSettings settings)
+    extension(IAudioDecoderSettings settings)
     {
-        var hasBrowsable = false;
-        foreach (PropertyDescriptor property in TypeDescriptor.GetProperties(settings))
+        public bool HasBrowsableAttributes()
         {
-            var isBrowsable = true;
-            foreach (var attribute in property.Attributes)
+            var hasBrowsable = false;
+            foreach (PropertyDescriptor property in TypeDescriptor.GetProperties(settings))
             {
-                var browsable = attribute as BrowsableAttribute;
-                isBrowsable &= browsable == null || browsable.Browsable;
+                var isBrowsable = true;
+                foreach (var attribute in property.Attributes)
+                {
+                    var browsable = attribute as BrowsableAttribute;
+                    isBrowsable &= browsable == null || browsable.Browsable;
+                }
+                hasBrowsable |= isBrowsable;
             }
-            hasBrowsable |= isBrowsable;
+            return hasBrowsable;
         }
-        return hasBrowsable;
-    }
 
-    public static void Init(this IAudioDecoderSettings settings)
-    {
-        // Iterate through each property and call ResetValue()
-        foreach (PropertyDescriptor property in TypeDescriptor.GetProperties(settings))
-            property.ResetValue(settings);
-    }
+        public void Init()
+        {
+            // Iterate through each property and call ResetValue()
+            foreach (PropertyDescriptor property in TypeDescriptor.GetProperties(settings))
+                property.ResetValue(settings);
+        }
 
-    public static IAudioSource Open(this IAudioDecoderSettings settings, string path, Stream io = null)
-    {
-        return Activator.CreateInstance(settings.DecoderType, settings, path, io) as IAudioSource;
+        public IAudioSource Open(string path, Stream io = null)
+        {
+            return Activator.CreateInstance(settings.DecoderType, settings, path, io) as IAudioSource;
+        }
     }
 }

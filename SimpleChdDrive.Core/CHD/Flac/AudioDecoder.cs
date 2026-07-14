@@ -272,7 +272,7 @@ public class AudioDecoder : IAudioSource
         if (bitreader.Readbits(15) != 0x7FFC)
             throw new AudioDecoderException("invalid frame");
 
-        var vbs = bitreader.Readbit();
+        bitreader.Readbit();
         frame.BsCode0 = (int)bitreader.Readbits(4);
         var srCode0 = bitreader.Readbits(4);
         frame.ChMode = (ChannelMode)bitreader.Readbits(4);
@@ -363,9 +363,9 @@ public class AudioDecoder : IAudioSource
             throw new AudioDecoderException("invalid partition order");
 
         var psize = frame.Blocksize >> frame.Subframes[ch].best.Rc.porder;
-        var res_cnt = psize - frame.Subframes[ch].best.Order;
+        var resCnt = psize - frame.Subframes[ch].best.Order;
 
-        var rice_len = 4 + frame.Subframes[ch].best.Rc.coding_method;
+        var riceLen = 4 + frame.Subframes[ch].best.Rc.coding_method;
         // residual
         var j = frame.Subframes[ch].best.Order;
         var r = frame.Subframes[ch].best.Residual + j;
@@ -373,13 +373,13 @@ public class AudioDecoder : IAudioSource
         {
             if (p == 1)
             {
-                res_cnt = psize;
+                resCnt = psize;
             }
 
-            var n = Math.Min(res_cnt, frame.Blocksize - j);
+            var n = Math.Min(resCnt, frame.Blocksize - j);
 
-            var k = frame.Subframes[ch].best.Rc.rparams[p] = (int)bitreader.Readbits(rice_len);
-            if (k == (1 << rice_len) - 1)
+            var k = frame.Subframes[ch].best.Rc.rparams[p] = (int)bitreader.Readbits(riceLen);
+            if (k == (1 << riceLen) - 1)
             {
                 k = frame.Subframes[ch].best.Rc.esc_bps[p] = (int)bitreader.Readbits(5);
                 for (var i = n; i > 0; i--)
@@ -396,7 +396,7 @@ public class AudioDecoder : IAudioSource
         }
     }
 
-    private unsafe void decode_subframe_fixed(BitReader bitreader, FlacFrame frame, int ch)
+    private static unsafe void decode_subframe_fixed(BitReader bitreader, FlacFrame frame, int ch)
     {
         // warm-up samples
         var obits = frame.Subframes[ch].obits;
@@ -409,7 +409,7 @@ public class AudioDecoder : IAudioSource
         decode_residual(bitreader, frame, ch);
     }
 
-    private unsafe void decode_subframe_lpc(BitReader bitreader, FlacFrame frame, int ch)
+    private static unsafe void decode_subframe_lpc(BitReader bitreader, FlacFrame frame, int ch)
     {
         // warm-up samples
         var obits = frame.Subframes[ch].obits;
@@ -622,8 +622,8 @@ public class AudioDecoder : IAudioSource
                 case ChannelMode.LeftSide:
                     for (var i = frame.Blocksize; i > 0; i--)
                     {
-                        int _l = *l++, _r = *r;
-                        *r++ = _l - _r;
+                        int left = *l++, right = *r;
+                        *r++ = left - right;
                     }
                     break;
                 case ChannelMode.RightSide:

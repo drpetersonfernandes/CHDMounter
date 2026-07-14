@@ -149,14 +149,14 @@ public abstract class BitWriter
                     return;
                 }
 
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)(bb >> 56)]);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)(bb >> 48)]);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)(bb >> 40)]);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)(bb >> 32)]);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)(bb >> 24)]);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)(bb >> 16)]);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)(bb >> 8)]);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ (byte)bb]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)(bb >> 56)]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)(bb >> 48)]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)(bb >> 40)]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)(bb >> 32)]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)(bb >> 24)]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)(bb >> 16)]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)(bb >> 8)]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ (byte)bb]);
 
                 Buffer[_bufPtrM + 7] = (byte)(bb & 0xFF);
                 bb >>= 8;
@@ -276,7 +276,7 @@ public abstract class BitWriter
         var bitBuf = _bitBufM;
         var bitLeft = _bitLeftM;
         var crc16 = _crc16M;
-        fixed (ushort* crc16T = Crc16.table)
+        fixed (ushort* crc16T = Crc16.Table)
         {
             for (var i = count; i > 0; i--)
             {
@@ -352,7 +352,7 @@ public abstract class BitWriter
             if (Buffer != null)
             {
                 var b = (byte)(_bitBufM >> 56);
-                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.table[(_crc16M >> 8) ^ b]);
+                _crc16M = (ushort)((_crc16M << 8) ^ Crc16.Table[(_crc16M >> 8) ^ b]);
                 Buffer[_bufPtrM] = b;
             }
             _bufPtrM++;

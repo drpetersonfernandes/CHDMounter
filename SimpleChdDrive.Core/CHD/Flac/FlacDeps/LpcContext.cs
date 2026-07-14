@@ -3,8 +3,8 @@ namespace SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 public class LpcSubframeInfo
 {
     // public LpcContext[] lpc_ctx;
-    public readonly double[,] AutocorrSectionValues = new double[Lpc.MAX_LPC_SECTIONS, Lpc.MAX_LPC_ORDER + 1];
-    public readonly int[] AutocorrSectionOrders = new int[Lpc.MAX_LPC_SECTIONS];
+    public double[,] AutocorrSectionValues { get; } = new double[Lpc.MAX_LPC_SECTIONS, Lpc.MAX_LPC_ORDER + 1];
+    public int[] AutocorrSectionOrders { get; } = new int[Lpc.MAX_LPC_SECTIONS];
     //public int obits;
 
     public void Reset()
@@ -27,10 +27,10 @@ public unsafe struct LpcWindowSection
         OneGlue,
         Glue
     }
-    public int MStart;
-    public int MEnd;
-    public SectionType MType;
-    public int MId;
+    public int MStart { get; set; }
+    public int MEnd { get; set; }
+    public SectionType MType { get; set; }
+    public int MId { get; set; }
     public LpcWindowSection(int end)
     {
         MId = -1;
@@ -112,7 +112,7 @@ public unsafe struct LpcWindowSection
                             alias[i1, boundaries.Count] = i;
                         }
                 }
-                if (boundaries.Count >= Lpc.MAX_LPC_SECTIONS * 2) throw new IndexOutOfRangeException();
+                if (boundaries.Count >= Lpc.MAX_LPC_SECTIONS * 2) throw new InvalidOperationException();
 
                 types[i, boundaries.Count] =
                     boundaries.Count >= Lpc.MAX_LPC_SECTIONS * 2 - 2 ? SectionType.Data : w == 0.0 ? SectionType.Zero : w != 1.0 ? SectionType.Data : bps * 2 + BitReader.Log2I(sz) >= 61 ? SectionType.OneLarge :
@@ -147,7 +147,7 @@ public unsafe struct LpcWindowSection
                 // leave room for glue
                 if (secs[i] >= Lpc.MAX_LPC_SECTIONS - 1)
                 {
-                    throw new IndexOutOfRangeException();
+                    throw new InvalidOperationException();
                     //window_sections[secs[i] - 1].m_type = LpcWindowSection.SectionType.Data;
                     //window_sections[secs[i] - 1].m_end = boundaries[j + 1];
                     //continue;
@@ -170,7 +170,7 @@ public unsafe struct LpcWindowSection
                     secs[i]--;
                     continue;
                 }
-                if (sectionId >= Lpc.MAX_LPC_SECTIONS) throw new IndexOutOfRangeException();
+                if (sectionId >= Lpc.MAX_LPC_SECTIONS) throw new InvalidOperationException();
 
                 if (aliasSet[i, j] != 0
                     && types[i, j] != SectionType.Zero)
@@ -384,14 +384,14 @@ public unsafe class LpcContext
         }
     }
 
-    public readonly double[] AutocorrValues = new double[Lpc.MAX_LPC_ORDER + 1];
-    public readonly double[] PredictionError = new double[Lpc.MAX_LPC_ORDER];
-    public readonly int[] BestOrders = new int[Lpc.MAX_LPC_ORDER];
-    public int[] Coefs = new int[Lpc.MAX_LPC_ORDER];
+    public double[] AutocorrValues { get; } = new double[Lpc.MAX_LPC_ORDER + 1];
+    public double[] PredictionError { get; } = new double[Lpc.MAX_LPC_ORDER];
+    public int[] BestOrders { get; } = new int[Lpc.MAX_LPC_ORDER];
+    public int[] Coefs { get; set; } = new int[Lpc.MAX_LPC_ORDER];
     private int _autocorrOrder;
-    public int Shift;
+    public int Shift { get; set; }
 
     public double[] Reflection { get; } = new double[Lpc.MAX_LPC_ORDER];
 
-    public readonly uint[] DoneLpcs = new uint[Lpc.MAX_LPC_PRECISIONS];
+    public uint[] DoneLpcs { get; } = new uint[Lpc.MAX_LPC_PRECISIONS];
 }
