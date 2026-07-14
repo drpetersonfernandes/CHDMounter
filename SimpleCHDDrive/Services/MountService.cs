@@ -8,7 +8,6 @@ namespace SimpleChdDrive.Services;
 public class MountService : IMountService, IDisposable
 {
     private readonly ILoggingService _loggingService;
-    private readonly ISettingsService _settingsService;
     private DokanInstance? _dokanInstance;
     private ChdFs? _currentFs;
     private ChdContainer? _container;
@@ -19,10 +18,9 @@ public class MountService : IMountService, IDisposable
     [DllImport("dokan2.dll", ExactSpelling = true)]
     private static extern uint DokanVersion();
 
-    public MountService(ILoggingService loggingService, ISettingsService settingsService)
+    public MountService(ILoggingService loggingService)
     {
         _loggingService = loggingService;
-        _settingsService = settingsService;
     }
 
     public bool CanMount()

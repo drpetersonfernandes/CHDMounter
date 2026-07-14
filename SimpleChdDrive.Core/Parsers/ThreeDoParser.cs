@@ -44,12 +44,6 @@ public class ThreeDoParser
             blockSize = 2048;
         }
 
-        uint avatarsCount = sectorData[0x0F];
-        if (avatarsCount > 8)
-        {
-            avatarsCount = 7;
-        }
-
         var rootDirBlock = Be24(sectorData, 0x11);
 
         rootNode.Name = "/";

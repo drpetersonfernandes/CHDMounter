@@ -253,17 +253,16 @@ public static class CdRom
     }
 
     /**
-     * @fn  void ecc_compute_bytes(const uint8_t *sector, const uint16_t *row, int rowlen, uint8_t &val1, uint8_t &val2)
-     *
      * @brief   -------------------------------------------------
      *            ecc_compute_bytes - calculate an ECC value (P or Q)
      *          -------------------------------------------------.
      *
-     * @param   sector          The sector.
+     * @param   data            The data buffer.
+     * @param   sectorOffset    The sector offset.
      * @param   row             The row.
      * @param   rowlen          The rowlen.
-     * @param [in,out]  val1    The first value.
-     * @param [in,out]  val2    The second value.
+     * @param [in,out]  val1Index    The first value index.
+     * @param [in,out]  val2Index    The second value index.
      */
     private static void ecc_compute_bytes(byte[] data, int sectorOffset, ushort[] row, int rowlen, int val1Index, int val2Index)
     {

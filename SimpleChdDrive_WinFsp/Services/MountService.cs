@@ -5,7 +5,6 @@ namespace SimpleChdDrive_WinFsp.Services;
 public class MountService : IMountService, IDisposable
 {
     private readonly ILoggingService _loggingService;
-    private readonly ISettingsService _settingsService;
     private FileSystemHost _host = null!;
     private ChdFs _currentFs = null!;
     private ChdContainer _container = null!;
@@ -13,10 +12,9 @@ public class MountService : IMountService, IDisposable
     public bool IsMounted { get; private set; }
     public string MountPoint { get; private set; } = "";
 
-    public MountService(ILoggingService loggingService, ISettingsService settingsService)
+    public MountService(ILoggingService loggingService)
     {
         _loggingService = loggingService;
-        _settingsService = settingsService;
     }
 
     public bool CanMount()

@@ -8,8 +8,6 @@ public partial class App
 {
     internal static string[] StartupArgs { get; private set; } = [];
 
-    private static CancellationTokenSource ShutdownCts { get; } = new();
-
     private static TextWriter? _originalConsoleOut;
     private static TextWriter? _originalConsoleError;
     private static LogTextWriter? _logTextWriter;
@@ -80,14 +78,8 @@ public partial class App
         var loggingService = new LoggingService();
         ServiceProvider.Register<ILoggingService>(loggingService);
 
-        var settingsService = new SettingsService();
-        ServiceProvider.Register<ISettingsService>(settingsService);
-
-        var mountService = new MountService(loggingService, settingsService);
+        var mountService = new MountService(loggingService);
         ServiceProvider.Register<IMountService>(mountService);
-
-        var userNotificationService = new UserNotificationService(loggingService);
-        ServiceProvider.Register<IUserNotificationService>(userNotificationService);
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -95,8 +87,6 @@ public partial class App
         DiagnosticLogger.LogSection("APPLICATION SHUTDOWN");
         try
         {
-            try { ShutdownCts.Cancel(); } catch (ObjectDisposedException) { }
-
             try { _logTextWriter?.Dispose(); }
             catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter", true); }
 

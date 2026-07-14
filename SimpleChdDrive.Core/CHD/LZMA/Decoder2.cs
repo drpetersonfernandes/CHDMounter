@@ -15,7 +15,7 @@ internal struct Decoder2
         {
             symbol = (symbol << 1) | _mDecoders[symbol].Decode(rangeDecoder);
         } while (symbol < 0x100);
-        return (byte)symbol;
+        return unchecked((byte)symbol);
     }
 
     public readonly byte DecodeWithMatchByte(RangeCoder.Decoder rangeDecoder, byte matchByte)
@@ -36,6 +36,6 @@ internal struct Decoder2
                 break;
             }
         } while (symbol < 0x100);
-        return (byte)symbol;
+        return unchecked((byte)symbol);
     }
 }

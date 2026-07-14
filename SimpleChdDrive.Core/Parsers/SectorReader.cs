@@ -125,7 +125,6 @@ public class SectorReader
 
         var sectorsPerHunk = hunkBytes / unitBytes;
         uint chdFrame = 0;
-        var found = false;
 
         if (_trackLocked && CurrentTrack != null)
         {
@@ -133,7 +132,6 @@ public class SectorReader
             if (relative >= 0 && relative < CurrentTrack.Frames)
             {
                 chdFrame = CurrentTrack.ChdOffset + (uint)relative;
-                found = true;
             }
             else
             {
@@ -142,6 +140,7 @@ public class SectorReader
         }
         else
         {
+            var found = false;
             var adjustedLba = (uint)(lba + LbaOffset);
 
             if (CurrentTrack != null && adjustedLba >= CurrentTrack.StartLba &&

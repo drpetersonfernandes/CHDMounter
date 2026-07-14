@@ -20,6 +20,7 @@
     <ItemGroup>
         <InternalsVisibleTo Include="SimpleChdDrive" />
         <InternalsVisibleTo Include="SimpleChdDrive_WinFsp" />
+        <InternalsVisibleTo Include="SimpleChdDrive.Core.Tests" />
     </ItemGroup>
 
     <ItemGroup>

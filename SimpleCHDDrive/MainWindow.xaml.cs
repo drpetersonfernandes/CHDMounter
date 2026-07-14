@@ -9,7 +9,6 @@ public partial class MainWindow
 {
     private readonly ILoggingService _loggingService;
     private readonly IMountService _mountService;
-    private readonly IUserNotificationService _userNotificationService;
 
     private string? _chdPath;
     private ConsoleType _selectedConsoleType = ConsoleType.Unknown;
@@ -20,7 +19,6 @@ public partial class MainWindow
 
         _loggingService = ServiceProvider.Get<ILoggingService>();
         _mountService = ServiceProvider.Get<IMountService>();
-        _userNotificationService = ServiceProvider.Get<IUserNotificationService>();
 
         PopulateConsoleTypes();
         WireUpLogging();

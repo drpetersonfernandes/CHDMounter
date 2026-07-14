@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Fsp;
 using Fsp.Interop;
@@ -6,6 +7,7 @@ using FileInfo = Fsp.Interop.FileInfo;
 
 namespace SimpleChdDrive_WinFsp;
 
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public sealed class ChdFs : FileSystemBase, IDisposable
 {
     private readonly ChdContainer _container;
@@ -89,61 +91,61 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         finally { ArrayPool<byte>.Shared.Return(readBuffer); }
     }
 
-    public override int GetFileInfo(object fileNode, object fileDesc, out FileInfo fileInfo)
+    public override int GetFileInfo(object FileNode, object FileDesc, out FileInfo FileInfo)
     {
-        if (fileNode is FileEntry entry)
+        if (FileNode is FileEntry entry)
         {
-            fileInfo = EntryToFileInfo(entry);
+            FileInfo = EntryToFileInfo(entry);
             return STATUS_SUCCESS;
         }
-        fileInfo = default;
+        FileInfo = default;
         return STATUS_UNSUCCESSFUL;
     }
 
-    public override int GetDirInfoByName(object fileNode, object fileDesc, string fileName,
-        out string normalizedName, out FileInfo fileInfo)
+    public override int GetDirInfoByName(object FileNode, object FileDesc, string FileName,
+        out string NormalizedName, out FileInfo FileInfo)
     {
-        normalizedName = fileName;
-        fileInfo = default;
+        NormalizedName = FileName;
+        FileInfo = default;
 
-        if (fileNode is not FileEntry { IsDirectory: true })
+        if (FileNode is not FileEntry { IsDirectory: true })
             return STATUS_OBJECT_NAME_NOT_FOUND;
 
-        foreach (var child in _container.ListDirectory(ResolvePath(fileNode)))
+        foreach (var child in _container.ListDirectory(ResolvePath(FileNode)))
         {
-            if (string.Equals(child.Name, fileName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(child.Name, FileName, StringComparison.OrdinalIgnoreCase))
             {
-                normalizedName = child.Name;
-                fileInfo = EntryToFileInfo(child);
+                NormalizedName = child.Name;
+                FileInfo = EntryToFileInfo(child);
                 return STATUS_SUCCESS;
             }
         }
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
-    public override bool ReadDirectoryEntry(object fileNode, object fileDesc, string pattern,
-        string marker, ref object context, out string fileName, out FileInfo fileInfo)
+    public override bool ReadDirectoryEntry(object FileNode, object FileDesc, string Pattern,
+        string Marker, ref object Context, out string FileName, out FileInfo FileInfo)
     {
-        fileName = null!;
-        fileInfo = default;
+        FileName = null!;
+        FileInfo = default;
 
-        if (fileNode is not FileEntry { IsDirectory: true })
+        if (FileNode is not FileEntry { IsDirectory: true })
             return false;
 
-        var entries = _container.ListDirectory(ResolvePath(fileNode)).ToList();
-        var index = context is int i ? i : 0;
+        var entries = _container.ListDirectory(ResolvePath(FileNode)).ToList();
+        var index = Context is int i ? i : 0;
 
         switch (index)
         {
             case 0:
-                fileName = ".";
-                fileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
-                context = 1;
+                FileName = ".";
+                FileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
+                Context = 1;
                 return true;
             case 1:
-                fileName = "..";
-                fileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
-                context = 2;
+                FileName = "..";
+                FileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
+                Context = 2;
                 return true;
         }
 
@@ -152,29 +154,29 @@ public sealed class ChdFs : FileSystemBase, IDisposable
             return false;
 
         var entry = entries[entryIndex];
-        fileName = entry.Name;
-        fileInfo = EntryToFileInfo(entry);
-        context = index + 1;
+        FileName = entry.Name;
+        FileInfo = EntryToFileInfo(entry);
+        Context = index + 1;
         return true;
     }
 
-    public override int GetVolumeInfo(out VolumeInfo volumeInfo)
+    public override int GetVolumeInfo(out VolumeInfo VolumeInfo)
     {
-        volumeInfo = default;
-        volumeInfo.TotalSize = _container.VolumeSize;
-        volumeInfo.FreeSize = 0;
+        VolumeInfo = default;
+        VolumeInfo.TotalSize = _container.VolumeSize;
+        VolumeInfo.FreeSize = 0;
         return STATUS_SUCCESS;
     }
 
-    public override int GetSecurityByName(string fileName, out uint fileAttributes,
-        ref byte[] securityDescriptor)
+    public override int GetSecurityByName(string FileName, out uint FileAttributes,
+        ref byte[] SecurityDescriptor)
     {
-        var entry = _container.FindFile(fileName);
-        fileAttributes = (uint)(entry?.IsDirectory == true
-            ? FileAttributes.Directory
-            : FileAttributes.Archive | FileAttributes.ReadOnly);
-        securityDescriptor = new byte[4096];
-        securityDescriptor.Initialize();
+        var entry = _container.FindFile(FileName);
+        FileAttributes = (uint)(entry?.IsDirectory == true
+            ? System.IO.FileAttributes.Directory
+            : System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReadOnly);
+        SecurityDescriptor = new byte[4096];
+        SecurityDescriptor.Initialize();
         return STATUS_SUCCESS;
     }
 

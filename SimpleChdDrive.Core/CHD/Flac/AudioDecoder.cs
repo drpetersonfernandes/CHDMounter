@@ -713,7 +713,6 @@ public class AudioDecoder : IAudioSource
                 }
                 continue;
             }
-            id = 0;
             if (x == 0xff) /* MAGIC NUMBER for the first 8 frame sync bits */
             {
                 do

@@ -161,12 +161,12 @@ public class UdfParser
         }
 
         if (node.IsDirectory)
-            return ParseDirectory(node.Lba, partitionStart, node);
+            return ParseDirectory(partitionStart, node);
 
         return true;
     }
 
-    private bool ParseDirectory(uint logicalBlockNum, uint partitionStart, FsNode dirNode)
+    private bool ParseDirectory(uint partitionStart, FsNode dirNode)
     {
         foreach (var extent in dirNode.Extents)
         {

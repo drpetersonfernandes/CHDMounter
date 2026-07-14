@@ -4,17 +4,6 @@ namespace SimpleChdDrive.Core.Logging;
 
 public static class ErrorLoggerStatic
 {
-    private static ErrorLogger? _instance;
-
-    public static ErrorLogger Instance
-    {
-        get
-        {
-            _instance ??= new ErrorLogger();
-            return _instance;
-        }
-    }
-
     public static void InitializeGlobalExceptionHandlers()
     {
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
@@ -56,13 +45,5 @@ public static class ErrorLoggerStatic
         {
             // ignored
         }
-    }
-}
-
-public class ErrorLogger : IDisposable
-{
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
     }
 }
