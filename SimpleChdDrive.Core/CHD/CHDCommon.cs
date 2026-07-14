@@ -2,63 +2,63 @@
 
 internal static class ChdCommon
 {
-    internal static chdCodec CompTypeConv(uint ct)
+    internal static ChdCodecType CompTypeConv(uint ct)
     {
         switch (ct)
         {
             case 1:
-            case 2: return chdCodec.Chdcodeczlib;
-            case 3: return chdCodec.Chdcodecavhuff;
+            case 2: return ChdCodecType.Zlib;
+            case 3: return ChdCodecType.Avhu;
             default:
-                return chdCodec.Chdcodecerror;
+                return ChdCodecType.Error;
         }
     }
 
     /* Converts V3 & V4 mapFlags to V5 compression_type */
-    internal static CompressionType ConvMapFlagstoCompressionType(MapFlags mapFlags)
+    internal static CompressionType ConvMapFlagstoCompressionType(MapFlag mapFlags)
     {
-        switch (mapFlags & MapFlags.Mapentryflagtypemask)
+        switch (mapFlags & MapFlag.TypeMask)
         {
-            case MapFlags.Mapentrytypeinvalid: return CompressionType.Compressionerror;
-            case MapFlags.Mapentrytypecompressed: return CompressionType.Compressiontype0;
-            case MapFlags.Mapentrytypeuncompressed: return CompressionType.Compressionnone;
-            case MapFlags.Mapentrytypemini: return CompressionType.Compressionmini;
-            case MapFlags.Mapentrytypeselfhunk: return CompressionType.Compressionself;
-            case MapFlags.Mapentrytypeparenthunk: return CompressionType.Compressionparent;
+            case MapFlag.Invalid: return CompressionType.Compressionerror;
+            case MapFlag.Compressed: return CompressionType.Compressiontype0;
+            case MapFlag.Uncompressed: return CompressionType.Compressionnone;
+            case MapFlag.Mini: return CompressionType.Compressionmini;
+            case MapFlag.SelfHunk: return CompressionType.Compressionself;
+            case MapFlag.ParentHunk: return CompressionType.Compressionparent;
             default:
                 return CompressionType.Compressionerror;
         }
     }
 }
 
-public enum chdCodec
+public enum ChdCodecType
 {
-    Chdcodecnone = 0,
-    Chdcodeczlib = 0x7A6C6962, // zlib
-    Chdcodeclzma = 0x6C7A6D61, // lzma
-    Chdcodechuffman = 0x68756666, // huff
-    Chdcodecflac = 0x666C6163, // flac
-    Chdcodeczstd = 0x7A737464, // zstd
-    Chdcodeccdzlib = 0x63647A6C, // cdzl
-    Chdcodeccdlzma = 0x63646C7A, // cdlz
-    Chdcodeccdflac = 0x6364666C, // cdfl
-    Chdcodeccdzstd = 0x63647A73, // cdzs
-    Chdcodecavhuff = 0x61766875, // avhu
-    Chdcodecerror = 0x0eeeeeee
+    None = 0,
+    Zlib = 0x7A6C6962, // zlib
+    Lzma = 0x6C7A6D61, // lzma
+    Huffman = 0x68756666, // huff
+    Flac = 0x666C6163, // flac
+    Zstd = 0x7A737464, // zstd
+    Cdzl = 0x63647A6C, // cdzl
+    Cdlz = 0x63646C7A, // cdlz
+    Cdfl = 0x6364666C, // cdfl
+    Cdzs = 0x63647A73, // cdzs
+    Avhu = 0x61766875, // avhu
+    Error = 0x0eeeeeee
 }
 
 [Flags]
-public enum MapFlags
+public enum MapFlag
 {
-    Mapentryflagtypemask = 0x000f,      /* what type of hunk */
-    Mapentryflagnocrc = 0x0010,         /* no CRC is present */
+    TypeMask = 0x000f,      /* what type of hunk */
+    NoCrc = 0x0010,         /* no CRC is present */
 
-    Mapentrytypeinvalid = 0x0000,        /* invalid type */
-    Mapentrytypecompressed = 0x0001,     /* standard compression */
-    Mapentrytypeuncompressed = 0x0002,   /* uncompressed data */
-    Mapentrytypemini = 0x0003,           /* mini: use offset as raw data */
-    Mapentrytypeselfhunk = 0x0004,      /* same as another hunk in this file */
-    Mapentrytypeparenthunk = 0x0005     /* same as a hunk in the parent file */
+    Invalid = 0x0000,        /* invalid type */
+    Compressed = 0x0001,     /* standard compression */
+    Uncompressed = 0x0002,   /* uncompressed data */
+    Mini = 0x0003,           /* mini: use offset as raw data */
+    SelfHunk = 0x0004,      /* same as another hunk in this file */
+    ParentHunk = 0x0005     /* same as a hunk in the parent file */
 }
 
 public enum CompressionType

@@ -59,7 +59,7 @@ internal static class ChdBlockRead
             var comp = "";
             if (i < chd.Compression.Length)
             {
-                comp = chd.Compression[i].ToString().Substring(10);
+                comp = chd.Compression[i].ToString();
             }
             else if (i == 4)
             {
@@ -128,16 +128,16 @@ internal static class ChdBlockRead
 
         switch (chd.Compression[(int)me.Comptype])
         {
-            case chdCodec.Chdcodeclzma: return 23;
-            case chdCodec.Chdcodeczlib: return 1;
-            case chdCodec.Chdcodecflac: return me.Length == 41 ? 1 : 2;
-            case chdCodec.Chdcodechuffman: return 64;
+            case ChdCodecType.Lzma: return 23;
+            case ChdCodecType.Zlib: return 1;
+            case ChdCodecType.Flac: return me.Length == 41 ? 1 : 2;
+            case ChdCodecType.Huffman: return 64;
 
-            case chdCodec.Chdcodecavhuff: return 1;
+            case ChdCodecType.Avhu: return 1;
 
-            case chdCodec.Chdcodeccdflac: return me.Length == 15 ? 1 : 2;
-            case chdCodec.Chdcodeccdlzma: return 18;
-            case chdCodec.Chdcodeccdzlib: return 3;
+            case ChdCodecType.Cdfl: return me.Length == 15 ? 1 : 2;
+            case ChdCodecType.Cdlz: return 18;
+            case ChdCodecType.Cdzl: return 3;
             default: return 1;
         }
     }
@@ -151,20 +151,20 @@ internal static class ChdBlockRead
         }
     }
 
-    private static ChdReader GetReaderFromCodec(chdCodec chdCodec)
+    private static ChdReader GetReaderFromCodec(ChdCodecType chdCodec)
     {
         switch (chdCodec)
         {
-            case chdCodec.Chdcodeczlib: return ChdReaders.Zlib;
-            case chdCodec.Chdcodeclzma: return ChdReaders.Lzma;
-            case chdCodec.Chdcodechuffman: return ChdReaders.Huffman;
-            case chdCodec.Chdcodecflac: return ChdReaders.Flac;
-            case chdCodec.Chdcodeczstd: return ChdReaders.Zstd;
-            case chdCodec.Chdcodeccdzlib: return ChdReaders.Cdzlib;
-            case chdCodec.Chdcodeccdlzma: return ChdReaders.Cdlzma;
-            case chdCodec.Chdcodeccdflac: return ChdReaders.Cdflac;
-            case chdCodec.Chdcodeccdzstd: return ChdReaders.Cdzstd;
-            case chdCodec.Chdcodecavhuff: return ChdReaders.AvHuff;
+            case ChdCodecType.Zlib: return ChdReaders.Zlib;
+            case ChdCodecType.Lzma: return ChdReaders.Lzma;
+            case ChdCodecType.Huffman: return ChdReaders.Huffman;
+            case ChdCodecType.Flac: return ChdReaders.Flac;
+            case ChdCodecType.Zstd: return ChdReaders.Zstd;
+            case ChdCodecType.Cdzl: return ChdReaders.Cdzlib;
+            case ChdCodecType.Cdlz: return ChdReaders.Cdlzma;
+            case ChdCodecType.Cdfl: return ChdReaders.Cdflac;
+            case ChdCodecType.Cdzs: return ChdReaders.Cdzstd;
+            case ChdCodecType.Avhu: return ChdReaders.AvHuff;
             default: return null!;
         }
     }

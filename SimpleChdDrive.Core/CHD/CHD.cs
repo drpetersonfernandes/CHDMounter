@@ -7,7 +7,7 @@ namespace SimpleChdDrive.Core.CHD;
 
 internal class ChdHeader
 {
-    public chdCodec[] Compression = null!;
+    public ChdCodecType[] Compression = null!;
     public ChdReader[] ChdReader = null!;
 
     public ulong Totalbytes;
@@ -138,7 +138,7 @@ public static class Chd
             var strComp = "";
             foreach (var t in chd.Compression)
             {
-                strComp += $", {t.ToString().Substring(10)}";
+                strComp += $", {t.ToString()}";
             }
 
             Log.Information("{Filename}, V:{Version} {Compression}", Path.GetFileName(filename), version, strComp);

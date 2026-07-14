@@ -11,7 +11,7 @@ internal static class ChdHeaders
 
         using var br = new BinaryReader(file, Encoding.UTF8, true);
 
-        chd.Compression = [chdCodec.Chdcodeczlib];
+        chd.Compression = [ChdCodecType.Zlib];
         _ = br.ReadUInt32BE();
         _ = br.ReadUInt32BE();
         chd.Blocksize = br.ReadUInt32BE();
@@ -64,7 +64,7 @@ internal static class ChdHeaders
 
         using var br = new BinaryReader(file, Encoding.UTF8, true);
 
-        chd.Compression = [chdCodec.Chdcodeczlib];
+        chd.Compression = [ChdCodecType.Zlib];
         _ = br.ReadUInt32BE();
         _ = br.ReadUInt32BE();
         _ = br.ReadUInt32BE();
@@ -141,9 +141,9 @@ internal static class ChdHeaders
                 Crc = br.ReadUInt32BE(),
                 Length = (uint)((br.ReadByte() << 8) | (br.ReadByte() << 0) | (br.ReadByte() << 16))
             };
-            var mapflag = (MapFlags)br.ReadByte();
+            var mapflag = (MapFlag)br.ReadByte();
             chd.Map[i].Comptype = ChdCommon.ConvMapFlagstoCompressionType(mapflag);
-            if ((mapflag & MapFlags.Mapentryflagnocrc) != 0)
+            if ((mapflag & MapFlag.NoCrc) != 0)
             {
                 chd.Map[i].Crc = null;
             }
@@ -180,7 +180,7 @@ internal static class ChdHeaders
                 Crc = br.ReadUInt32BE(),
                 Length = (uint)(br.ReadUInt16BE() | (br.ReadByte() << 16))
             };
-            var mapflag = (MapFlags)br.ReadByte();
+            var mapflag = (MapFlag)br.ReadByte();
             chd.Map[i].Comptype = ChdCommon.ConvMapFlagstoCompressionType(mapflag);
             chd.Map[i].Crc = null;
         }
@@ -193,10 +193,10 @@ internal static class ChdHeaders
         chd = new ChdHeader();
         using var br = new BinaryReader(file, Encoding.UTF8, true);
 
-        chd.Compression = new chdCodec[4];
+        chd.Compression = new ChdCodecType[4];
         for (var i = 0; i < 4; i++)
         {
-            chd.Compression[i] = (chdCodec)br.ReadUInt32BE();
+            chd.Compression[i] = (ChdCodecType)br.ReadUInt32BE();
         }
 
         chd.Totalbytes = br.ReadUInt64BE();  // total byte size of the image
@@ -212,7 +212,7 @@ internal static class ChdHeaders
 
         chd.Totalblocks = (uint)((chd.Totalbytes + chd.Blocksize - 1) / chd.Blocksize);
 
-        var chdCompressed = chd.Compression[0] != chdCodec.Chdcodecnone;
+        var chdCompressed = chd.Compression[0] != ChdCodecType.None;
         chd.UncompressedMap = !chdCompressed;
 
         var err = chdCompressed ? compressed_v5_map(br, mapoffset, chd.Totalblocks, chd.Blocksize, unitbytes, out chd.Map) : uncompressed_v5_map(br, mapoffset, chd.Totalblocks, chd.Blocksize, out chd.Map);
