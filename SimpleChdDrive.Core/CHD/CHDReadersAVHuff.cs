@@ -33,11 +33,11 @@ internal static partial class ChdReaders
 
     */
 
-    internal static chd_error AvHuff(byte[] buffIn, int buffInLength, byte[] buffOut, int buffOutLength, ChdCodec codec)
+    internal static ChdError AvHuff(byte[] buffIn, int buffInLength, byte[] buffOut, int buffOutLength, ChdCodec codec)
     {
         // extract info from the header
         if (buffInLength < 8)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
         uint metaDataLength = buffIn[0];
         uint audioChannels = buffIn[1];
@@ -48,7 +48,7 @@ internal static partial class ChdReaders
         var sourceTotalSize = 10 + 2 * audioChannels;
         // validate that the sizes make sense
         if (buffInLength < sourceTotalSize)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
         sourceTotalSize += metaDataLength;
 
@@ -66,7 +66,7 @@ internal static partial class ChdReaders
         }
 
         if (sourceTotalSize >= buffInLength)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
         // starting offsets of source data
         var buffInIndex = 10 + 2 * audioChannels;
@@ -110,7 +110,7 @@ internal static partial class ChdReaders
         {
             // decode the audio
             var err = DecodeAudio(audioChannels, audioSamplesPerBlock, buffIn, buffInIndex, audioHuffmanTreeSize, audioChannelCompressedSize, buffOut, audioChannelDestStart, codec);
-            if (err != chd_error.CHDERR_NONE)
+            if (err != ChdError.Chderrnone)
                 return err;
 
             // advance the pointers past the data
@@ -131,7 +131,7 @@ internal static partial class ChdReaders
             var videostride = 2 * videoWidth;
             // decode the video
             var err = DecodeVideo(videoWidth, videoHeight, buffIn, buffInIndex, (uint)buffInLength - buffInIndex, buffOut, videoDestStart, videostride, codec);
-            if (err != chd_error.CHDERR_NONE)
+            if (err != ChdError.Chderrnone)
                 return err;
         }
 
@@ -141,11 +141,11 @@ internal static partial class ChdReaders
             buffOut[index] = 0;
         }
 
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 
 
-    private static chd_error DecodeAudio(uint channels, uint samples, byte[] buffIn, uint buffInOffset, uint treesize, uint?[] audioChannelCompressedSize, byte[] buffOut, uint?[] audioChannelDestStart, ChdCodec codec)
+    private static ChdError DecodeAudio(uint channels, uint samples, byte[] buffIn, uint buffInOffset, uint treesize, uint?[] audioChannelCompressedSize, byte[] buffOut, uint?[] audioChannelDestStart, ChdCodec codec)
     {
         // if the tree size is 0xffff, the streams are FLAC-encoded
         if (treesize == 0xffff)
@@ -196,7 +196,7 @@ internal static partial class ChdReaders
                 // advance to the next channel's data
                 buffInOffset += sourceSize;
             }
-            return chd_error.CHDERR_NONE;
+            return ChdError.Chderrnone;
         }
 
 
@@ -222,12 +222,12 @@ internal static partial class ChdReaders
 
             var hufferr = mAudiohiDecoder.ImportTreeRLE();
             if (hufferr != huffman_error.HUFFERR_NONE)
-                return chd_error.CHDERR_INVALID_DATA;
+                return ChdError.Chderrinvaliddata;
 
             bitbuf.flush();
             hufferr = mAudioloDecoder.ImportTreeRLE();
             if (hufferr != huffman_error.HUFFERR_NONE || bitbuf.flush() != treesize)
-                return chd_error.CHDERR_INVALID_DATA;
+                return ChdError.Chderrinvaliddata;
 
             buffInOffset += treesize;
         }
@@ -278,17 +278,17 @@ internal static partial class ChdReaders
                         curdest += 2;
                     }
                     if (bitbuf.overflow())
-                        return chd_error.CHDERR_INVALID_DATA;
+                        return ChdError.Chderrinvaliddata;
                 }
             }
 
             // advance to the next channel's data
             buffInOffset += audioChannelCompressedSize[chnum]!.Value;
         }
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 
-    private static chd_error DecodeVideo(uint width, uint height, byte[] buffIn, uint buffInOffset, uint buffInLength, byte[] buffOut, uint buffOutOffset, uint dstride, ChdCodec codec)
+    private static ChdError DecodeVideo(uint width, uint height, byte[] buffIn, uint buffInOffset, uint buffInLength, byte[] buffOut, uint buffOutOffset, uint dstride, ChdCodec codec)
     {
         // The first video byte is MAME AVHuff's video-encoding marker. The high
         // bit (0x80) signals that the video stream is Huffman(+RLE) encoded, which
@@ -298,7 +298,7 @@ internal static partial class ChdReaders
         // (Note: libchdr 0.3.0 does not implement AVHuff at all, so there is no
         // additional "lossy" path to port - this is already the complete decode.)
         if ((buffIn[buffInOffset] & 0x80) == 0)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
         // skip the first byte
         var bitbuf = new BitStream(buffIn, (int)buffInOffset, (int)buffInLength);
@@ -326,17 +326,17 @@ internal static partial class ChdReaders
         // import the tables
         var hufferr = mYcontext.ImportTreeRLE();
         if (hufferr != huffman_error.HUFFERR_NONE)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
         bitbuf.flush();
         hufferr = mCbcontext.ImportTreeRLE();
         if (hufferr != huffman_error.HUFFERR_NONE)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
         bitbuf.flush();
         hufferr = mCrcontext.ImportTreeRLE();
         if (hufferr != huffman_error.HUFFERR_NONE)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
         bitbuf.flush();
 
@@ -363,9 +363,9 @@ internal static partial class ChdReaders
 
         // check for errors if we overflowed or decoded too little data
         if (bitbuf.overflow() || bitbuf.flush() != buffInLength)
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
 
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 }
 

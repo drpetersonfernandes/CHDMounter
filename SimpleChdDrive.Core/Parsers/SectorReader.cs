@@ -181,7 +181,7 @@ public class SectorReader
         {
             var buffer = new byte[hunkBytes];
             var err = _chd.ReadHunk(hunkNum, buffer);
-            if (err != chd_error.CHDERR_NONE)
+            if (err != ChdError.Chderrnone)
                 return false;
 
             if (needsSwap)
@@ -483,7 +483,7 @@ public class SectorReader
                     var offsetInHunk = track.ChdOffset % sectorsPerHunk * chd.UnitBytes;
 
                     var firstHunk = new byte[chd.HunkBytes];
-                    if (chd.ReadHunk(hunkNum, firstHunk) == chd_error.CHDERR_NONE &&
+                    if (chd.ReadHunk(hunkNum, firstHunk) == ChdError.Chderrnone &&
                         (int)(offsetInHunk + 12) <= firstHunk.Length)
                     {
                         var swappedSync = new byte[12];

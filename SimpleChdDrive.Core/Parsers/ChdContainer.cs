@@ -40,7 +40,7 @@ public class ChdContainer
         ConsoleType = consoleType;
 
         var err = ChdFile.Open(_chdPath, out var chd);
-        if (err != chd_error.CHDERR_NONE)
+        if (err != ChdError.Chderrnone)
             return false;
 
         _primaryChd = chd;
@@ -412,7 +412,7 @@ public class ChdContainer
         if (_primaryChd == null) return 0;
 
         var err = _primaryChd.Read(offset, buffer, bufOffset, bytesToRead);
-        return err == chd_error.CHDERR_NONE ? bytesToRead : 0;
+        return err == ChdError.Chderrnone ? bytesToRead : 0;
     }
 
     private SectorReader AcquireReader()

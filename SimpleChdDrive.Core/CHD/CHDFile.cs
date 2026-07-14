@@ -85,9 +85,9 @@ public sealed class ChdFile : IDisposable
 
     /// <summary>
     /// Opens a standalone CHD file from disk for random access. Fails with
-    /// <see cref="chd_error.CHDERR_REQUIRES_PARENT"/> if the file is a child CHD.
+    /// <see cref="ChdError.Chderrrequiresparent"/> if the file is a child CHD.
     /// </summary>
-    public static chd_error Open(string filename, out ChdFile chdFile)
+    public static ChdError Open(string filename, out ChdFile chdFile)
     {
         return Open(filename, (ChdFile)null, out chdFile);
     }
@@ -97,7 +97,7 @@ public sealed class ChdFile : IDisposable
     /// against the parent CHD at <paramref name="parentFilename"/>. The parent is
     /// opened internally and disposed together with the returned instance.
     /// </summary>
-    public static chd_error Open(string filename, string parentFilename, out ChdFile chdFile)
+    public static ChdError Open(string filename, string parentFilename, out ChdFile chdFile)
     {
         chdFile = null;
 
@@ -105,12 +105,12 @@ public sealed class ChdFile : IDisposable
         if (!string.IsNullOrEmpty(parentFilename))
         {
             var perr = Open(parentFilename, (ChdFile)null, out parent);
-            if (perr != chd_error.CHDERR_NONE)
+            if (perr != ChdError.Chderrnone)
                 return perr;
         }
 
         var err = Open(filename, parent, out chdFile);
-        if (err != chd_error.CHDERR_NONE)
+        if (err != ChdError.Chderrnone)
         {
             parent?.Dispose();
             return err;
@@ -122,7 +122,7 @@ public sealed class ChdFile : IDisposable
             chdFile._ownsParent = true;
         }
 
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 
     /// <summary>
@@ -131,11 +131,11 @@ public sealed class ChdFile : IDisposable
     /// ownership of <paramref name="parent"/> (it is not disposed by this
     /// instance). Pass null for a standalone CHD.
     /// </summary>
-    public static chd_error Open(string filename, ChdFile parent, out ChdFile chdFile)
+    public static ChdError Open(string filename, ChdFile parent, out ChdFile chdFile)
     {
         chdFile = null;
         if (!File.Exists(filename))
-            return chd_error.CHDERR_FILE_NOT_FOUND;
+            return ChdError.Chderrfilenotfound;
 
         FileStream fs;
         try
@@ -144,11 +144,11 @@ public sealed class ChdFile : IDisposable
         }
         catch
         {
-            return chd_error.CHDERR_CANNOT_OPEN_FILE;
+            return ChdError.Chderrcannotopenfile;
         }
 
         var err = Open(fs, false, parent, out chdFile);
-        if (err != chd_error.CHDERR_NONE)
+        if (err != ChdError.Chderrnone)
             fs.Dispose();
         return err;
     }
@@ -159,7 +159,7 @@ public sealed class ChdFile : IDisposable
     /// <param name="stream">Seekable, readable stream positioned anywhere; it will be seeked as needed.</param>
     /// <param name="leaveOpen">If false, the stream is disposed when this instance is disposed.</param>
     /// <param name="chdFile"></param>
-    public static chd_error Open(Stream stream, bool leaveOpen, out ChdFile chdFile)
+    public static ChdError Open(Stream stream, bool leaveOpen, out ChdFile chdFile)
     {
         return Open(stream, leaveOpen, null, out chdFile);
     }
@@ -168,17 +168,17 @@ public sealed class ChdFile : IDisposable
     /// Opens a (possibly child) CHD from an existing seekable stream, resolving
     /// parent references against <paramref name="parent"/> (null = standalone).
     /// </summary>
-    public static chd_error Open(Stream stream, bool leaveOpen, ChdFile parent, out ChdFile chdFile)
+    public static ChdError Open(Stream stream, bool leaveOpen, ChdFile parent, out ChdFile chdFile)
     {
         chdFile = null;
         if (stream is not { CanRead: true } || !stream.CanSeek)
-            return chd_error.CHDERR_INVALID_PARAMETER;
+            return ChdError.Chderrinvalidparameter;
 
         stream.Seek(0, SeekOrigin.Begin);
         if (!Chd.CheckHeader(stream, out _, out var version))
-            return chd_error.CHDERR_INVALID_FILE;
+            return ChdError.Chderrinvalidfile;
 
-        chd_error valid;
+        ChdError valid;
         ChdHeader chd;
         try
         {
@@ -189,25 +189,25 @@ public sealed class ChdFile : IDisposable
                 case 3: valid = ChdHeaders.ReadHeaderV3(stream, out chd); break;
                 case 4: valid = ChdHeaders.ReadHeaderV4(stream, out chd); break;
                 case 5: valid = ChdHeaders.ReadHeaderV5(stream, out chd); break;
-                default: return chd_error.CHDERR_UNSUPPORTED_VERSION;
+                default: return ChdError.Chderrunsupportedversion;
             }
         }
         catch
         {
-            return chd_error.CHDERR_INVALID_DATA;
+            return ChdError.Chderrinvaliddata;
         }
 
-        if (valid != chd_error.CHDERR_NONE)
+        if (valid != ChdError.Chderrnone)
             return valid;
 
         var needsParent = !Util.IsAllZeroArray(chd.Parentmd5) || !Util.IsAllZeroArray(chd.Parentsha1);
         if (needsParent)
         {
             if (parent == null)
-                return chd_error.CHDERR_REQUIRES_PARENT;
+                return ChdError.Chderrrequiresparent;
 
             var verr = ValidateParent(chd, parent._chd);
-            if (verr != chd_error.CHDERR_NONE)
+            if (verr != ChdError.Chderrnone)
                 return verr;
         }
 
@@ -221,35 +221,35 @@ public sealed class ChdFile : IDisposable
 
         chdFile = new ChdFile(stream, leaveOpen, chd, version);
         chdFile._parent = needsParent ? parent : null;
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 
     // Parent hash validation, matching libchdr: a check passes if the child's
     // stored hash is all-zero, OR the parent's hash is all-zero, OR they match.
-    private static chd_error ValidateParent(ChdHeader child, ChdHeader parent)
+    private static ChdError ValidateParent(ChdHeader child, ChdHeader parent)
     {
         var childMd5 = child.Parentmd5;
         var parentMd5 = parent.Md5;
         if (childMd5 != null && parentMd5 != null &&
             !Util.IsAllZeroArray(childMd5) && !Util.IsAllZeroArray(parentMd5) &&
             !Util.ByteArrEquals(childMd5, parentMd5))
-            return chd_error.CHDERR_INVALID_PARENT;
+            return ChdError.Chderrinvalidparent;
 
         var childSha1 = child.Parentsha1;
         var parentSha1 = parent.Sha1 ?? parent.Rawsha1;
         if (childSha1 != null && parentSha1 != null &&
             !Util.IsAllZeroArray(childSha1) && !Util.IsAllZeroArray(parentSha1) &&
             !Util.ByteArrEquals(childSha1, parentSha1))
-            return chd_error.CHDERR_INVALID_PARENT;
+            return ChdError.Chderrinvalidparent;
 
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 
     private static void LinkSelfBlocks(ChdHeader chd)
     {
         foreach (var me in chd.Map)
         {
-            if (me.Comptype == compression_type.COMPRESSION_SELF)
+            if (me.Comptype == CompressionType.Compressionself)
             {
                 me.SelfMapEntry = chd.Map[me.Offset];
             }
@@ -261,22 +261,22 @@ public sealed class ChdFile : IDisposable
     /// </summary>
     /// <param name="hunknum">Zero-based hunk index.</param>
     /// <param name="buffer">Destination buffer of at least <see cref="HunkBytes"/> bytes.</param>
-    public chd_error ReadHunk(uint hunknum, byte[] buffer)
+    public ChdError ReadHunk(uint hunknum, byte[] buffer)
     {
         if (hunknum >= _chd.Totalblocks)
-            return chd_error.CHDERR_HUNK_OUT_OF_RANGE;
+            return ChdError.Chderrhunkoutofrange;
         if (buffer == null || buffer.Length < _chd.Blocksize)
-            return chd_error.CHDERR_INVALID_PARAMETER;
+            return ChdError.Chderrinvalidparameter;
 
         var me = _chd.Map[hunknum];
 
         // Parent-referenced hunk: resolve against the parent CHD.
-        if (me.Comptype == compression_type.COMPRESSION_PARENT)
+        if (me.Comptype == CompressionType.Compressionparent)
             return ReadParentHunk(me, buffer);
 
         // Resolve the entry that actually holds compressed data (follow SELF links).
         var dataEntry = me;
-        while (dataEntry.Comptype == compression_type.COMPRESSION_SELF && dataEntry.SelfMapEntry != null)
+        while (dataEntry.Comptype == CompressionType.Compressionself && dataEntry.SelfMapEntry != null)
         {
             dataEntry = dataEntry.SelfMapEntry;
         }
@@ -300,7 +300,7 @@ public sealed class ChdFile : IDisposable
         }
         catch
         {
-            return chd_error.CHDERR_DECOMPRESSION_ERROR;
+            return ChdError.Chderrdecompressionerror;
         }
         finally
         {
@@ -321,10 +321,10 @@ public sealed class ChdFile : IDisposable
     // Note: parent map entries carry no per-hunk CRC of their own (the map slot
     // holds the offset instead), so no CRC check is done here - matching libchdr,
     // which only verifies block CRCs for compressed/uncompressed entries.
-    private chd_error ReadParentHunk(MapEntry me, byte[] buffer)
+    private ChdError ReadParentHunk(MapEntry me, byte[] buffer)
     {
         if (_parent == null)
-            return chd_error.CHDERR_REQUIRES_PARENT;
+            return ChdError.Chderrrequiresparent;
 
         var unitbytes = _chd.Unitbytes;
         var hunkbytes = _chd.Blocksize;
@@ -335,7 +335,7 @@ public sealed class ChdFile : IDisposable
         if (directIndex || unitbytes == 0 || unitbytes == hunkbytes)
         {
             if (me.Offset >= _parent.HunkCount)
-                return chd_error.CHDERR_INVALID_PARENT;
+                return ChdError.Chderrinvalidparent;
 
             return _parent.ReadHunk((uint)me.Offset, buffer);
         }
@@ -349,20 +349,20 @@ public sealed class ChdFile : IDisposable
         if (unitInHunk == 0)
         {
             if (parentHunk >= _parent.HunkCount)
-                return chd_error.CHDERR_INVALID_PARENT;
+                return ChdError.Chderrinvalidparent;
 
             return _parent.ReadHunk((uint)parentHunk, buffer);
         }
 
         // Unaligned: stitch two adjacent parent hunks at the unit boundary.
         if (parentHunk + 1 >= _parent.HunkCount)
-            return chd_error.CHDERR_INVALID_PARENT;
+            return ChdError.Chderrinvalidparent;
 
         _parentScratch ??= new byte[hunkbytes];
 
         // First part: tail of parent hunk 'parentHunk'.
         var e1 = _parent.ReadHunk((uint)parentHunk, _parentScratch);
-        if (e1 != chd_error.CHDERR_NONE)
+        if (e1 != ChdError.Chderrnone)
             return e1;
 
         var firstBytes = (int)((unitsInHunk - unitInHunk) * unitbytes);
@@ -370,13 +370,13 @@ public sealed class ChdFile : IDisposable
 
         // Second part: head of parent hunk 'parentHunk + 1'.
         var e2 = _parent.ReadHunk((uint)parentHunk + 1, _parentScratch);
-        if (e2 != chd_error.CHDERR_NONE)
+        if (e2 != ChdError.Chderrnone)
             return e2;
 
         var secondBytes = (int)(unitInHunk * unitbytes);
         Array.Copy(_parentScratch, 0, buffer, firstBytes, secondBytes);
 
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 
     /// <summary>
@@ -384,11 +384,11 @@ public sealed class ChdFile : IDisposable
     /// at <paramref name="byteOffset"/>, decompressing hunks on demand. A single
     /// hunk is cached so sequential reads within the same hunk avoid re-decoding.
     /// </summary>
-    public chd_error Read(ulong byteOffset, byte[] destination, int destinationOffset, int count)
+    public ChdError Read(ulong byteOffset, byte[] destination, int destinationOffset, int count)
     {
         if (destination == null || destinationOffset < 0 || count < 0 ||
             destinationOffset + count > destination.Length || byteOffset + (ulong)count > _chd.Totalbytes)
-            return chd_error.CHDERR_INVALID_PARAMETER;
+            return ChdError.Chderrinvalidparameter;
 
         _hunkBuffer ??= new byte[_chd.Blocksize];
 
@@ -401,7 +401,7 @@ public sealed class ChdFile : IDisposable
             if (hunk != _cachedHunk)
             {
                 var err = ReadHunk((uint)hunk, _hunkBuffer);
-                if (err != chd_error.CHDERR_NONE)
+                if (err != ChdError.Chderrnone)
                 {
                     _cachedHunk = -1;
                     return err;
@@ -415,7 +415,7 @@ public sealed class ChdFile : IDisposable
             count -= chunk;
         }
 
-        return chd_error.CHDERR_NONE;
+        return ChdError.Chderrnone;
     }
 
     /// <summary>
