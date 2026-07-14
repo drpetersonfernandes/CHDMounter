@@ -37,7 +37,7 @@ public unsafe class FlacFrame
         {
             for (i = 0; i < 15; i++)
             {
-                if (bs == FlakeConstants.flac_blocksizes[i])
+                if (bs == FlakeConstants.FlacBlocksizes[i])
                 {
                     BsCode0 = i;
                     BsCode1 = -1;

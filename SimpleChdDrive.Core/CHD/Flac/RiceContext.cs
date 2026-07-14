@@ -4,8 +4,8 @@ public class RiceContext
 {
     public RiceContext()
     {
-        rparams = new int[FlakeConstants.MAX_PARTITIONS];
-        esc_bps = new int[FlakeConstants.MAX_PARTITIONS];
+        rparams = new int[FlakeConstants.MaxPartitions];
+        esc_bps = new int[FlakeConstants.MaxPartitions];
     }
     /// <summary>
     /// partition order

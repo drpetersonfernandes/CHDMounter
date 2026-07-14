@@ -2,131 +2,126 @@ namespace SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 
 public class Lpc
 {
-    public const int MAX_LPC_ORDER = 32;
-    public const int MAX_LPC_WINDOWS = 16;
-    public const int MAX_LPC_PRECISIONS = 4;
-    public const int MAX_LPC_SECTIONS = 128;
+    public const int MaxLpcOrder = 32;
+    public const int MaxLpcWindows = 16;
+    public const int MaxLpcPrecisions = 4;
+    public const int MaxLpcSections = 128;
 
-    public static unsafe void window_welch(float* window, int L)
+    public static unsafe void window_welch(float* window, int l)
     {
-        var N = L - 1;
-        var N2 = N / 2.0;
+        var nMax = l - 1;
+        var n2 = nMax / 2.0;
 
-        for (var n = 0; n <= N; n++)
+        for (var n = 0; n <= nMax; n++)
         {
-            var k = (n - N2) / N2;
+            var k = (n - n2) / n2;
             k = 1.0 - k * k;
             window[n] = (float)k;
         }
     }
 
-    public static unsafe void window_bartlett(float* window, int L)
+    public static unsafe void window_bartlett(float* window, int l)
     {
-        var N = L - 1;
-        var N2 = N / 2.0;
-        for (var n = 0; n <= N; n++)
+        var nMax = l - 1;
+        var n2 = nMax / 2.0;
+        for (var n = 0; n <= nMax; n++)
         {
-            var k = (n - N2) / N2;
+            var k = (n - n2) / n2;
             k = 1.0 - k * k;
             window[n] = (float)(k * k);
         }
     }
 
-    public static unsafe void window_rectangle(float* window, int L)
+    public static unsafe void window_rectangle(float* window, int l)
     {
-        for (var n = 0; n < L; n++)
+        for (var n = 0; n < l; n++)
         {
             window[n] = 1.0F;
         }
     }
 
-    public static unsafe void window_flattop(float* window, int L)
+    public static unsafe void window_flattop(float* window, int l)
     {
-        var N = L - 1;
-        for (var n = 0; n < L; n++)
+        var nMax = l - 1;
+        for (var n = 0; n < l; n++)
         {
-            window[n] = (float)(1.0 - 1.93 * Math.Cos(2.0 * Math.PI * n / N) + 1.29 * Math.Cos(4.0 * Math.PI * n / N) - 0.388 * Math.Cos(6.0 * Math.PI * n / N) + 0.0322 * Math.Cos(8.0 * Math.PI * n / N));
+            window[n] = (float)(1.0 - 1.93 * Math.Cos(2.0 * Math.PI * n / nMax) + 1.29 * Math.Cos(4.0 * Math.PI * n / nMax) - 0.388 * Math.Cos(6.0 * Math.PI * n / nMax) + 0.0322 * Math.Cos(8.0 * Math.PI * n / nMax));
         }
     }
 
-    public static unsafe void window_tukey(float* window, int L, double p)
+    public static unsafe void window_tukey(float* window, int l, double p)
     {
-        var z = 0;
-        var Np = (int)(p / 2.0 * L) - z;
-        if (Np > 0)
+        const int z = 0;
+        var np = (int)(p / 2.0 * l) - z;
+        if (np > 0)
         {
-            for (var n = 0; n < z; n++)
+            for (var n = 0; n < np - 1; n++)
             {
-                window[n] = window[L - n - 1] = 0;
+                window[n + z] = window[l - n - 1 - z] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * (n + 1) / np));
             }
 
-            for (var n = 0; n < Np - 1; n++)
-            {
-                window[n + z] = window[L - n - 1 - z] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * (n + 1) / Np));
-            }
-
-            for (var n = z + Np - 1; n < L - z - Np + 1; n++)
+            for (var n = z + np - 1; n < l - z - np + 1; n++)
             {
                 window[n] = 1.0F;
             }
         }
     }
 
-    public static unsafe void window_punchout_tukey(float* window, int L, double p, double p1, double start, double end)
+    public static unsafe void window_punchout_tukey(float* window, int l, double p, double p1, double start, double end)
     {
-        var start_n = (int)(start * L);
-        var end_n = (int)(end * L);
-        var Np = (int)(p / 2.0 * L);
-        var Np1 = (int)(p1 / 2.0 * L);
+        var startN = (int)(start * l);
+        var endN = (int)(end * l);
+        var np = (int)(p / 2.0 * l);
+        var np1 = (int)(p1 / 2.0 * l);
         int i, n = 0;
 
-        if (start_n != 0)
+        if (startN != 0)
         {
-            for (i = 1; n < Np; n++, i++)
+            for (i = 1; n < np; n++, i++)
             {
-                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / Np));
+                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / np));
             }
 
-            for (; n < start_n - Np1; n++)
+            for (; n < startN - np1; n++)
             {
                 window[n] = 1.0f;
             }
 
-            for (i = Np1; n < start_n; n++, i--)
+            for (i = np1; n < startN; n++, i--)
             {
-                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / Np1));
+                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / np1));
             }
         }
-        for (; n < end_n; n++)
+        for (; n < endN; n++)
         {
             window[n] = 0.0f;
         }
 
-        if (end_n != L)
+        if (endN != l)
         {
-            for (i = 1; n < end_n + Np1; n++, i++)
+            for (i = 1; n < endN + np1; n++, i++)
             {
-                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / Np1));
+                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / np1));
             }
 
-            for (; n < L - Np; n++)
+            for (; n < l - np; n++)
             {
                 window[n] = 1.0f;
             }
 
-            for (i = Np; n < L; n++, i--)
+            for (i = np; n < l; n++, i--)
             {
-                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / Np));
+                window[n] = (float)(0.5 - 0.5 * Math.Cos(Math.PI * i / np));
             }
         }
     }
 
-    public static unsafe void window_hann(float* window, int L)
+    public static unsafe void window_hann(float* window, int l)
     {
-        var N = L - 1;
-        for (var n = 0; n < L; n++)
+        var nMax = l - 1;
+        for (var n = 0; n < l; n++)
         {
-            window[n] = (float)(0.5 - 0.5 * Math.Cos(2.0 * Math.PI * n / N));
+            window[n] = (float)(0.5 - 0.5 * Math.Cos(2.0 * Math.PI * n / nMax));
         }
     }
 
@@ -162,15 +157,15 @@ public class Lpc
      * A window function is applied before calculation.
      */
     public static unsafe void
-        compute_autocorr(/*const*/ int* data, float* window, int len, int min, int lag, double* autoc)
+        compute_autocorr( /*const*/ int* data, float* window, int len, int min, int lag, double* autoc)
     {
 #if FPAC
             short* data1 = stackalloc short[len + 1];
             short* data2 = stackalloc short[len + 1];
-            int* c1 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
-            int* c2 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
-            int* c3 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
-            int* c4 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
+            int* c1 = stackalloc int[Lpc.MaxLpcOrder + 1];
+            int* c2 = stackalloc int[Lpc.MaxLpcOrder + 1];
+            int* c3 = stackalloc int[Lpc.MaxLpcOrder + 1];
+            int* c4 = stackalloc int[Lpc.MaxLpcOrder + 1];
 
             for (int i = 0; i < len; i++)
             {
@@ -282,7 +277,7 @@ public class Lpc
     }
 
     public static unsafe void
-        compute_autocorr_windowless(/*const*/ int* data, int len, int min, int lag, double* autoc)
+        compute_autocorr_windowless( /*const*/ int* data, int len, int min, int lag, double* autoc)
     {
         // if databits*2 + log2(len) <= 64
 #if !XXX
@@ -376,7 +371,7 @@ public class Lpc
     }
 
     public static unsafe void
-        compute_autocorr_windowless_large(/*const*/ int* data, int len, int min, int lag, double* autoc)
+        compute_autocorr_windowless_large( /*const*/ int* data, int len, int min, int lag, double* autoc)
     {
         for (var i = min; i <= lag; ++i)
         {
@@ -399,7 +394,7 @@ public class Lpc
     }
 
     public static unsafe void
-        compute_autocorr_glue(/*const*/ int* data, float* window, int offs, int offs1, int min, int lag, double* autoc)
+        compute_autocorr_glue( /*const*/ int* data, float* window, int offs, int offs1, int min, int lag, double* autoc)
     {
         var data1 = stackalloc double[lag + lag];
         for (var i = -lag; i < lag; i++)
@@ -422,7 +417,7 @@ public class Lpc
     }
 
     public static unsafe void
-        compute_autocorr_glue(/*const*/ int* data, int min, int lag, double* autoc)
+        compute_autocorr_glue( /*const*/ int* data, int min, int lag, double* autoc)
     {
         for (var i = min; i <= lag; ++i)
         {
@@ -443,51 +438,51 @@ public class Lpc
      * Produces LPC coefficients from autocorrelation data.
      */
     public static unsafe void
-        compute_lpc_coefs(uint max_order, double* reff, float* lpc/*[][MAX_LPC_ORDER]*/)
+        compute_lpc_coefs(uint maxOrder, double* reff, float* lpc /*[][MaxLpcOrder]*/)
     {
-        var lpc_tmp = stackalloc double[MAX_LPC_ORDER];
+        var lpcTmp = stackalloc double[MaxLpcOrder];
 
-        if (max_order > MAX_LPC_ORDER)
-            throw new Exception("weird");
+        if (maxOrder > MaxLpcOrder)
+            throw new InvalidOperationException("weird");
 
-        for (var i = 0; i < max_order; i++)
+        for (var i = 0; i < maxOrder; i++)
         {
-            lpc_tmp[i] = 0;
+            lpcTmp[i] = 0;
         }
 
-        for (var i = 0; i < max_order; i++)
+        for (var i = 0; i < maxOrder; i++)
         {
             var r = reff[i];
             var i2 = i >> 1;
-            lpc_tmp[i] = r;
+            lpcTmp[i] = r;
             for (var j = 0; j < i2; j++)
             {
-                var tmp = lpc_tmp[j];
-                lpc_tmp[j] += r * lpc_tmp[i - 1 - j];
-                lpc_tmp[i - 1 - j] += r * tmp;
+                var tmp = lpcTmp[j];
+                lpcTmp[j] += r * lpcTmp[i - 1 - j];
+                lpcTmp[i - 1 - j] += r * tmp;
             }
 
             if (0 != (i & 1))
             {
-                lpc_tmp[i2] += lpc_tmp[i2] * r;
+                lpcTmp[i2] += lpcTmp[i2] * r;
             }
 
             for (var j = 0; j <= i; j++)
             {
-                lpc[i * MAX_LPC_ORDER + j] = (float)-lpc_tmp[j];
+                lpc[i * MaxLpcOrder + j] = (float)-lpcTmp[j];
             }
         }
     }
 
     public static unsafe void
-        compute_schur_reflection(/*const*/ double* autoc, uint max_order,
-            double* reff/*[][MAX_LPC_ORDER]*/, double* err)
+        compute_schur_reflection( /*const*/ double* autoc, uint maxOrder,
+            double* reff /*[][MaxLpcOrder]*/, double* err)
     {
-        var gen0 = stackalloc double[MAX_LPC_ORDER];
-        var gen1 = stackalloc double[MAX_LPC_ORDER];
+        var gen0 = stackalloc double[MaxLpcOrder];
+        var gen1 = stackalloc double[MaxLpcOrder];
 
         // Schur recursion
-        for (uint i = 0; i < max_order; i++)
+        for (uint i = 0; i < maxOrder; i++)
         {
             gen0[i] = gen1[i] = autoc[i + 1];
         }
@@ -496,9 +491,9 @@ public class Lpc
         reff[0] = -gen1[0] / error;
         error += gen1[0] * reff[0];
         err[0] = error;
-        for (uint i = 1; i < max_order; i++)
+        for (uint i = 1; i < maxOrder; i++)
         {
-            for (uint j = 0; j < max_order - i; j++)
+            for (uint j = 0; j < maxOrder - i; j++)
             {
                 gen1[j] = gen1[j + 1] + reff[i - 1] * gen0[j];
                 gen0[j] = gen1[j + 1] * reff[i - 1] + gen0[j];
@@ -513,41 +508,36 @@ public class Lpc
      * Quantize LPC coefficients
      */
     public static unsafe void
-        quantize_lpc_coefs(float* lpc_in, int order, uint precision, int* lpc_out,
-            out int shift, int max_shift, int zero_shift)
+        quantize_lpc_coefs(float* lpcIn, int order, uint precision, int* lpcOut,
+            out int shift, int maxShift, int zeroShift)
     {
-        int i;
-        float d, cmax, error;
-        int qmax;
-        int sh, q;
-
         // define maximum levels
-        qmax = (1 << ((int)precision - 1)) - 1;
+        var qmax = (1 << ((int)precision - 1)) - 1;
 
         // find maximum coefficient value
-        cmax = 0.0F;
-        for (i = 0; i < order; i++)
+        var cmax = 0.0F;
+        for (int i = 0; i < order; i++)
         {
-            d = Math.Abs(lpc_in[i]);
+            float d = Math.Abs(lpcIn[i]);
             if (d > cmax)
             {
                 cmax = d;
             }
         }
         // if maximum value quantizes to zero, return all zeros
-        if (cmax * (1 << max_shift) < 1.0)
+        if (cmax * (1 << maxShift) < 1.0)
         {
-            shift = zero_shift;
-            for (i = 0; i < order; i++)
+            shift = zeroShift;
+            for (int i = 0; i < order; i++)
             {
-                lpc_out[i] = 0;
+                lpcOut[i] = 0;
             }
 
             return;
         }
 
         // calculate level shift which scales max coeff to available bits
-        sh = max_shift;
+        var sh = maxShift;
         while (cmax * (1 << sh) > qmax && sh > 0)
         {
             sh--;
@@ -558,18 +548,18 @@ public class Lpc
         if (sh == 0 && cmax > qmax)
         {
             var scale = qmax / cmax;
-            for (i = 0; i < order; i++)
+            for (int i = 0; i < order; i++)
             {
-                lpc_in[i] *= scale;
+                lpcIn[i] *= scale;
             }
         }
 
         // output quantized coefficients and level shift
-        error = 0;
-        for (i = 0; i < order; i++)
+        float error = 0;
+        for (int i = 0; i < order; i++)
         {
-            error += lpc_in[i] * (1 << sh);
-            q = (int)(error + 0.5);
+            error += lpcIn[i] * (1 << sh);
+            int q = (int)(error + 0.5);
             if (q < -(qmax + 1))
             {
                 q = -(qmax + 1);
@@ -581,13 +571,13 @@ public class Lpc
             }
 
             error -= q;
-            lpc_out[i] = q;
+            lpcOut[i] = q;
         }
         shift = sh;
     }
 
     private static unsafe ulong
-        encode_residual_partition(int* s, int* r, int* seg_end, int* coefs, int shift, int order)
+        encode_residual_partition(int* s, int* r, int* segEnd, int* coefs, int shift, int order)
     {
         var sum = 0ul;
         var c0 = coefs[0];
@@ -595,7 +585,7 @@ public class Lpc
         switch (order)
         {
             case 1:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = c0 * *s++;
                     //*(r++) = *s - (pred >> shift);
@@ -604,7 +594,7 @@ public class Lpc
                 }
                 break;
             case 2:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = c1 * *s++;
                     pred += c0 * *s++;
@@ -613,7 +603,7 @@ public class Lpc
                 }
                 break;
             case 3:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = coefs[2] * *s++ +
                                c1 * *s++ + c0 * *s++;
@@ -623,7 +613,7 @@ public class Lpc
                 }
                 break;
             case 4:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -635,7 +625,7 @@ public class Lpc
                 }
                 break;
             case 5:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -648,7 +638,7 @@ public class Lpc
                 }
                 break;
             case 6:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -661,7 +651,7 @@ public class Lpc
                 }
                 break;
             case 7:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -675,7 +665,7 @@ public class Lpc
                 }
                 break;
             case 8:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -689,7 +679,7 @@ public class Lpc
                 }
                 break;
             case 9:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -704,7 +694,7 @@ public class Lpc
                 }
                 break;
             case 10:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -719,7 +709,7 @@ public class Lpc
                 }
                 break;
             case 11:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -735,7 +725,7 @@ public class Lpc
                 }
                 break;
             case 12:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var c = coefs + order - 1;
                     var pred =
@@ -751,7 +741,7 @@ public class Lpc
                 }
                 break;
             default:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = 0;
                     var c = coefs + order - 1;
@@ -787,20 +777,20 @@ public class Lpc
         }
 
         var s = smp;
-        var s_end = smp + n - order;
-        var seg_end = s + (n >> pmax) - order;
+        var sEnd = smp + n - order;
+        var segEnd = s + (n >> pmax) - order;
         var r = res + order;
-        while (s < s_end)
+        while (s < sEnd)
         {
-            *sums++ = encode_residual_partition(s, r, seg_end, coefs, shift, order);
-            r += seg_end - s;
-            s = seg_end;
-            seg_end += n >> pmax;
+            *sums++ = encode_residual_partition(s, r, segEnd, coefs, shift, order);
+            r += segEnd - s;
+            s = segEnd;
+            segEnd += n >> pmax;
         }
     }
 
     private static unsafe ulong
-        encode_residual_long_partition(int* s, int* r, int* seg_end, int* coefs, int shift, int order)
+        encode_residual_long_partition(int* s, int* r, int* segEnd, int* coefs, int shift, int order)
     {
         var sum = 0ul;
         var c0 = coefs[0];
@@ -808,7 +798,7 @@ public class Lpc
         switch (order)
         {
             case 1:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = c0 * (long)*s++;
                     var d = *r++ = *s - (int)(pred >> shift);
@@ -816,7 +806,7 @@ public class Lpc
                 }
                 break;
             case 2:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = c1 * (long)*s++;
                     pred += c0 * (long)*s++;
@@ -825,7 +815,7 @@ public class Lpc
                 }
                 break;
             case 3:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = coefs[2] * (long)*s++;
                     pred += c1 * (long)*s++;
@@ -836,7 +826,7 @@ public class Lpc
                 }
                 break;
             case 4:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = coefs[3] * (long)*s++;
                     pred += coefs[2] * (long)*s++;
@@ -848,7 +838,7 @@ public class Lpc
                 }
                 break;
             case 5:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = coefs[4] * (long)*s++;
                     pred += coefs[3] * (long)*s++;
@@ -861,7 +851,7 @@ public class Lpc
                 }
                 break;
             case 6:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = coefs[5] * (long)*s++;
                     pred += coefs[4] * (long)*s++;
@@ -875,7 +865,7 @@ public class Lpc
                 }
                 break;
             case 7:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = coefs[6] * (long)*s++;
                     pred += coefs[5] * (long)*s++;
@@ -890,7 +880,7 @@ public class Lpc
                 }
                 break;
             case 8:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     var pred = coefs[7] * (long)*s++;
                     pred += coefs[6] * (long)*s++;
@@ -906,7 +896,7 @@ public class Lpc
                 }
                 break;
             default:
-                while (s < seg_end)
+                while (s < segEnd)
                 {
                     long pred = 0;
                     var co = coefs + order - 1;
@@ -943,15 +933,15 @@ public class Lpc
         }
 
         var s = smp;
-        var s_end = smp + n - order;
-        var seg_end = s + (n >> pmax) - order;
+        var sEnd = smp + n - order;
+        var segEnd = s + (n >> pmax) - order;
         var r = res + order;
-        while (s < s_end)
+        while (s < sEnd)
         {
-            *sums++ = encode_residual_long_partition(s, r, seg_end, coefs, shift, order);
-            r += seg_end - s;
-            s = seg_end;
-            seg_end += n >> pmax;
+            *sums++ = encode_residual_long_partition(s, r, segEnd, coefs, shift, order);
+            r += segEnd - s;
+            s = segEnd;
+            segEnd += n >> pmax;
         }
     }
 

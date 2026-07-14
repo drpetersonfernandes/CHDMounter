@@ -9,8 +9,8 @@ public unsafe class FlacSubframeInfo
         best = new FlacSubframe();
         sf = new LpcSubframeInfo();
         best_fixed = new ulong[5];
-        lpc_ctx = new LpcContext[Lpc.MAX_LPC_WINDOWS];
-        for (var i = 0; i < Lpc.MAX_LPC_WINDOWS; i++)
+        lpc_ctx = new LpcContext[Lpc.MaxLpcWindows];
+        for (var i = 0; i < Lpc.MaxLpcWindows; i++)
         {
             lpc_ctx[i] = new LpcContext();
         }
@@ -33,7 +33,7 @@ public unsafe class FlacSubframeInfo
         best.Type = SubframeType.Verbatim;
         best.Size = AudioSamples.Uint32Max;
         sf.Reset();
-        for (var iWindow = 0; iWindow < Lpc.MAX_LPC_WINDOWS; iWindow++)
+        for (var iWindow = 0; iWindow < Lpc.MaxLpcWindows; iWindow++)
             lpc_ctx[iWindow].Reset();
         //sf.obits = obits;
         done_fixed = 0;

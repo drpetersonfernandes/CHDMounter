@@ -88,8 +88,8 @@ public class AudioDecoder : IAudioSource
         if (Pcm.BitsPerSample != 16 && Pcm.BitsPerSample != 24)
             throw new AudioDecoderException("invalid flac file");
 
-        Samples = new int[FlakeConstants.MAX_BLOCKSIZE * Pcm.ChannelCount];
-        _residualBuffer = new int[FlakeConstants.MAX_BLOCKSIZE * Pcm.ChannelCount];
+        Samples = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
+        _residualBuffer = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
     }
 
     public AudioDecoder(AudioPcmConfig pcm)
@@ -97,8 +97,8 @@ public class AudioDecoder : IAudioSource
         Pcm = pcm;
         _crc8 = new Crc8();
 
-        Samples = new int[FlakeConstants.MAX_BLOCKSIZE * Pcm.ChannelCount];
-        _residualBuffer = new int[FlakeConstants.MAX_BLOCKSIZE * Pcm.ChannelCount];
+        Samples = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
+        _residualBuffer = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
         _frame = new FlacFrame(Pcm.ChannelCount);
         _framereader = new BitReader();
     }
@@ -182,13 +182,13 @@ public class AudioDecoder : IAudioSource
         {
             fixed (int* src = &Samples[_samplesBufferOffset])
             {
-                buff.Interlace(offset, src, src + FlakeConstants.MAX_BLOCKSIZE, count);
+                buff.Interlace(offset, src, src + FlakeConstants.MaxBlocksize, count);
             }
         }
         else
         {
             for (var ch = 0; ch < Pcm.ChannelCount; ch++)
-                fixed (int* res = &buff.Samples[offset, ch], src = &Samples[_samplesBufferOffset + ch * FlakeConstants.MAX_BLOCKSIZE])
+                fixed (int* res = &buff.Samples[offset, ch], src = &Samples[_samplesBufferOffset + ch * FlakeConstants.MaxBlocksize])
                 {
                     var psrc = src;
                     for (var i = 0; i < count; i++)
@@ -277,7 +277,7 @@ public class AudioDecoder : IAudioSource
         var srCode0 = bitreader.Readbits(4);
         frame.ChMode = (ChannelMode)bitreader.Readbits(4);
         var bpsCode = bitreader.Readbits(3);
-        if (FlakeConstants.flac_bitdepths[bpsCode] != Pcm.BitsPerSample)
+        if (FlakeConstants.FlacBitdepths[bpsCode] != Pcm.BitsPerSample)
             throw new AudioDecoderException("unsupported bps coding");
 
         var t1 = bitreader.Readbit(); // == 0?????
@@ -298,7 +298,7 @@ public class AudioDecoder : IAudioSource
                 frame.Blocksize = frame.BsCode1 + 1;
                 break;
             default:
-                frame.Blocksize = FlakeConstants.flac_blocksizes[frame.BsCode0];
+                frame.Blocksize = FlakeConstants.FlacBlocksizes[frame.BsCode0];
                 break;
         }
 
@@ -476,8 +476,8 @@ public class AudioDecoder : IAudioSource
                     frame.Subframes[ch].best.Type = SubframeType.Fixed;
                 }
 
-                frame.Subframes[ch].best.Residual = r + ch * FlakeConstants.MAX_BLOCKSIZE;
-                frame.Subframes[ch].samples = s + ch * FlakeConstants.MAX_BLOCKSIZE;
+                frame.Subframes[ch].best.Residual = r + ch * FlakeConstants.MaxBlocksize;
+                frame.Subframes[ch].samples = s + ch * FlakeConstants.MaxBlocksize;
 
                 // subframe
                 switch (frame.Subframes[ch].best.Type)

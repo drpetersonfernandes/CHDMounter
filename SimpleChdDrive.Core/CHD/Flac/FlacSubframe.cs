@@ -12,6 +12,6 @@ public unsafe class FlacSubframe
 
     public int Cbits { get; set; }
     public int Shift { get; set; }
-    public int[] Coefs { get; } = new int[Lpc.MAX_LPC_ORDER];
+    public int[] Coefs { get; } = new int[Lpc.MaxLpcOrder];
     public int Window { get; set; }
 }

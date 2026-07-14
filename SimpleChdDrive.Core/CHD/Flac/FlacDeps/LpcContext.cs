@@ -3,8 +3,8 @@ namespace SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 public class LpcSubframeInfo
 {
     // public LpcContext[] lpc_ctx;
-    public double[,] AutocorrSectionValues { get; } = new double[Lpc.MAX_LPC_SECTIONS, Lpc.MAX_LPC_ORDER + 1];
-    public int[] AutocorrSectionOrders { get; } = new int[Lpc.MAX_LPC_SECTIONS];
+    public double[,] AutocorrSectionValues { get; } = new double[Lpc.MaxLpcSections, Lpc.MaxLpcOrder + 1];
+    public int[] AutocorrSectionOrders { get; } = new int[Lpc.MaxLpcSections];
     //public int obits;
 
     public void Reset()
@@ -93,9 +93,9 @@ public unsafe struct LpcWindowSection
     {
         var sectionId = 0;
         var boundaries = new List<int>();
-        var types = new SectionType[windowcount, Lpc.MAX_LPC_SECTIONS * 2];
-        var alias = new int[windowcount, Lpc.MAX_LPC_SECTIONS * 2];
-        var aliasSet = new int[windowcount, Lpc.MAX_LPC_SECTIONS * 2];
+        var types = new SectionType[windowcount, Lpc.MaxLpcSections * 2];
+        var alias = new int[windowcount, Lpc.MaxLpcSections * 2];
+        var aliasSet = new int[windowcount, Lpc.MaxLpcSections * 2];
         for (var x = 0; x < sz; x++)
         {
             for (var i = 0; i < windowcount; i++)
@@ -112,10 +112,10 @@ public unsafe struct LpcWindowSection
                             alias[i1, boundaries.Count] = i;
                         }
                 }
-                if (boundaries.Count >= Lpc.MAX_LPC_SECTIONS * 2) throw new InvalidOperationException();
+                if (boundaries.Count >= Lpc.MaxLpcSections * 2) throw new InvalidOperationException();
 
                 types[i, boundaries.Count] =
-                    boundaries.Count >= Lpc.MAX_LPC_SECTIONS * 2 - 2 ? SectionType.Data : w == 0.0 ? SectionType.Zero : w != 1.0 ? SectionType.Data : bps * 2 + BitReader.Log2I(sz) >= 61 ? SectionType.OneLarge :
+                    boundaries.Count >= Lpc.MaxLpcSections * 2 - 2 ? SectionType.Data : w == 0.0 ? SectionType.Zero : w != 1.0 ? SectionType.Data : bps * 2 + BitReader.Log2I(sz) >= 61 ? SectionType.OneLarge :
                                     SectionType.One;
             }
             var isBoundary = false;
@@ -143,9 +143,9 @@ public unsafe struct LpcWindowSection
         {
             for (var i = 0; i < windowcount; i++)
             {
-                var windowSections = sections + i * Lpc.MAX_LPC_SECTIONS;
+                var windowSections = sections + i * Lpc.MaxLpcSections;
                 // leave room for glue
-                if (secs[i] >= Lpc.MAX_LPC_SECTIONS - 1)
+                if (secs[i] >= Lpc.MaxLpcSections - 1)
                 {
                     throw new InvalidOperationException();
                     //window_sections[secs[i] - 1].m_type = LpcWindowSection.SectionType.Data;
@@ -157,7 +157,7 @@ public unsafe struct LpcWindowSection
             }
             for (var i = 0; i < windowcount; i++)
             {
-                var windowSections = sections + i * Lpc.MAX_LPC_SECTIONS;
+                var windowSections = sections + i * Lpc.MaxLpcSections;
                 var sec = secs[i] - 1;
                 if (sec > 0
                     && j > 0 && (aliasSet[i, j] == aliasSet[i, j - 1] || windowSections[sec].MType == SectionType.Zero)
@@ -170,7 +170,7 @@ public unsafe struct LpcWindowSection
                     secs[i]--;
                     continue;
                 }
-                if (sectionId >= Lpc.MAX_LPC_SECTIONS) throw new InvalidOperationException();
+                if (sectionId >= Lpc.MaxLpcSections) throw new InvalidOperationException();
 
                 if (aliasSet[i, j] != 0
                     && types[i, j] != SectionType.Zero)
@@ -178,7 +178,7 @@ public unsafe struct LpcWindowSection
                     for (var i1 = i; i1 < windowcount; i1++)
                         if (alias[i1, j] == i && secs[i1] > 0)
                         {
-                            sections[i1 * Lpc.MAX_LPC_SECTIONS + secs[i1] - 1].MId = sectionId;
+                            sections[i1 * Lpc.MaxLpcSections + secs[i1] - 1].MId = sectionId;
                         }
 
                     sectionId++;
@@ -189,9 +189,9 @@ public unsafe struct LpcWindowSection
                     // TODO: section_id for glue? nontrivial, must be sure next sections are the same size
                     case > 0
                         when (windowSections[sec].MType == SectionType.One || windowSections[sec].MType == SectionType.OneLarge)
-                             && windowSections[sec].MEnd - windowSections[sec].MStart >= Lpc.MAX_LPC_ORDER
+                             && windowSections[sec].MEnd - windowSections[sec].MStart >= Lpc.MaxLpcOrder
                              && (windowSections[sec - 1].MType == SectionType.One || windowSections[sec - 1].MType == SectionType.OneLarge)
-                             && windowSections[sec - 1].MEnd - windowSections[sec - 1].MStart >= Lpc.MAX_LPC_ORDER:
+                             && windowSections[sec - 1].MEnd - windowSections[sec - 1].MStart >= Lpc.MaxLpcOrder:
                         windowSections[sec + 1] = windowSections[sec];
                         windowSections[sec].MEnd = windowSections[sec].MStart;
                         windowSections[sec].MType = SectionType.OneGlue;
@@ -214,16 +214,16 @@ public unsafe struct LpcWindowSection
         {
             for (var s = 0; s < secs[i]; s++)
             {
-                var windowSections = sections + i * Lpc.MAX_LPC_SECTIONS;
+                var windowSections = sections + i * Lpc.MaxLpcSections;
                 if (windowSections[s].MType == SectionType.Glue
                     || windowSections[s].MType == SectionType.OneGlue)
                 {
                     windowSections[s].MEnd = windowSections[s + 1].MEnd;
                 }
             }
-            while (secs[i] < Lpc.MAX_LPC_SECTIONS)
+            while (secs[i] < Lpc.MaxLpcSections)
             {
-                var windowSections = sections + i * Lpc.MAX_LPC_SECTIONS;
+                var windowSections = sections + i * Lpc.MaxLpcSections;
                 windowSections[secs[i]++].SetZero(sz, sz);
             }
         }
@@ -241,7 +241,7 @@ public unsafe class LpcContext
     public void Reset()
     {
         _autocorrOrder = 0;
-        for (var iPrecision = 0; iPrecision < Lpc.MAX_LPC_PRECISIONS; iPrecision++)
+        for (var iPrecision = 0; iPrecision < Lpc.MaxLpcPrecisions; iPrecision++)
         {
             DoneLpcs[iPrecision] = 0;
         }
@@ -252,10 +252,12 @@ public unsafe class LpcContext
     /// Can be used to incrementaly compute coefficients for higher orders,
     /// because it caches them.
     /// </summary>
+    /// <param name="subframe">Subframe info</param>
     /// <param name="order">Maximum order</param>
-    /// <param name="samples">Samples pointer</param>
     /// <param name="blocksize">Block size</param>
+    /// <param name="samples">Samples pointer</param>
     /// <param name="window">Window function</param>
+    /// <param name="sections">Window sections</param>
     public void GetReflection(LpcSubframeInfo subframe, int order, int blocksize, int* samples, float* window, LpcWindowSection* sections)
     {
         if (_autocorrOrder > order)
@@ -268,7 +270,7 @@ public unsafe class LpcContext
                 autoc[i] = 0;
             }
 
-            for (var section = 0; section < Lpc.MAX_LPC_SECTIONS; section++)
+            for (var section = 0; section < Lpc.MaxLpcSections; section++)
             {
                 if (sections[section].MType == LpcWindowSection.SectionType.Zero)
                 {
@@ -352,6 +354,11 @@ public unsafe class LpcContext
     /// Sorts orders based on Akaike's criteria
     /// </summary>
     /// <param name="blocksize">Frame size</param>
+    /// <param name="count">Number of orders to select</param>
+    /// <param name="minOrder">Minimum LPC order</param>
+    /// <param name="maxOrder">Maximum LPC order</param>
+    /// <param name="alpha">Alpha coefficient for Akaike criterion</param>
+    /// <param name="beta">Beta coefficient for Akaike criterion</param>
     public void SortOrdersAkaike(int blocksize, int count, int minOrder, int maxOrder, double alpha, double beta)
     {
         for (var i = minOrder; i <= maxOrder; i++)
@@ -384,14 +391,14 @@ public unsafe class LpcContext
         }
     }
 
-    public double[] AutocorrValues { get; } = new double[Lpc.MAX_LPC_ORDER + 1];
-    public double[] PredictionError { get; } = new double[Lpc.MAX_LPC_ORDER];
-    public int[] BestOrders { get; } = new int[Lpc.MAX_LPC_ORDER];
-    public int[] Coefs { get; set; } = new int[Lpc.MAX_LPC_ORDER];
+    public double[] AutocorrValues { get; } = new double[Lpc.MaxLpcOrder + 1];
+    public double[] PredictionError { get; } = new double[Lpc.MaxLpcOrder];
+    public int[] BestOrders { get; } = new int[Lpc.MaxLpcOrder];
+    public int[] Coefs { get; set; } = new int[Lpc.MaxLpcOrder];
     private int _autocorrOrder;
     public int Shift { get; set; }
 
-    public double[] Reflection { get; } = new double[Lpc.MAX_LPC_ORDER];
+    public double[] Reflection { get; } = new double[Lpc.MaxLpcOrder];
 
-    public uint[] DoneLpcs { get; } = new uint[Lpc.MAX_LPC_PRECISIONS];
+    public uint[] DoneLpcs { get; } = new uint[Lpc.MaxLpcPrecisions];
 }
