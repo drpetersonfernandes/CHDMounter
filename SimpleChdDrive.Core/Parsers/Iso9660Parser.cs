@@ -46,8 +46,17 @@ public class Iso9660Parser
 
                 if (isIso || isHs)
                 {
-                    if (type == 2 && isIso) { pvdLba = effectiveTrackStart + offset; _isHighSierra = false; _isJoliet = true; foundPvd = true; bestVdData = sectorData; break; }
-                    if (!foundPvd && (type == 1 || isHs)) { pvdLba = effectiveTrackStart + offset; _isHighSierra = isHs; _isJoliet = false; foundPvd = true; bestVdData = sectorData; }
+                    if (type == 2 && isIso) { pvdLba = effectiveTrackStart + offset;
+                        _isHighSierra = false;
+                        _isJoliet = true;
+                        foundPvd = true;
+                        bestVdData = sectorData;
+                        break; }
+                    if (!foundPvd && (type == 1 || isHs)) { pvdLba = effectiveTrackStart + offset;
+                        _isHighSierra = isHs;
+                        _isJoliet = false;
+                        foundPvd = true;
+                        bestVdData = sectorData; }
                 }
             }
         }
@@ -63,8 +72,21 @@ public class Iso9660Parser
                     var isHs = CheckMagic(sectorData, 9, "CDROM");
                     if (isIso || isHs)
                     {
-                        if (type == 2 && isIso) { pvdLba = offset; effectiveTrackStart = 0; _reader.SetTrack(null); _isHighSierra = false; _isJoliet = true; foundPvd = true; bestVdData = sectorData; break; }
-                        if (!foundPvd && (type == 1 || isHs)) { pvdLba = offset; effectiveTrackStart = 0; _reader.SetTrack(null); _isHighSierra = isHs; _isJoliet = false; foundPvd = true; bestVdData = sectorData; }
+                        if (type == 2 && isIso) { pvdLba = offset;
+                            effectiveTrackStart = 0;
+                            _reader.SetTrack(null);
+                            _isHighSierra = false;
+                            _isJoliet = true;
+                            foundPvd = true;
+                            bestVdData = sectorData;
+                            break; }
+                        if (!foundPvd && (type == 1 || isHs)) { pvdLba = offset;
+                            effectiveTrackStart = 0;
+                            _reader.SetTrack(null);
+                            _isHighSierra = isHs;
+                            _isJoliet = false;
+                            foundPvd = true;
+                            bestVdData = sectorData; }
                     }
                 }
             }
@@ -78,7 +100,12 @@ public class Iso9660Parser
                 {
                     var type = sectorData[0];
                     if (type is 1 or 2 && (CheckMagic(sectorData, 1, "CD001") || CheckMagic(sectorData, 9, "CDROM")))
-                    { pvdLba = effectiveTrackStart + i; _isHighSierra = CheckMagic(sectorData, 9, "CDROM"); _isJoliet = type == 2; foundPvd = true; bestVdData = sectorData; break; }
+                    { pvdLba = effectiveTrackStart + i;
+                        _isHighSierra = CheckMagic(sectorData, 9, "CDROM");
+                        _isJoliet = type == 2;
+                        foundPvd = true;
+                        bestVdData = sectorData;
+                        break; }
                 }
             }
         }
@@ -116,7 +143,8 @@ public class Iso9660Parser
                 var recordLen = sectorData[pos];
                 if (recordLen == 0) break;
 
-                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen; if ((pos & 1) != 0)
+                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen;
+                    if ((pos & 1) != 0)
                     {
                         pos++;
                     }
@@ -136,7 +164,8 @@ public class Iso9660Parser
                 var nameOff = _isHighSierra ? 32 : 33;
 
                 if (nameOff + nameLen > recordLen || pos + nameOff + nameLen > 2048)
-                { pos += recordLen; if ((pos & 1) != 0)
+                { pos += recordLen;
+                    if ((pos & 1) != 0)
                     {
                         pos++;
                     }
@@ -178,8 +207,14 @@ public class Iso9660Parser
     private string DecodeName(byte[] data, int offset, byte nameLen)
     {
         if (_isJoliet) return DecodeUtf16Be(data, offset, nameLen);
-        if (nameLen == 1 && data[offset] == 0x00) return ".";
-        if (nameLen == 1 && data[offset] == 0x01) return "..";
+
+        switch (nameLen)
+        {
+            case 1 when data[offset] == 0x00:
+                return ".";
+            case 1 when data[offset] == 0x01:
+                return "..";
+        }
 
         var name = Encoding.ASCII.GetString(data, offset, nameLen);
         var semi = name.IndexOf(';');
@@ -196,10 +231,15 @@ public class Iso9660Parser
         return name;
     }
 
-    private string DecodeUtf16Be(byte[] data, int offset, int len)
+    private static string DecodeUtf16Be(byte[] data, int offset, int len)
     {
-        if (len == 1 && data[offset] == 0x00) return ".";
-        if (len == 1 && data[offset] == 0x01) return "..";
+        switch (len)
+        {
+            case 1 when data[offset] == 0x00:
+                return ".";
+            case 1 when data[offset] == 0x01:
+                return "..";
+        }
 
         var sb = new StringBuilder();
         for (var i = 0; i + 1 < len; i += 2)
@@ -216,10 +256,12 @@ public class Iso9660Parser
 
     private static string Utf16ToChar(ushort u16)
     {
-        if (u16 < 0x80) return ((char)u16).ToString();
-        if (u16 < 0x800) return $"{(char)(0xC0 | (u16 >> 6))}{(char)(0x80 | (u16 & 0x3F))}";
-
-        return $"{(char)(0xE0 | (u16 >> 12))}{(char)(0x80 | ((u16 >> 6) & 0x3F))}{(char)(0x80 | (u16 & 0x3F))}";
+        return u16 switch
+        {
+            < 0x80 => ((char)u16).ToString(),
+            < 0x800 => $"{(char)(0xC0 | (u16 >> 6))}{(char)(0x80 | (u16 & 0x3F))}",
+            _ => $"{(char)(0xE0 | (u16 >> 12))}{(char)(0x80 | ((u16 >> 6) & 0x3F))}{(char)(0x80 | (u16 & 0x3F))}"
+        };
     }
 
     private static bool CheckMagic(byte[] data, int offset, string magic)

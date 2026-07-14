@@ -25,36 +25,35 @@ public static class ParserFactory
             ConsoleType.NeoGeoCD => new NeoGeoCDParser(reader),
             ConsoleType.PcFx => new PcFxParser(reader),
             ConsoleType.GenericISO9660 => new GenericIso9660Parser(reader),
-            ConsoleType.GenericCueBin or ConsoleType.GenericCueBin2048 or ConsoleType.Unknown => null,
             _ => null
         };
     }
 
-    public static List<ConsoleInfo> GetAllSupportedConsoles()
+    public static IEnumerable<ConsoleInfo> GetAllSupportedConsoles()
     {
         return
         [
-            new(ConsoleType.Xbox, "Xbox"),
-            new(ConsoleType.Xbox360, "Xbox 360"),
-            new(ConsoleType.XboxSingleFile, "Xbox (Single File)"),
-            new(ConsoleType.PS1, "PS1"),
-            new(ConsoleType.PS2, "PS2"),
-            new(ConsoleType.PS3, "PS3"),
-            new(ConsoleType.PS3SingleFile, "PS3 (Single File)"),
-            new(ConsoleType.PSP, "PSP"),
-            new(ConsoleType.Dreamcast, "Dreamcast"),
-            new(ConsoleType.CDi, "CD-i"),
-            new(ConsoleType.ThreeDO, "3DO"),
-            new(ConsoleType.AmigaCD32, "Amiga CD32"),
-            new(ConsoleType.AmigaCD, "Amiga CD"),
-            new(ConsoleType.PcEngineCD, "PC Engine CD"),
-            new(ConsoleType.SegaGenesisCD, "Sega Genesis CD"),
-            new(ConsoleType.Saturn, "Saturn"),
-            new(ConsoleType.NeoGeoCD, "NeoGeo CD"),
-            new(ConsoleType.PcFx, "PC-FX"),
-            new(ConsoleType.GenericISO9660, "Generic ISO 9660"),
-            new(ConsoleType.GenericCueBin, "CUE/BIN (Raw)"),
-            new(ConsoleType.GenericCueBin2048, "CUE/BIN (Cooked)")
+            new ConsoleInfo(ConsoleType.Xbox, "Xbox"),
+            new ConsoleInfo(ConsoleType.Xbox360, "Xbox 360"),
+            new ConsoleInfo(ConsoleType.XboxSingleFile, "Xbox (Single File)"),
+            new ConsoleInfo(ConsoleType.PS1, "PS1"),
+            new ConsoleInfo(ConsoleType.PS2, "PS2"),
+            new ConsoleInfo(ConsoleType.PS3, "PS3"),
+            new ConsoleInfo(ConsoleType.PS3SingleFile, "PS3 (Single File)"),
+            new ConsoleInfo(ConsoleType.PSP, "PSP"),
+            new ConsoleInfo(ConsoleType.Dreamcast, "Dreamcast"),
+            new ConsoleInfo(ConsoleType.CDi, "CD-i"),
+            new ConsoleInfo(ConsoleType.ThreeDO, "3DO"),
+            new ConsoleInfo(ConsoleType.AmigaCD32, "Amiga CD32"),
+            new ConsoleInfo(ConsoleType.AmigaCD, "Amiga CD"),
+            new ConsoleInfo(ConsoleType.PcEngineCD, "PC Engine CD"),
+            new ConsoleInfo(ConsoleType.SegaGenesisCD, "Sega Genesis CD"),
+            new ConsoleInfo(ConsoleType.Saturn, "Saturn"),
+            new ConsoleInfo(ConsoleType.NeoGeoCD, "NeoGeo CD"),
+            new ConsoleInfo(ConsoleType.PcFx, "PC-FX"),
+            new ConsoleInfo(ConsoleType.GenericISO9660, "Generic ISO 9660"),
+            new ConsoleInfo(ConsoleType.GenericCueBin, "CUE/BIN (Raw)"),
+            new ConsoleInfo(ConsoleType.GenericCueBin2048, "CUE/BIN (Cooked)")
         ];
     }
 }
