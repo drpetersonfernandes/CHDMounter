@@ -277,7 +277,7 @@ public class ChdContainer
 
     private void BuildVirtualCueBin(bool cooked2048)
     {
-        var tracks = SectorReader.ParseTracksWithLBA(_primaryChd!);
+        var tracks = SectorReader.ParseTracksWithLba(_primaryChd!);
         if (tracks.Count == 0) return;
 
         _cueBinEnabled = true;
@@ -346,7 +346,7 @@ public class ChdContainer
 
     private int ReadVirtualBin(ulong offset, byte[] buffer, int bufOffset, int bytesToRead)
     {
-        var tracks = SectorReader.ParseTracksWithLBA(_primaryChd!);
+        var tracks = SectorReader.ParseTracksWithLba(_primaryChd!);
         if (tracks.Count == 0) return 0;
 
         var reader = AcquireReader();

@@ -14,9 +14,9 @@ public class PspParser : Iso9660Wrapper
     }
 }
 
-public class PcEngineCDParser : Iso9660Wrapper
+public class PcEngineCdParser : Iso9660Wrapper
 {
-    public PcEngineCDParser(SectorReader reader) : base(reader) { }
+    public PcEngineCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.PcEngineCD;
@@ -42,9 +42,9 @@ public class PcFxParser : Iso9660Wrapper
     }
 }
 
-public class SegaGenesisCDParser : Iso9660Wrapper
+public class SegaGenesisCdParser : Iso9660Wrapper
 {
-    public SegaGenesisCDParser(SectorReader reader) : base(reader) { }
+    public SegaGenesisCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.SegaGenesisCD;
@@ -70,9 +70,9 @@ public class SegaSaturnParser : Iso9660Wrapper
     }
 }
 
-public class NeoGeoCDParser : Iso9660Wrapper
+public class NeoGeoCdParser : Iso9660Wrapper
 {
-    public NeoGeoCDParser(SectorReader reader) : base(reader) { }
+    public NeoGeoCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.NeoGeoCD;
@@ -84,9 +84,9 @@ public class NeoGeoCDParser : Iso9660Wrapper
     }
 }
 
-public class AmigaCD32Parser : Iso9660Wrapper
+public class AmigaCd32Parser : Iso9660Wrapper
 {
-    public AmigaCD32Parser(SectorReader reader) : base(reader) { }
+    public AmigaCd32Parser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.AmigaCD32;
@@ -98,9 +98,9 @@ public class AmigaCD32Parser : Iso9660Wrapper
     }
 }
 
-public class AmigaCDParser : Iso9660Wrapper
+public class AmigaCdParser : Iso9660Wrapper
 {
-    public AmigaCDParser(SectorReader reader) : base(reader) { }
+    public AmigaCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.AmigaCD;
@@ -114,12 +114,12 @@ public class AmigaCDParser : Iso9660Wrapper
 
 public abstract class Iso9660Wrapper : IConsoleParser
 {
-    protected readonly SectorReader _reader;
+    protected readonly SectorReader Reader;
     public bool ForceMode { get; set; }
 
     protected Iso9660Wrapper(SectorReader reader)
     {
-        _reader = reader;
+        Reader = reader;
     }
 
     public abstract ConsoleType GetConsoleType();
@@ -132,15 +132,15 @@ public abstract class Iso9660Wrapper : IConsoleParser
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
-        var parser = new Iso9660Parser(_reader);
+        var parser = new Iso9660Parser(Reader);
         return parser.Parse(rootNode, track);
     }
 
     protected TrackInfo FindDataTrack()
     {
-        foreach (var t in _reader.Tracks)
+        foreach (var t in Reader.Tracks)
             if (t.IsDataTrack) return t;
 
-        return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+        return Reader.Tracks.Count > 0 ? Reader.Tracks[0] : new TrackInfo();
     }
 }

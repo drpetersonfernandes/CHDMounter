@@ -33,7 +33,7 @@ public class SectorReader
     public SectorReader(ChdFile chd)
     {
         _chd = chd;
-        Tracks = ParseTracksWithLBA(chd);
+        Tracks = ParseTracksWithLba(chd);
     }
 
     public void SetTrack(TrackInfo track, bool locked = false)
@@ -44,7 +44,7 @@ public class SectorReader
 
     public TrackInfo CurrentTrack { get; private set; }
 
-    public List<TrackInfo> Tracks { get; } = [];
+    public List<TrackInfo> Tracks { get; }
 
     public void Reset()
     {
@@ -206,7 +206,7 @@ public class SectorReader
             if (_trackOffsetCache.TryGetValue(trackIdx, out var cachedOffset))
             {
                 SectorHeaderOffset = cachedOffset;
-                var isMode2 = CurrentTrack != null &&
+                var isMode2 = CurrentTrack is { TrackType: not null } &&
                               (CurrentTrack.TrackType.Contains("MODE2") || CurrentTrack.TrackType.Contains("CDI"));
                 var headerSize = isMode2 ? 24u : 16u;
                 SyncOffset = SectorHeaderOffset >= headerSize ? SectorHeaderOffset - headerSize : 0;
@@ -290,7 +290,8 @@ public class SectorReader
                 for (var k = 0; k < 7; k++)
                 {
                     if (_cachedHunk[checkOff + k] != operaMagic[k])
-                    { operaMatch = false; break; }
+                    { operaMatch = false;
+                        break; }
                 }
                 if (operaMatch)
                 {
@@ -315,7 +316,8 @@ public class SectorReader
                     for (var z = 0; z < 64; z++)
                     {
                         if (_cachedHunk[rawOffsetInHunk + fallbackOffset + z] != 0)
-                        { fallbackIsZero = false; break; }
+                        { fallbackIsZero = false;
+                            break; }
                     }
                 }
 
@@ -358,7 +360,7 @@ public class SectorReader
         return 16;
     }
 
-    public static List<TrackInfo> ParseTracksWithLBA(ChdFile chd)
+    public static List<TrackInfo> ParseTracksWithLba(ChdFile chd)
     {
         var tracks = new List<TrackInfo>();
         var metadata = chd.ReadMetadata();
@@ -383,17 +385,8 @@ public class SectorReader
             var trackIndex = tracks.Count + 1;
             var metaValue = entry.Value;
 
-            uint frames = 0;
-            uint pregap = 0;
-            uint postgap = 0;
-            uint padFrames = 0;
-            var typeStr = "";
-            var subtypeStr = "";
-            var pgtypeStr = "";
-            var pgsubStr = "";
-            var parsedTrackNum = 0;
-            var parsed = TryParseTrackMetadata(metaValue, ref parsedTrackNum, ref typeStr, ref subtypeStr,
-                ref frames, ref padFrames, ref pregap, ref pgtypeStr, ref pgsubStr, ref postgap);
+            var parsed = TryParseTrackMetadata(metaValue, out _, out var typeStr, out _,
+                out var frames, out _, out var pregap, out _, out _, out var postgap);
 
             if (!parsed || frames == 0)
                 continue;
@@ -433,7 +426,8 @@ public class SectorReader
             foreach (var t in tracks)
             {
                 if (t.Metadata?.Contains("PAD:") == true)
-                { isGdrom = true; break; }
+                { isGdrom = true;
+                    break; }
             }
         }
         if (!isGdrom && tracks.Count >= 3)
@@ -444,30 +438,30 @@ public class SectorReader
                 totalFrames += t.Frames;
             }
 
-            if (totalFrames >= 500000 && totalFrames <= 560000)
+            if (totalFrames is >= 500000 and <= 560000)
             {
                 isGdrom = true;
             }
         }
 
         uint currentFileFrame = 0;
-        uint currentLogicalLBA = 150;
-        const uint GdHighDensityLba = 45000;
+        uint currentLogicalLba = 150;
+        const uint gdHighDensityLba = 45000;
 
         for (var i = 0; i < tracks.Count; i++)
         {
             var track = tracks[i];
             var trackNum = i + 1;
 
-            if (isGdrom && trackNum >= 3 && currentLogicalLBA < GdHighDensityLba)
+            if (isGdrom && trackNum >= 3 && currentLogicalLba < gdHighDensityLba)
             {
-                currentLogicalLBA = GdHighDensityLba;
+                currentLogicalLba = gdHighDensityLba;
             }
 
-            track.StartLBA = currentLogicalLBA;
+            track.StartLBA = currentLogicalLba;
             track.ChdOffset = currentFileFrame;
 
-            currentLogicalLBA += track.Frames;
+            currentLogicalLba += track.Frames;
             var padded = (track.Frames + 3) / 4 * 4;
             currentFileFrame += padded;
         }
@@ -496,7 +490,8 @@ public class SectorReader
                         for (var j = 0; j < 12; j++)
                         {
                             if (swappedSync[j] != SyncPattern[j])
-                            { match = false; break; }
+                            { match = false;
+                                break; }
                         }
                         if (match)
                         {
@@ -510,9 +505,9 @@ public class SectorReader
         return tracks;
     }
 
-    private static bool TryParseTrackMetadata(string metadata, ref int trackNum, ref string typeStr,
-        ref string subtypeStr, ref uint frames, ref uint padFrames, ref uint pregap,
-        ref string pgtypeStr, ref string pgsubStr, ref uint postgap)
+    private static bool TryParseTrackMetadata(string metadata, out int trackNum, out string typeStr,
+        out string subtypeStr, out uint frames, out uint padFrames, out uint pregap,
+        out string pgtypeStr, out string pgsubStr, out uint postgap)
     {
         var parts = metadata.Split(' ');
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -531,11 +526,11 @@ public class SectorReader
         subtypeStr = map.GetValueOrDefault("SUBTYPE", "");
         pgtypeStr = map.GetValueOrDefault("PGTYPE", "");
         pgsubStr = map.GetValueOrDefault("PGSUB", "");
-        int.TryParse(map.GetValueOrDefault("TRACK", "0"), out trackNum);
-        uint.TryParse(map.GetValueOrDefault("FRAMES", "0"), out frames);
-        uint.TryParse(map.GetValueOrDefault("PREGAP", "0"), out pregap);
-        uint.TryParse(map.GetValueOrDefault("POSTGAP", "0"), out postgap);
-        uint.TryParse(map.GetValueOrDefault("PAD", "0"), out padFrames);
+        _ = int.TryParse(map.GetValueOrDefault("TRACK", "0"), out trackNum);
+        _ = uint.TryParse(map.GetValueOrDefault("FRAMES", "0"), out frames);
+        _ = uint.TryParse(map.GetValueOrDefault("PREGAP", "0"), out pregap);
+        _ = uint.TryParse(map.GetValueOrDefault("POSTGAP", "0"), out postgap);
+        _ = uint.TryParse(map.GetValueOrDefault("PAD", "0"), out padFrames);
 
         return frames > 0;
     }
