@@ -24,6 +24,7 @@ public static class ParserFactory
             ConsoleType.Saturn => new SegaSaturnParser(reader),
             ConsoleType.NeoGeoCd => new NeoGeoCdParser(reader),
             ConsoleType.PcFx => new PcFxParser(reader),
+            ConsoleType.PlayStation => new PlayStationAutoDetectParser(reader),
             ConsoleType.GenericIso9660 => new GenericIso9660Parser(reader),
             _ => null!
         };
@@ -40,6 +41,7 @@ public static class ParserFactory
             new ConsoleInfo(ConsoleType.Ps2, "PS2"),
             new ConsoleInfo(ConsoleType.Ps3, "PS3"),
             new ConsoleInfo(ConsoleType.Ps3SingleFile, "PS3 (Single File)"),
+            new ConsoleInfo(ConsoleType.PlayStation, "PlayStation (Auto)"),
             new ConsoleInfo(ConsoleType.Psp, "PSP"),
             new ConsoleInfo(ConsoleType.Dreamcast, "Dreamcast"),
             new ConsoleInfo(ConsoleType.CDi, "CD-i"),

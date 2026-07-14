@@ -84,7 +84,7 @@ internal class BinTree : InWindow
         uint matchMaxLen, uint keepAddBufferAfter)
     {
         if (historySize > KMaxValForNormalize - 256)
-            throw new Exception();
+            throw new ArgumentOutOfRangeException(nameof(historySize), $"historySize must be <= {KMaxValForNormalize - 256}");
 
         _cutValue = 16 + (matchMaxLen >> 1);
 
@@ -303,7 +303,7 @@ internal class BinTree : InWindow
             }
             else
             {
-            hashValue = BufferBase![cur] ^ ((uint)BufferBase[cur + 1] << 8);
+                hashValue = BufferBase![cur] ^ ((uint)BufferBase[cur + 1] << 8);
             }
 
             var curMatch = _hash[_kFixHashSize + hashValue];

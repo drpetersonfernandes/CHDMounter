@@ -8,7 +8,7 @@ internal struct Decoder2
     public void Create() { _mDecoders = new BitDecoder[0x300]; }
     public readonly void Init() { for (var i = 0; i < 0x300; i++) _mDecoders[i].Init(); }
 
-    public byte DecodeNormal(RangeCoder.Decoder rangeDecoder)
+    public readonly byte DecodeNormal(RangeCoder.Decoder rangeDecoder)
     {
         uint symbol = 1;
         do
@@ -18,7 +18,7 @@ internal struct Decoder2
         return (byte)symbol;
     }
 
-    public byte DecodeWithMatchByte(RangeCoder.Decoder rangeDecoder, byte matchByte)
+    public readonly byte DecodeWithMatchByte(RangeCoder.Decoder rangeDecoder, byte matchByte)
     {
         uint symbol = 1;
         do

@@ -26,12 +26,14 @@ public class MountService : IMountService, IDisposable
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp")
                             ?? Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp");
             if (key == null)
-            { _loggingService.LogError("WinFsp not found."); return false; }
+            { _loggingService.LogError("WinFsp not found.");
+                return false; }
             _loggingService.Log("WinFsp detected.");
             return true;
         }
         catch (Exception ex)
-        { _loggingService.LogError($"WinFsp detection failed: {ex.Message}"); return false; }
+        { _loggingService.LogError($"WinFsp detection failed: {ex.Message}");
+            return false; }
     }
 
     public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
@@ -86,11 +88,16 @@ public class MountService : IMountService, IDisposable
     private static string PickDriveLetter()
     {
         var drives = DriveInfo.GetDrives().Select(d => d.Name[0]).ToHashSet();
-        for (char c = 'M'; c <= 'Q'; c++)
+        for (var c = 'M'; c <= 'Q'; c++)
             if (!drives.Contains(c))
                 return $"{c}:";
+
         return "Z:";
     }
 
-    public void Dispose() => Unmount();
+    public void Dispose()
+    {
+        Unmount();
+        GC.SuppressFinalize(this);
+    }
 }

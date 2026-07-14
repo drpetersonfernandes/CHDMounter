@@ -125,17 +125,17 @@ public class DokanPrefixedLogger : ILogger
 
     public void Debug(string message, params object[] args)
     {
-        _loggingService.Log($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+        _loggingService.Log($"[Dokan:DBG] {string.Format(CultureInfo.InvariantCulture, message, args)}");
     }
 
     public void Info(string message, params object[] args)
     {
-        _loggingService.Log($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+        _loggingService.Log($"[Dokan:INF] {string.Format(CultureInfo.InvariantCulture, message, args)}");
     }
 
     public void Warn(string message, params object[] args)
     {
-        _loggingService.Log($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+        _loggingService.Log($"[Dokan:WRN] {string.Format(CultureInfo.InvariantCulture, message, args)}");
     }
 
     public void Error(string message, params object[] args)

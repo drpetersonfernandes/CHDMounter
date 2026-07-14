@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace SimpleCHDDrive_WinFsp;
+namespace SimpleChdDrive_WinFsp;
 
 public partial class App
 {

@@ -24,6 +24,7 @@ public class ChdContainer
     private ulong _cueBinSize;
     private uint _cueBinRawSectorSize;
     private string _cueBinStemName = "";
+    private List<TrackInfo>? _cachedTracks;
 
     public string VolumeName { get; private set; } = "";
     public ulong VolumeSize { get; private set; }
@@ -89,7 +90,7 @@ public class ChdContainer
         _parentHandles.Clear();
         _entryMap.Clear();
 
-        var rootEntry = new FileEntry { Name = "\\", Lba = rootNode.Lba, Size = rootNode.Size, IsDirectory = true };
+        var rootEntry = new FileEntry { Name = "\\", FullPath = "\\", Lba = rootNode.Lba, Size = rootNode.Size, IsDirectory = true };
         var rootHandle = RegisterEntry(rootEntry, InvalidHandle);
 
         foreach (var child in rootNode.Children)
@@ -98,10 +99,13 @@ public class ChdContainer
 
     private void AddFsNodeRecursive(FsNode node, uint parentHandle, string parentPath)
     {
+        var currentPath = parentPath == "\\" ? $"\\{node.Name}" : $"{parentPath}\\{node.Name}";
+
         var entry = new FileEntry
         {
-            Name = node.Name, Lba = node.Lba, Size = node.Size,
-            IsDirectory = node.IsDirectory, FileNumber = node.FileNumber, IsInterleaved = node.IsInterleaved
+            Name = node.Name, FullPath = currentPath, Lba = node.Lba, Size = node.Size,
+            IsDirectory = node.IsDirectory, FileNumber = node.FileNumber, IsInterleaved = node.IsInterleaved,
+            IsRawPassthrough = node.IsRawPassthrough
         };
 
         foreach (var ext in node.Extents)
@@ -111,7 +115,6 @@ public class ChdContainer
 
         if (entry.IsDirectory)
         {
-            var currentPath = parentPath == "\\" ? $"\\{node.Name}" : $"{parentPath}\\{node.Name}";
             foreach (var child in node.Children)
                 AddFsNodeRecursive(child, handle, currentPath);
         }
@@ -214,8 +217,7 @@ public class ChdContainer
                 return ReadVirtualBin(offset, buffer, bufOffset, bytesToRead);
         }
 
-        if (entry.Lba == 0 && entry.Size == VolumeSize && entry.Extents.Count == 0 &&
-            entry.Name.EndsWith(".iso", StringComparison.OrdinalIgnoreCase))
+        if (entry.IsRawPassthrough)
         {
             return ReadRawChdBytes(offset, buffer, bufOffset, bytesToRead);
         }
@@ -281,8 +283,8 @@ public class ChdContainer
 
     private void BuildVirtualCueBin(bool cooked2048)
     {
-        var tracks = SectorReader.ParseTracksWithLba(_primaryChd!);
-        if (tracks.Count == 0) return;
+        _cachedTracks = SectorReader.ParseTracksWithLba(_primaryChd!);
+        if (_cachedTracks.Count == 0) return;
 
         _cueBinEnabled = true;
         _cueBinStemName = Path.GetFileNameWithoutExtension(_chdPath);
@@ -296,7 +298,7 @@ public class ChdContainer
         sb.AppendLine(CultureInfo.InvariantCulture, $"FILE \"{_cueBinStemName}.bin\" BINARY");
 
         var trackNum = 0;
-        foreach (var t in tracks)
+        foreach (var t in _cachedTracks)
         {
             trackNum++;
             var mode = t.IsDataTrack
@@ -350,8 +352,7 @@ public class ChdContainer
 
     private int ReadVirtualBin(ulong offset, byte[] buffer, int bufOffset, int bytesToRead)
     {
-        var tracks = SectorReader.ParseTracksWithLba(_primaryChd!);
-        if (tracks.Count == 0) return 0;
+        if (_cachedTracks == null || _cachedTracks.Count == 0) return 0;
 
         var reader = AcquireReader();
         if (reader == null) return 0;
@@ -367,7 +368,7 @@ public class ChdContainer
                 TrackInfo? targetTrack = null;
                 ulong trackByteOffset = 0;
 
-                foreach (var t in tracks)
+                foreach (var t in _cachedTracks)
                 {
                     var trackBytes = (ulong)t.Frames * _cueBinRawSectorSize;
                     if (currentOffset >= cumulative && currentOffset < cumulative + trackBytes)
@@ -439,6 +440,7 @@ public class ChdContainer
         lock (_poolLock) { _poolShutdown = true; }
         _readerPool.Clear();
         _availableReaders.Clear();
+        _cachedTracks = null;
         _primaryChd?.Dispose();
     }
 }

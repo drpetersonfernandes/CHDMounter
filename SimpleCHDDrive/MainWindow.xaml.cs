@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Windows;
 
-namespace SimpleCHDDrive;
+namespace SimpleChdDrive;
 
 public partial class MainWindow
 {
@@ -115,6 +115,7 @@ public partial class MainWindow
         return arg.ToLowerInvariant() switch
         {
             "ps1" or "playstation" or "psx" => ConsoleType.Ps1,
+            "psauto" or "psdetect" => ConsoleType.PlayStation,
             "ps2" => ConsoleType.Ps2,
             "ps3" => ConsoleType.Ps3,
             "psp" => ConsoleType.Psp,
@@ -128,8 +129,8 @@ public partial class MainWindow
             "pcengine" or "pce" or "tgcd" => ConsoleType.PcEngineCd,
             "pcfx" => ConsoleType.PcFx,
             "segagenesis" or "megacd" or "segacd" => ConsoleType.SegaGenesisCd,
-            "amigacd32" or "amiga" => ConsoleType.AmigaCd32,
-            "amigacd" => ConsoleType.AmigaCd,
+            "amigacd32" or "cd32" => ConsoleType.AmigaCd32,
+            "amigacd" or "amiga" => ConsoleType.AmigaCd,
             "iso9660" or "generic" or "iso" => ConsoleType.GenericIso9660,
             "cuebin" or "cue" => ConsoleType.GenericCueBin,
             _ => ConsoleType.Unknown

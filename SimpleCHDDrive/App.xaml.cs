@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace SimpleCHDDrive;
+namespace SimpleChdDrive;
 
 public partial class App
 {

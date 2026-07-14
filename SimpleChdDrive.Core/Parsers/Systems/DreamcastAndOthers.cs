@@ -152,7 +152,11 @@ public class GenericIso9660Parser : IConsoleParser
 
     public bool Parse(FsNode rootNode)
     {
-        return ParseTrack(rootNode, FindDataTrack());
+        var track = FindDataTrack();
+        if (track == null)
+            return false;
+
+        return ParseTrack(rootNode, track);
     }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
@@ -161,11 +165,11 @@ public class GenericIso9660Parser : IConsoleParser
         return parser.Parse(rootNode, track);
     }
 
-    private TrackInfo FindDataTrack()
+    private TrackInfo? FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
             if (t.IsDataTrack) return t;
 
-        return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+        return _reader.Tracks.FirstOrDefault();
     }
 }

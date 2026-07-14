@@ -2,9 +2,9 @@ namespace SimpleChdDrive.Core.CHD.LZMA.RangeCoder;
 
 internal class Encoder
 {
-    public const uint kTopValue = 1 << 24;
+    public const uint KTopValue = 1 << 24;
 
-    private Stream Stream = null!;
+    private Stream _stream = null!;
 
     public ulong Low;
     public uint Range;
@@ -15,12 +15,12 @@ internal class Encoder
 
     public void SetStream(Stream stream)
     {
-        Stream = stream;
+        _stream = stream;
     }
 
     public void ReleaseStream()
     {
-        Stream = null!;
+        _stream = null!;
     }
 
     public void Init()
@@ -41,19 +41,19 @@ internal class Encoder
 
     public void FlushStream()
     {
-        Stream.Flush();
+        _stream.Flush();
     }
 
     public void CloseStream()
     {
-        Stream.Dispose();
+        _stream.Dispose();
     }
 
     public void Encode(uint start, uint size, uint total)
     {
         Low += start * (Range /= total);
         Range *= size;
-        while (Range < kTopValue)
+        while (Range < KTopValue)
         {
             Range <<= 8;
             ShiftLow();
@@ -67,10 +67,9 @@ internal class Encoder
             var temp = _cache;
             do
             {
-                Stream.WriteByte((byte)(temp + (Low >> 32)));
+                _stream.WriteByte((byte)(temp + (Low >> 32)));
                 temp = 0xFF;
-            }
-            while (--_cacheSize != 0);
+            } while (--_cacheSize != 0);
             _cache = (byte)((uint)Low >> 24);
         }
         _cacheSize++;
@@ -87,7 +86,7 @@ internal class Encoder
                 Low += Range;
             }
 
-            if (Range < kTopValue)
+            if (Range < KTopValue)
             {
                 Range <<= 8;
                 ShiftLow();
@@ -107,7 +106,7 @@ internal class Encoder
             Low += newBound;
             Range -= newBound;
         }
-        while (Range < kTopValue)
+        while (Range < KTopValue)
         {
             Range <<= 8;
             ShiftLow();
@@ -124,7 +123,7 @@ internal class Encoder
 
 internal class Decoder
 {
-    public const uint kTopValue = 1 << 24;
+    public const uint KTopValue = 1 << 24;
     public uint Range;
     public uint Code;
     // public Buffer.InBuffer Stream = new Buffer.InBuffer(1 << 16);
@@ -159,7 +158,7 @@ internal class Decoder
 
     public void Normalize()
     {
-        while (Range < kTopValue)
+        while (Range < KTopValue)
         {
             Code = (Code << 8) | (byte)Stream.ReadByte();
             Range <<= 8;
@@ -169,7 +168,7 @@ internal class Decoder
 
     public void Normalize2()
     {
-        if (Range < kTopValue)
+        if (Range < KTopValue)
         {
             Code = (Code << 8) | (byte)Stream.ReadByte();
             Range <<= 8;
@@ -209,7 +208,7 @@ internal class Decoder
             code -= range & (t - 1);
             result = (result << 1) | (1 - t);
 
-            if (range < kTopValue)
+            if (range < KTopValue)
             {
                 code = (code << 8) | (byte)Stream.ReadByte();
                 range <<= 8;

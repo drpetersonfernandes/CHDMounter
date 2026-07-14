@@ -15,7 +15,6 @@ public class XdvdfsParser
     public void SetTrack(TrackInfo track)
     {
         _currentTrack = track;
-        _reader.SetTrack(track, true);
     }
 
     private static readonly byte[] XdvdfsMagic = "MICROSOFT*XBOX*MEDIA"u8.ToArray();
@@ -23,7 +22,7 @@ public class XdvdfsParser
     public bool Parse(FsNode rootNode)
     {
         _reader.Reset();
-        if (_currentTrack != null) _reader.SetTrack(_currentTrack, true);
+        _reader.SetTrack(_currentTrack!, true);
 
         var sectorData = new byte[2048];
         uint volumeOffsetSectors = 0;

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -12,18 +13,18 @@ public class BugReportSink : ILogEventSink
 
         if (logEvent.Exception != null)
         {
-            var context = logEvent.RenderMessage();
-            Services.BugReportClient.SendException(logEvent.Exception, context);
+            var context = logEvent.RenderMessage(CultureInfo.InvariantCulture);
+            _ = Task.Run(() => BugReportClient.SendException(logEvent.Exception, context));
         }
         else if (logEvent.Level >= LogEventLevel.Error)
         {
-            var message = logEvent.RenderMessage();
-            Services.BugReportClient.SendError(message, null);
+            var message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
+            _ = Task.Run(() => BugReportClient.SendError(message, null));
         }
         else
         {
-            var message = logEvent.RenderMessage();
-            Services.BugReportClient.SendWarning(message);
+            var message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
+            _ = Task.Run(() => BugReportClient.SendWarning(message));
         }
     }
 }

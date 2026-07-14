@@ -9,6 +9,7 @@ public class FsNode
     public bool IsInterleaved { get; set; }
     public bool IsDirectory { get; set; }
     public bool IsMultiExtent { get; set; }
+    public bool IsRawPassthrough { get; set; }
     public List<FsExtent> Extents { get; set; } = [];
     public List<FsNode> Children { get; set; } = [];
 }

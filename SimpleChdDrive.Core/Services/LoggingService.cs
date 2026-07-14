@@ -6,7 +6,7 @@ namespace SimpleChdDrive.Core.Services;
 public class LoggingService : ILoggingService
 {
     private const int MaxEntries = 5000;
-    private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
+    private readonly Dispatcher _dispatcher = System.Windows.Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
     private string _lastMessage = "";
     private DateTime _lastMessageTime;
 

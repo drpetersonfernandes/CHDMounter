@@ -90,7 +90,6 @@ public class Crc
         }
 
         _crc = crc;
-
     }
 
     public byte[] Crc32ResultB

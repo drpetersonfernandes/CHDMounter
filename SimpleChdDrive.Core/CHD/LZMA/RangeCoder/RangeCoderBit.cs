@@ -2,25 +2,25 @@ namespace SimpleChdDrive.Core.CHD.LZMA.RangeCoder;
 
 internal struct BitEncoder
 {
-    public const int kNumBitModelTotalBits = 11;
-    public const uint kBitModelTotal = 1 << kNumBitModelTotalBits;
-    private const int kNumMoveBits = 5;
-    private const int kNumMoveReducingBits = 2;
-    public const int kNumBitPriceShiftBits = 6;
+    public const int KNumBitModelTotalBits = 11;
+    public const uint KBitModelTotal = 1 << KNumBitModelTotalBits;
+    private const int KNumMoveBits = 5;
+    private const int KNumMoveReducingBits = 2;
+    public const int KNumBitPriceShiftBits = 6;
 
-    private uint Prob;
+    private uint _prob;
 
-    public void Init() { Prob = kBitModelTotal >> 1; }
+    public void Init() { _prob = KBitModelTotal >> 1; }
 
     public void UpdateModel(uint symbol)
     {
         if (symbol == 0)
         {
-            Prob += (kBitModelTotal - Prob) >> kNumMoveBits;
+            _prob += (KBitModelTotal - _prob) >> KNumMoveBits;
         }
         else
         {
-            Prob -= Prob >> kNumMoveBits;
+            _prob -= _prob >> KNumMoveBits;
         }
     }
 
@@ -28,80 +28,80 @@ internal struct BitEncoder
     {
         // encoder.EncodeBit(Prob, kNumBitModelTotalBits, symbol);
         // UpdateModel(symbol);
-        var newBound = (encoder.Range >> kNumBitModelTotalBits) * Prob;
+        var newBound = (encoder.Range >> KNumBitModelTotalBits) * _prob;
         if (symbol == 0)
         {
             encoder.Range = newBound;
-            Prob += (kBitModelTotal - Prob) >> kNumMoveBits;
+            _prob += (KBitModelTotal - _prob) >> KNumMoveBits;
         }
         else
         {
             encoder.Low += newBound;
             encoder.Range -= newBound;
-            Prob -= Prob >> kNumMoveBits;
+            _prob -= _prob >> KNumMoveBits;
         }
-        if (encoder.Range < Encoder.kTopValue)
+        if (encoder.Range < Encoder.KTopValue)
         {
             encoder.Range <<= 8;
             encoder.ShiftLow();
         }
     }
 
-    private static readonly uint[] ProbPrices = new uint[kBitModelTotal >> kNumMoveReducingBits];
+    private static readonly uint[] ProbPrices = new uint[KBitModelTotal >> KNumMoveReducingBits];
 
     static BitEncoder()
     {
-        const int kNumBits = kNumBitModelTotalBits - kNumMoveReducingBits;
+        const int kNumBits = KNumBitModelTotalBits - KNumMoveReducingBits;
         for (var i = kNumBits - 1; i >= 0; i--)
         {
             var start = (uint)1 << (kNumBits - i - 1);
             var end = (uint)1 << (kNumBits - i);
             for (var j = start; j < end; j++)
             {
-                ProbPrices[j] = ((uint)i << kNumBitPriceShiftBits) +
-                                (((end - j) << kNumBitPriceShiftBits) >> (kNumBits - i - 1));
+                ProbPrices[j] = ((uint)i << KNumBitPriceShiftBits) +
+                                (((end - j) << KNumBitPriceShiftBits) >> (kNumBits - i - 1));
             }
         }
     }
 
     public readonly uint GetPrice(uint symbol)
     {
-        return ProbPrices[(((Prob - symbol) ^ -(int)symbol) & (kBitModelTotal - 1)) >> kNumMoveReducingBits];
+        return ProbPrices[(((_prob - symbol) ^ -(int)symbol) & (KBitModelTotal - 1)) >> KNumMoveReducingBits];
     }
-    public readonly uint GetPrice0() { return ProbPrices[Prob >> kNumMoveReducingBits]; }
-    public readonly uint GetPrice1() { return ProbPrices[(kBitModelTotal - Prob) >> kNumMoveReducingBits]; }
+    public readonly uint GetPrice0() { return ProbPrices[_prob >> KNumMoveReducingBits]; }
+    public readonly uint GetPrice1() { return ProbPrices[(KBitModelTotal - _prob) >> KNumMoveReducingBits]; }
 }
 
 internal struct BitDecoder
 {
-    public const int kNumBitModelTotalBits = 11;
-    public const uint kBitModelTotal = 1 << kNumBitModelTotalBits;
-    private const int kNumMoveBits = 5;
+    public const int KNumBitModelTotalBits = 11;
+    public const uint KBitModelTotal = 1 << KNumBitModelTotalBits;
+    private const int KNumMoveBits = 5;
 
-    private uint Prob;
+    private uint _prob;
 
     public void UpdateModel(int numMoveBits, uint symbol)
     {
         if (symbol == 0)
         {
-            Prob += (kBitModelTotal - Prob) >> numMoveBits;
+            _prob += (KBitModelTotal - _prob) >> numMoveBits;
         }
         else
         {
-            Prob -= Prob >> numMoveBits;
+            _prob -= _prob >> numMoveBits;
         }
     }
 
-    public void Init() { Prob = kBitModelTotal >> 1; }
+    public void Init() { _prob = KBitModelTotal >> 1; }
 
     public uint Decode(Decoder rangeDecoder)
     {
-        var newBound = (rangeDecoder.Range >> kNumBitModelTotalBits) * Prob;
+        var newBound = (rangeDecoder.Range >> KNumBitModelTotalBits) * _prob;
         if (rangeDecoder.Code < newBound)
         {
             rangeDecoder.Range = newBound;
-            Prob += (kBitModelTotal - Prob) >> kNumMoveBits;
-            if (rangeDecoder.Range < Decoder.kTopValue)
+            _prob += (KBitModelTotal - _prob) >> KNumMoveBits;
+            if (rangeDecoder.Range < Decoder.KTopValue)
             {
                 rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte)rangeDecoder.Stream.ReadByte();
                 rangeDecoder.Range <<= 8;
@@ -113,8 +113,8 @@ internal struct BitDecoder
         {
             rangeDecoder.Range -= newBound;
             rangeDecoder.Code -= newBound;
-            Prob -= Prob >> kNumMoveBits;
-            if (rangeDecoder.Range < Decoder.kTopValue)
+            _prob -= _prob >> KNumMoveBits;
+            if (rangeDecoder.Range < Decoder.KTopValue)
             {
                 rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte)rangeDecoder.Stream.ReadByte();
                 rangeDecoder.Range <<= 8;

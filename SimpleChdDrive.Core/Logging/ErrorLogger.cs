@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Serilog;
 
 namespace SimpleChdDrive.Core.Logging;
@@ -6,7 +5,6 @@ namespace SimpleChdDrive.Core.Logging;
 public static class ErrorLoggerStatic
 {
     private static ErrorLogger? _instance;
-    private static readonly ConcurrentQueue<Action> PendingReports = new();
 
     public static ErrorLogger Instance
     {
@@ -58,10 +56,6 @@ public static class ErrorLoggerStatic
         {
             // ignored
         }
-    }
-
-    public static void WaitForPendingReports(TimeSpan timeout)
-    {
     }
 }
 

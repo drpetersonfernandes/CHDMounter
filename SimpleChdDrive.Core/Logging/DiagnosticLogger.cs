@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Serilog;
 using SerilogLog = Serilog.Log;
 
 namespace SimpleChdDrive.Core.Logging;

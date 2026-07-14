@@ -1,5 +1,4 @@
-﻿using SimpleChdDrive.Core.CHD.Flac;
-using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
+﻿using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 using SimpleChdDrive.Core.CHD.Utils;
 
 namespace SimpleChdDrive.Core.CHD;
@@ -261,8 +260,8 @@ internal static partial class ChdReaders
                 else
                 {
                     var bitbuf = new BitStream(buffIn, (int)buffInOffset, (int)audioChannelCompressedSize[chnum]!.Value);
-                    mAudiohiDecoder!.AssignBitStream(bitbuf);
-                    mAudioloDecoder!.AssignBitStream(bitbuf);
+                    mAudiohiDecoder.AssignBitStream(bitbuf);
+                    mAudioloDecoder.AssignBitStream(bitbuf);
                     for (var sampnum = 0; sampnum < samples; sampnum++)
                     {
                         var delta = (short)(mAudiohiDecoder.DecodeOne() << 8);

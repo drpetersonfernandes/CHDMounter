@@ -1,5 +1,3 @@
-using SimpleChdDrive.Core.CHD.LZMA.RangeCoder;
-
 namespace SimpleChdDrive.Core.CHD.LZMA;
 
 internal class LenPriceTableEncoder : LenEncoder

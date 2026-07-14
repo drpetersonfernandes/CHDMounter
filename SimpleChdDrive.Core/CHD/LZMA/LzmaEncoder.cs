@@ -1237,7 +1237,7 @@ internal class Encoder
 
             for (posSlot = Base.KEndPosModelIndex; posSlot < _distTableSize; posSlot++)
             {
-                _posSlotPrices[st + posSlot] += ((posSlot >> 1) - 1 - Base.KNumAlignBits) << BitEncoder.kNumBitPriceShiftBits;
+                _posSlotPrices[st + posSlot] += ((posSlot >> 1) - 1 - Base.KNumAlignBits) << BitEncoder.KNumBitPriceShiftBits;
             }
 
             var st2 = lenToPosState * Base.KNumFullDistances;

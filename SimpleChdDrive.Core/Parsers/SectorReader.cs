@@ -14,7 +14,7 @@ public class SectorReader
 
     private bool _isOffsetDetected;
     private uint _offsetDetectedHunk = 0xFFFFFFFF;
-    private TrackInfo _offsetDetectedTrack = null!;
+    private TrackInfo? _offsetDetectedTrack;
     private readonly Dictionary<int, uint> _trackOffsetCache = [];
 
     private static readonly byte[] SyncPattern = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00];
@@ -54,9 +54,9 @@ public class SectorReader
         _isOffsetDetected = false;
         SectorHeaderOffset = 0;
         SyncOffset = 0;
-        _offsetDetectedHunk = 0xFFFFFFFF;
-        _offsetDetectedTrack = null!;
-        LbaOffset = 0;
+            _offsetDetectedHunk = 0xFFFFFFFF;
+            _offsetDetectedTrack = null;
+            LbaOffset = 0;
         _trackLocked = false;
         _trackOffsetCache.Clear();
     }
@@ -74,13 +74,13 @@ public class SectorReader
         return true;
     }
 
-    public byte[] ReadSector(uint lba)
+    public byte[]? ReadSector(uint lba)
     {
         var buffer = new byte[SectorSize];
         if (ReadSector(lba, buffer))
             return buffer;
 
-        return null!;
+        return null;
     }
 
     public bool ReadRawSector(uint lba, out byte[] rawSector)
@@ -186,13 +186,18 @@ public class SectorReader
 
             if (needsSwap)
             {
+                var swapped = new byte[hunkBytes];
                 for (var i = 0; i + 1 < buffer.Length; i += 2)
                 {
-                    (buffer[i + 1], buffer[i]) = (buffer[i], buffer[i + 1]);
+                    swapped[i] = buffer[i + 1];
+                    swapped[i + 1] = buffer[i];
                 }
+                _cachedHunk = swapped;
             }
-
-            _cachedHunk = buffer;
+            else
+            {
+                _cachedHunk = buffer;
+            }
             _cachedHunkNum = hunkNum;
             _cachedHunkSwapped = needsSwap;
             _isOffsetDetected = false;
@@ -224,7 +229,7 @@ public class SectorReader
 
             _isOffsetDetected = true;
             _offsetDetectedHunk = hunkNum;
-            _offsetDetectedTrack = CurrentTrack!;
+            _offsetDetectedTrack = CurrentTrack;
         }
 
         return true;

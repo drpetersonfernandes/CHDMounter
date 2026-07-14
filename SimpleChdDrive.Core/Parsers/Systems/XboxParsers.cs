@@ -112,7 +112,8 @@ public class XboxSingleFileParser : IConsoleParser
             Name = "image.iso",
             Lba = 0,
             Size = _reader.TotalBytes,
-            IsDirectory = false
+            IsDirectory = false,
+            IsRawPassthrough = true
         });
         return true;
     }

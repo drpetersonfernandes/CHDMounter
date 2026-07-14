@@ -15,7 +15,10 @@ public class CDiFsParser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        _reader.SetTrack(track!, true);
+        if (track != null)
+            _reader.SetTrack(track, true);
+        else
+            _reader.SetTrack(null!, false);
         _lbaOffset = 0;
 
         var sectorData = new byte[2048];
@@ -78,8 +81,9 @@ public class CDiFsParser
     {
         var size = dirNode.Size == 0 ? 2048 : (uint)dirNode.Size;
         var sectorData = new byte[2048];
+        var maxSectors = Math.Min((size + 2047) / 2048, 4096);
 
-        for (uint i = 0; i < 256; i++)
+        for (uint i = 0; i < maxSectors; i++)
         {
             if (!_reader.ReadSector(dirNode.Lba + i, sectorData)) break;
 

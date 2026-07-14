@@ -40,7 +40,7 @@ internal struct Encoder2
         }
     }
 
-    public uint GetPrice(bool matchMode, byte matchByte, byte symbol)
+    public readonly uint GetPrice(bool matchMode, byte matchByte, byte symbol)
     {
         uint price = 0;
         uint context = 1;

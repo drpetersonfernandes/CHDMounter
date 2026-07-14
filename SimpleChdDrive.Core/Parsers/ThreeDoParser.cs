@@ -16,7 +16,10 @@ public class ThreeDoParser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        _reader.SetTrack(track!, true);
+        if (track != null)
+            _reader.SetTrack(track, true);
+        else
+            _reader.SetTrack(null!, false);
 
         var sectorData = new byte[2048];
         var trackStart = track?.StartLba ?? 0;
@@ -91,10 +94,10 @@ public class ThreeDoParser
 
                 var name = Encoding.ASCII.GetString(sectorData, (int)pos + 0x20, 32).TrimEnd('\0');
 
-                var byteCount = Be24(sectorData, (int)pos + 0x11);
+                var byteCount = Be32(sectorData, (int)pos + 0x10);
                 uint avCnt = sectorData[pos + 0x43];
 
-                var extent = Be24(sectorData, (int)pos + 0x45);
+                var extent = Be32(sectorData, (int)pos + 0x44);
 
                 var child = new FsNode
                 {

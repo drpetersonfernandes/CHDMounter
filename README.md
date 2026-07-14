@@ -236,7 +236,7 @@ For SingleFile mode, the container serves the entire decompressed CHD image as a
 | Package              | Version    | Purpose                                   |
 |----------------------|------------|-------------------------------------------|
 | `DokanNet`           | 2.3.0.3    | Dokan virtual filesystem driver bindings   |
-| `winfsp.net`         | 2.2.26183  | WinFsp virtual filesystem driver bindings  |
+| `winfsp.net`         | 2.2.26194  | WinFsp virtual filesystem driver bindings  |
 | `Serilog`            | 4.4.0      | Structured logging                         |
 | `Serilog.Sinks.File` | 7.0.0      | File-based log output                      |
 | `Serilog.Sinks.Debug`| 3.0.0      | Visual Studio debug output logging         |

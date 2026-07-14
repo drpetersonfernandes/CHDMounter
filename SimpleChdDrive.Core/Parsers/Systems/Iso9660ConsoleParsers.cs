@@ -114,7 +114,7 @@ public class AmigaCdParser : Iso9660Wrapper
 
 public abstract class Iso9660Wrapper : IConsoleParser
 {
-    protected readonly SectorReader Reader;
+    protected SectorReader Reader { get; }
     public bool ForceMode { get; set; }
 
     protected Iso9660Wrapper(SectorReader reader)
@@ -127,7 +127,11 @@ public abstract class Iso9660Wrapper : IConsoleParser
 
     public bool Parse(FsNode rootNode)
     {
-        return ParseTrack(rootNode, FindDataTrack());
+        var track = FindDataTrack();
+        if (track == null)
+            return false;
+
+        return ParseTrack(rootNode, track);
     }
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
@@ -136,11 +140,11 @@ public abstract class Iso9660Wrapper : IConsoleParser
         return parser.Parse(rootNode, track);
     }
 
-    protected TrackInfo FindDataTrack()
+    protected TrackInfo? FindDataTrack()
     {
         foreach (var t in Reader.Tracks)
             if (t.IsDataTrack) return t;
 
-        return Reader.Tracks.Count > 0 ? Reader.Tracks[0] : new TrackInfo();
+        return Reader.Tracks.FirstOrDefault();
     }
 }

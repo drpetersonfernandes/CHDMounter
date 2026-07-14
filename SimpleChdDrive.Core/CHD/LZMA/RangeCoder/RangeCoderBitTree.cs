@@ -1,138 +1,138 @@
 namespace SimpleChdDrive.Core.CHD.LZMA.RangeCoder;
 
-internal struct BitTreeEncoder
+internal readonly struct BitTreeEncoder
 {
-    private readonly BitEncoder[] Models;
-    private readonly int NumBitLevels;
+    private readonly BitEncoder[] _models;
+    private readonly int _numBitLevels;
 
     public BitTreeEncoder(int numBitLevels)
     {
-        NumBitLevels = numBitLevels;
-        Models = new BitEncoder[1 << numBitLevels];
+        _numBitLevels = numBitLevels;
+        _models = new BitEncoder[1 << numBitLevels];
     }
 
-    public readonly void Init()
+    public void Init()
     {
-        for (uint i = 1; i < 1 << NumBitLevels; i++)
-            Models[i].Init();
+        for (uint i = 1; i < 1 << _numBitLevels; i++)
+            _models[i].Init();
     }
 
-    public readonly void Encode(Encoder rangeEncoder, uint symbol)
+    public void Encode(Encoder rangeEncoder, uint symbol)
     {
         uint m = 1;
-        for (var bitIndex = NumBitLevels; bitIndex > 0; )
+        for (var bitIndex = _numBitLevels; bitIndex > 0;)
         {
             bitIndex--;
             var bit = (symbol >> bitIndex) & 1;
-            Models[m].Encode(rangeEncoder, bit);
+            _models[m].Encode(rangeEncoder, bit);
             m = (m << 1) | bit;
         }
     }
 
-    public readonly void ReverseEncode(Encoder rangeEncoder, uint symbol)
+    public void ReverseEncode(Encoder rangeEncoder, uint symbol)
     {
         uint m = 1;
-        for (uint i = 0; i < NumBitLevels; i++)
+        for (uint i = 0; i < _numBitLevels; i++)
         {
             var bit = symbol & 1;
-            Models[m].Encode(rangeEncoder, bit);
+            _models[m].Encode(rangeEncoder, bit);
             m = (m << 1) | bit;
             symbol >>= 1;
         }
     }
 
-    public readonly uint GetPrice(uint symbol)
+    public uint GetPrice(uint symbol)
     {
         uint price = 0;
         uint m = 1;
-        for (var bitIndex = NumBitLevels; bitIndex > 0; )
+        for (var bitIndex = _numBitLevels; bitIndex > 0;)
         {
             bitIndex--;
             var bit = (symbol >> bitIndex) & 1;
-            price += Models[m].GetPrice(bit);
+            price += _models[m].GetPrice(bit);
             m = (m << 1) + bit;
         }
         return price;
     }
 
-    public readonly uint ReverseGetPrice(uint symbol)
+    public uint ReverseGetPrice(uint symbol)
     {
         uint price = 0;
         uint m = 1;
-        for (var i = NumBitLevels; i > 0; i--)
+        for (var i = _numBitLevels; i > 0; i--)
         {
             var bit = symbol & 1;
             symbol >>= 1;
-            price += Models[m].GetPrice(bit);
+            price += _models[m].GetPrice(bit);
             m = (m << 1) | bit;
         }
         return price;
     }
 
-    public static uint ReverseGetPrice(BitEncoder[] Models, uint startIndex,
-        int NumBitLevels, uint symbol)
+    public static uint ReverseGetPrice(BitEncoder[] models, uint startIndex,
+        int numBitLevels, uint symbol)
     {
         uint price = 0;
         uint m = 1;
-        for (var i = NumBitLevels; i > 0; i--)
+        for (var i = numBitLevels; i > 0; i--)
         {
             var bit = symbol & 1;
             symbol >>= 1;
-            price += Models[startIndex + m].GetPrice(bit);
+            price += models[startIndex + m].GetPrice(bit);
             m = (m << 1) | bit;
         }
         return price;
     }
 
-    public static void ReverseEncode(BitEncoder[] Models, uint startIndex,
-        Encoder rangeEncoder, int NumBitLevels, uint symbol)
+    public static void ReverseEncode(BitEncoder[] models, uint startIndex,
+        Encoder rangeEncoder, int numBitLevels, uint symbol)
     {
         uint m = 1;
-        for (var i = 0; i < NumBitLevels; i++)
+        for (var i = 0; i < numBitLevels; i++)
         {
             var bit = symbol & 1;
-            Models[startIndex + m].Encode(rangeEncoder, bit);
+            models[startIndex + m].Encode(rangeEncoder, bit);
             m = (m << 1) | bit;
             symbol >>= 1;
         }
     }
 }
 
-internal struct BitTreeDecoder
+internal readonly struct BitTreeDecoder
 {
-    private readonly BitDecoder[] Models;
-    private readonly int NumBitLevels;
+    private readonly BitDecoder[] _models;
+    private readonly int _numBitLevels;
 
     public BitTreeDecoder(int numBitLevels)
     {
-        NumBitLevels = numBitLevels;
-        Models = new BitDecoder[1 << numBitLevels];
+        _numBitLevels = numBitLevels;
+        _models = new BitDecoder[1 << numBitLevels];
     }
 
-    public readonly void Init()
+    public void Init()
     {
-        for (uint i = 1; i < 1 << NumBitLevels; i++)
-            Models[i].Init();
+        for (uint i = 1; i < 1 << _numBitLevels; i++)
+            _models[i].Init();
     }
 
-    public readonly uint Decode(Decoder rangeDecoder)
+    public uint Decode(Decoder rangeDecoder)
     {
         uint m = 1;
-        for (var bitIndex = NumBitLevels; bitIndex > 0; bitIndex--)
+        for (var bitIndex = _numBitLevels; bitIndex > 0; bitIndex--)
         {
-            m = (m << 1) + Models[m].Decode(rangeDecoder);
+            m = (m << 1) + _models[m].Decode(rangeDecoder);
         }
 
-        return m - ((uint)1 << NumBitLevels);
+        return m - ((uint)1 << _numBitLevels);
     }
 
-    public readonly uint ReverseDecode(Decoder rangeDecoder)
+    public uint ReverseDecode(Decoder rangeDecoder)
     {
         uint m = 1;
         uint symbol = 0;
-        for (var bitIndex = 0; bitIndex < NumBitLevels; bitIndex++)
+        for (var bitIndex = 0; bitIndex < _numBitLevels; bitIndex++)
         {
-            var bit = Models[m].Decode(rangeDecoder);
+            var bit = _models[m].Decode(rangeDecoder);
             m <<= 1;
             m += bit;
             symbol |= bit << bitIndex;
@@ -140,14 +140,14 @@ internal struct BitTreeDecoder
         return symbol;
     }
 
-    public static uint ReverseDecode(BitDecoder[] Models, uint startIndex,
-        Decoder rangeDecoder, int NumBitLevels)
+    public static uint ReverseDecode(BitDecoder[] models, uint startIndex,
+        Decoder rangeDecoder, int numBitLevels)
     {
         uint m = 1;
         uint symbol = 0;
-        for (var bitIndex = 0; bitIndex < NumBitLevels; bitIndex++)
+        for (var bitIndex = 0; bitIndex < numBitLevels; bitIndex++)
         {
-            var bit = Models[startIndex + m].Decode(rangeDecoder);
+            var bit = models[startIndex + m].Decode(rangeDecoder);
             m <<= 1;
             m += bit;
             symbol |= bit << bitIndex;

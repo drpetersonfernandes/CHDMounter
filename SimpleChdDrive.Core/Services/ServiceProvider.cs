@@ -32,9 +32,9 @@ public static class ServiceProvider
             if (kvp.Value is IDisposable disposable)
             {
                 try { disposable.Dispose(); }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    System.Diagnostics.Debug.WriteLine($"ServiceProvider: Failed to dispose {kvp.Key.Name}: {ex.Message}");
                 }
             }
         }

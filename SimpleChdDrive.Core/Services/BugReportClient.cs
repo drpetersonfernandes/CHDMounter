@@ -79,7 +79,11 @@ public static class BugReportClient
             while (PendingReports.TryDequeue(out var sendAction))
             {
                 try { await sendAction(); }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
+
                 await Task.Delay(6000);
             }
         }
@@ -161,7 +165,8 @@ public static class BugReportClient
     private static string Truncate(string value, int maxLength)
     {
         if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
-            return value ?? "";
+            return value;
+
         return value[..(maxLength - 3)] + "...";
     }
 }

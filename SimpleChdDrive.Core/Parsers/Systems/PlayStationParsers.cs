@@ -40,6 +40,46 @@ public class PlayStation1Parser : IConsoleParser
     }
 }
 
+public class PlayStationAutoDetectParser : IConsoleParser
+{
+    private readonly SectorReader _reader;
+    public bool ForceMode { get; set; }
+
+    public PlayStationAutoDetectParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
+
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.PlayStation;
+    }
+
+    public string GetConsoleName()
+    {
+        return "PlayStation (Auto)";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
+
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
+    {
+        var parser = new Iso9660Parser(_reader);
+        return parser.Parse(rootNode, track);
+    }
+
+    private TrackInfo FindDataTrack()
+    {
+        foreach (var t in _reader.Tracks)
+            if (t.IsDataTrack) return t;
+
+        return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+    }
+}
+
 public class PlayStation2Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
@@ -154,7 +194,8 @@ public class PlayStation3SingleFileParser : IConsoleParser
             Name = "image.iso",
             Lba = 0,
             Size = _reader.TotalBytes,
-            IsDirectory = false
+            IsDirectory = false,
+            IsRawPassthrough = true
         });
         return true;
     }

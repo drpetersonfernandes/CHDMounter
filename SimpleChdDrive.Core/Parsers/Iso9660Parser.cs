@@ -22,7 +22,10 @@ public class Iso9660Parser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        _reader.SetTrack(track!, true);
+        if (track != null)
+            _reader.SetTrack(track, true);
+        else
+            _reader.SetTrack(null!, false);
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;

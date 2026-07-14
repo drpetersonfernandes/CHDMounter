@@ -33,7 +33,6 @@ internal class ArrayPool
             }
         }
         return ret;
-
     }
 
     internal void Return(byte[] ret)
