@@ -272,7 +272,7 @@ internal static class ChdBlockRead
 
         if (checkCrc)
         {
-            if ((mapEntry.Crc != null && !Crc.VerifyDigest((uint)mapEntry.Crc, buffOut, 0, (uint)buffOutLength)) || (mapEntry.Crc16 != null && Utils.Crc16.Calc(buffOut, buffOutLength) != mapEntry.Crc16))
+            if ((mapEntry.Crc != null && !Crc.VerifyDigest((uint)mapEntry.Crc, buffOut, 0, (uint)buffOutLength)) || (mapEntry.Crc16 != null && Crc16.Calc(buffOut, buffOutLength) != mapEntry.Crc16))
                 return ChdError.Chderrdecompressionerror;
         }
         return ChdError.Chderrnone;

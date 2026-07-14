@@ -17,9 +17,9 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         _loggingService = loggingService;
     }
 
-    public override int Init(object host2)
+    public override int Init(object Host)
     {
-        if (host2 is FileSystemHost host)
+        if (Host is FileSystemHost host)
         {
             host.CasePreservedNames = true;
             host.UnicodeOnDisk = true;
@@ -32,26 +32,26 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         return STATUS_SUCCESS;
     }
 
-    public override int Open(string fileName, uint createOptions, uint grantedAccess,
-        out object fileNode, out object fileDesc, out FileInfo fileInfo, out string normalizedName)
+    public override int Open(string FileName, uint CreateOptions, uint GrantedAccess,
+        out object FileNode, out object FileDesc, out FileInfo FileInfo, out string NormalizedName)
     {
-        return OpenOrCreate(fileName, out fileNode, out fileDesc, out fileInfo, out normalizedName);
+        return OpenOrCreate(FileName, out FileNode, out FileDesc, out FileInfo, out NormalizedName);
     }
 
-    public override void Close(object fileNode, object fileDesc) { }
+    public override void Close(object FileNode, object FileDesc) { }
 
-    private int OpenOrCreate(string fileName, out object fileNode, out object fileDesc,
-        out FileInfo fileInfo, out string normalizedName)
+    private int OpenOrCreate(string FileName, out object FileNode, out object FileDesc,
+        out FileInfo FileInfo, out string NormalizedName)
     {
-        fileNode = null!;
-        fileDesc = null!;
-        fileInfo = default;
-        normalizedName = fileName;
+        FileNode = null!;
+        FileDesc = null!;
+        FileInfo = default;
+        NormalizedName = FileName;
 
-        var entry = _container.FindFile(fileName);
+        var entry = _container.FindFile(FileName);
         if (entry == null)
         {
-            if (fileName is "\\" or "/")
+            if (FileName is "\\" or "/")
             {
                 entry = new FileEntry { Name = "\\", IsDirectory = true };
             }
@@ -59,31 +59,31 @@ public sealed class ChdFs : FileSystemBase, IDisposable
                 return STATUS_OBJECT_NAME_NOT_FOUND;
         }
 
-        normalizedName = entry.Name;
-        fileNode = entry;
-        fileDesc = entry;
-        fileInfo = EntryToFileInfo(entry);
+        NormalizedName = entry.Name;
+        FileNode = entry;
+        FileDesc = entry;
+        FileInfo = EntryToFileInfo(entry);
         return STATUS_SUCCESS;
     }
 
-    public override int Read(object fileNode, object fileDesc, IntPtr buffer, ulong offset,
-        uint length, out uint bytesTransferred)
+    public override int Read(object FileNode, object FileDesc, IntPtr Buffer, ulong Offset,
+        uint Length, out uint BytesTransferred)
     {
-        bytesTransferred = 0;
+        BytesTransferred = 0;
 
-        if (fileNode is FileEntry { IsDirectory: true })
+        if (FileNode is FileEntry { IsDirectory: true })
             return STATUS_ACCESS_DENIED;
 
-        if (fileNode is not FileEntry entry)
+        if (FileNode is not FileEntry entry)
             return STATUS_INVALID_HANDLE;
 
-        var readBuffer = ArrayPool<byte>.Shared.Rent((int)length);
+        var readBuffer = ArrayPool<byte>.Shared.Rent((int)Length);
         try
         {
-            var read = _container.ReadFile(entry, offset, readBuffer, 0, (int)length);
+            var read = _container.ReadFile(entry, Offset, readBuffer, 0, (int)Length);
             if (read > 0)
-                Marshal.Copy(readBuffer, 0, buffer, read);
-            bytesTransferred = (uint)read;
+                Marshal.Copy(readBuffer, 0, Buffer, read);
+            BytesTransferred = (uint)read;
             return STATUS_SUCCESS;
         }
         finally { ArrayPool<byte>.Shared.Return(readBuffer); }

@@ -32,6 +32,7 @@ public enum SpeakerConfig
     KsaudioSpeaker7Point1 = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter | SpeakerLowFrequency | SpeakerBackLeft | SpeakerBackRight | SpeakerFrontLeftOfCenter | SpeakerFrontRightOfCenter,
     KsaudioSpeaker7Point1Surround = SpeakerFrontLeft | SpeakerFrontRight | SpeakerFrontCenter | SpeakerLowFrequency | SpeakerBackLeft | SpeakerBackRight | SpeakerSideLeft | SpeakerSideRight,
 
+#pragma warning disable CA1069
     DvdaudioGr10 = KsaudioSpeakerMono,
     DvdaudioGr11 = KsaudioSpeakerStereo,
     DvdaudioGr12 = KsaudioSpeakerStereo,
@@ -75,4 +76,5 @@ public enum SpeakerConfig
     DvdaudioGr218 = SpeakerLowFrequency,
     DvdaudioGr219 = SpeakerFrontCenter,
     DvdaudioGr220 = DvdaudioGr210
+#pragma warning restore CA1069
 }

@@ -142,7 +142,14 @@ public partial class MainWindow
 
     private async void Mount_Click(object sender, RoutedEventArgs e)
     {
-        await MountDiskAsync();
+        try
+        {
+            await MountDiskAsync();
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogError($"Mount failed: {ex.Message}");
+        }
     }
 
     private void MountDisk()

@@ -149,13 +149,6 @@ public partial class App
             try { _logTextWriter?.Dispose(); }
             catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter", true); }
 
-            try
-            {
-                if (Current.MainWindow is IDisposable disposableMainWindow)
-                    disposableMainWindow.Dispose();
-            }
-            catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose MainWindow", true); }
-
             try { ServiceProvider.DisposeAllServices(); }
             catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose services", true); }
 
