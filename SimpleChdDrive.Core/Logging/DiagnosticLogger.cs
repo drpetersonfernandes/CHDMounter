@@ -1,17 +1,17 @@
 using System.Diagnostics;
-using System.Text;
+using Serilog;
+using SerilogLog = Serilog.Log;
 
 namespace SimpleChdDrive.Core.Logging;
 
 public static class DiagnosticLogger
 {
-    private static readonly StringBuilder _buffer = new();
-
     public static string? LogFilePath { get; private set; }
 
     public static void Initialize()
     {
         LogFilePath = Path.Combine(Path.GetTempPath(), $"SimpleChdDrive_Debug_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        AppLogger.Initialize(LogFilePath);
     }
 
     public static void CleanupOldLogs()
@@ -28,10 +28,16 @@ public static class DiagnosticLogger
                     if (fi.CreationTime < DateTime.Now.AddDays(-7))
                         File.Delete(log);
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             }
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
     }
 
     public static void LogSection(string section)
@@ -44,14 +50,7 @@ public static class DiagnosticLogger
 
     public static void Log(string message)
     {
-        var line = $"[{DateTime.Now:HH:mm:ss.fff}] {message}";
-        _buffer.AppendLine(line);
         Debug.WriteLine($"[DIAG] {message}");
-
-        if (LogFilePath != null)
-        {
-            try { File.AppendAllText(LogFilePath, line + Environment.NewLine); }
-            catch { }
-        }
+        SerilogLog.Debug(message);
     }
 }

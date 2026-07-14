@@ -438,9 +438,9 @@ public sealed class ChdFile : IDisposable
             while (offset != 0)
             {
                 _stream.Seek((long)offset, SeekOrigin.Begin);
-                var tag = br.ReadUInt32BE();
-                var lengthAndFlags = br.ReadUInt32BE();
-                var next = br.ReadUInt64BE();
+                var tag = br.ReadUInt32Be();
+                var lengthAndFlags = br.ReadUInt32Be();
+                var next = br.ReadUInt64Be();
 
                 var flags = lengthAndFlags >> 24;
                 var length = lengthAndFlags & 0x00FFFFFF;

@@ -1,18 +1,18 @@
 ﻿namespace SimpleChdDrive.Core.CHD.Utils;
 
-public class CRC
+public class Crc
 {
-    public static readonly uint[] CRC32Lookup;
+    public static readonly uint[] Crc32Lookup;
     private uint _crc;
 
-    static CRC()
+    static Crc()
     {
         const uint polynomial = 0xEDB88320;
         const int crcNumTables = 8;
 
         unchecked
         {
-            CRC32Lookup = new uint[256 * crcNumTables];
+            Crc32Lookup = new uint[256 * crcNumTables];
             int i;
             for (i = 0; i < 256; i++)
             {
@@ -22,19 +22,19 @@ public class CRC
                     r = (r >> 1) ^ (polynomial & ~((r & 1) - 1));
                 }
 
-                CRC32Lookup[i] = r;
+                Crc32Lookup[i] = r;
             }
 
             for (; i < 256 * crcNumTables; i++)
             {
-                var r = CRC32Lookup[i - 256];
-                CRC32Lookup[i] = CRC32Lookup[r & 0xFF] ^ (r >> 8);
+                var r = Crc32Lookup[i - 256];
+                Crc32Lookup[i] = Crc32Lookup[r & 0xFF] ^ (r >> 8);
             }
         }
     }
 
 
-    public CRC()
+    public Crc()
     {
         Reset();
     }
@@ -46,9 +46,9 @@ public class CRC
     }
 
 
-    internal void UpdateCRC(int inCh)
+    internal void UpdateCrc(int inCh)
     {
-        _crc = (_crc >> 8) ^ CRC32Lookup[(byte)_crc ^ (byte)inCh];
+        _crc = (_crc >> 8) ^ Crc32Lookup[(byte)_crc ^ (byte)inCh];
     }
 
     public void SlurpBlock(byte[] block, int offset, int count)
@@ -58,7 +58,7 @@ public class CRC
 
         for (; (offset & 7) != 0 && count != 0; count--)
         {
-            crc = (crc >> 8) ^ CRC32Lookup[(byte)crc ^ block[offset++]];
+            crc = (crc >> 8) ^ Crc32Lookup[(byte)crc ^ block[offset++]];
         }
 
         if (count >= 8)
@@ -73,20 +73,20 @@ public class CRC
                 var high = (uint)(block[offset + 4] + (block[offset + 5] << 8) + (block[offset + 6] << 16) + (block[offset + 7] << 24));
                 offset += 8;
 
-                crc = CRC32Lookup[(byte)crc + 0x700]
-                      ^ CRC32Lookup[(byte)(crc >>= 8) + 0x600]
-                      ^ CRC32Lookup[(byte)(crc >>= 8) + 0x500]
-                      ^ CRC32Lookup[ /*(byte)*/(crc >> 8) + 0x400]
-                      ^ CRC32Lookup[(byte)high + 0x300]
-                      ^ CRC32Lookup[(byte)(high >>= 8) + 0x200]
-                      ^ CRC32Lookup[(byte)(high >>= 8) + 0x100]
-                      ^ CRC32Lookup[ /*(byte)*/(high >> 8) + 0x000];
+                crc = Crc32Lookup[(byte)crc + 0x700]
+                      ^ Crc32Lookup[(byte)(crc >>= 8) + 0x600]
+                      ^ Crc32Lookup[(byte)(crc >>= 8) + 0x500]
+                      ^ Crc32Lookup[ /*(byte)*/(crc >> 8) + 0x400]
+                      ^ Crc32Lookup[(byte)high + 0x300]
+                      ^ Crc32Lookup[(byte)(high >>= 8) + 0x200]
+                      ^ Crc32Lookup[(byte)(high >>= 8) + 0x100]
+                      ^ Crc32Lookup[ /*(byte)*/(high >> 8) + 0x000];
             }
         }
 
         while (count-- != 0)
         {
-            crc = (crc >> 8) ^ CRC32Lookup[(byte)crc ^ block[offset++]];
+            crc = (crc >> 8) ^ Crc32Lookup[(byte)crc ^ block[offset++]];
         }
 
         _crc = crc;
@@ -110,7 +110,7 @@ public class CRC
 
     public static uint CalculateDigest(byte[] data, uint offset, uint size)
     {
-        var crc = new CRC();
+        var crc = new Crc();
         // crc.Init();
         crc.SlurpBlock(data, (int)offset, (int)size);
         return crc.Crc32ResultU;

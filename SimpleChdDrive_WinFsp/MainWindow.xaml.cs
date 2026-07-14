@@ -133,7 +133,10 @@ public partial class MainWindow : Window
 
     private void OpenChd_Click(object sender, RoutedEventArgs e) => BrowseChd_Click(sender, e);
     private async void Mount_Click(object sender, RoutedEventArgs e) => await MountDiskAsync();
-    private void MountDisk() => _ = MountDiskAsync();
+    private void MountDisk()
+    {
+        _ = MountDiskAsync();
+    }
 
     private async Task MountDiskAsync()
     {
@@ -142,7 +145,11 @@ public partial class MainWindow : Window
         try
         {
             var type = _selectedConsoleType;
-            if (ConsoleTypeComboBox.SelectedItem is ConsoleInfo sci) type = sci.Type;
+            if (ConsoleTypeComboBox.SelectedItem is ConsoleInfo sci)
+            {
+                type = sci.Type;
+            }
+
             await Task.Run(() => _mountService.Mount(_chdPath!, null, type));
             if (_mountService.IsMounted) { StatusText.Text = "Mounted"; DriveLetterText.Text = _mountService.MountPoint ?? ""; UnmountButton.IsEnabled = true; }
             else { StatusText.Text = "Mount failed"; MountButton.IsEnabled = true; }

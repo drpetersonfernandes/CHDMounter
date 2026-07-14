@@ -41,9 +41,9 @@ internal static partial class ChdReaders
 
         uint metaDataLength = buffIn[0];
         uint audioChannels = buffIn[1];
-        uint audioSamplesPerBlock = buffIn.ReadUInt16BE(2);
-        uint videoWidth = buffIn.ReadUInt16BE(4);
-        uint videoHeight = buffIn.ReadUInt16BE(6);
+        uint audioSamplesPerBlock = buffIn.ReadUInt16Be(2);
+        uint videoWidth = buffIn.ReadUInt16Be(4);
+        uint videoHeight = buffIn.ReadUInt16Be(6);
 
         var sourceTotalSize = 10 + 2 * audioChannels;
         // validate that the sizes make sense
@@ -52,7 +52,7 @@ internal static partial class ChdReaders
 
         sourceTotalSize += metaDataLength;
 
-        uint audioHuffmanTreeSize = buffIn.ReadUInt16BE(8);
+        uint audioHuffmanTreeSize = buffIn.ReadUInt16Be(8);
         if (audioHuffmanTreeSize != 0xffff)
         {
             sourceTotalSize += audioHuffmanTreeSize;
@@ -61,7 +61,7 @@ internal static partial class ChdReaders
         var audioChannelCompressedSize = new uint?[16];
         for (var chnum = 0; chnum < audioChannels; chnum++)
         {
-            audioChannelCompressedSize[chnum] = buffIn.ReadUInt16BE(10 + 2 * chnum);
+            audioChannelCompressedSize[chnum] = buffIn.ReadUInt16Be(10 + 2 * chnum);
             sourceTotalSize += audioChannelCompressedSize[chnum]!.Value;
         }
 

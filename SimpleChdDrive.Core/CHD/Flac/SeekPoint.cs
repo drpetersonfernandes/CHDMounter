@@ -2,7 +2,7 @@
 
 public struct SeekPoint
 {
-    public long number;
-    public long offset;
-    public int framesize;
+    public long Number { get; set; }
+    public long Offset { get; set; }
+    public int Framesize { get; set; }
 }

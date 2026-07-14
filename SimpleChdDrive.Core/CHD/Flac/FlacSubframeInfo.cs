@@ -42,9 +42,9 @@ public unsafe class FlacSubframeInfo
     public FlacSubframe Best { get; set; }
     public int Obits { get; set; }
     public int Wbits { get; set; }
-    public unsafe int* Samples { get; set; }
+    public int* Samples { get; set; }
     public uint DoneFixed { get; set; }
-    public readonly ulong[] BestFixed;
-    public readonly LpcContext[] LpcCtx;
-    public readonly LpcSubframeInfo Sf;
+    public ulong[] BestFixed { get; }
+    public LpcContext[] LpcCtx { get; }
+    public LpcSubframeInfo Sf { get; }
 }

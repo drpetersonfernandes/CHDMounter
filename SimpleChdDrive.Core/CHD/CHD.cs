@@ -247,8 +247,8 @@ public static class Chd
         }
 
         using var br = new BinaryReader(file, Encoding.UTF8, true);
-        length = br.ReadUInt32BE();
-        version = br.ReadUInt32BE();
+        length = br.ReadUInt32Be();
+        version = br.ReadUInt32Be();
         return HeaderLengths[version] == length;
     }
 

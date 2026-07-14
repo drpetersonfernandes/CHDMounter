@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Globalization;
 using DokanNet;
 using DokanNet.Logging;
 
@@ -98,13 +99,18 @@ public class MountService : IMountService, IDisposable
     private static string PickDriveLetter()
     {
         var drives = DriveInfo.GetDrives().Select(d => d.Name[0]).ToHashSet();
-        for (char c = 'M'; c <= 'Q'; c++)
+        for (var c = 'M'; c <= 'Q'; c++)
             if (!drives.Contains(c))
                 return $"{c}:";
+
         return "Z:";
     }
 
-    public void Dispose() => Unmount();
+    public void Dispose()
+    {
+        Unmount();
+        GC.SuppressFinalize(this);
+    }
 }
 
 public class DokanPrefixedLogger : ILogger
@@ -112,16 +118,33 @@ public class DokanPrefixedLogger : ILogger
     private readonly ILoggingService _loggingService;
     public bool DebugEnabled => false;
 
-    public DokanPrefixedLogger(ILoggingService loggingService) => _loggingService = loggingService;
+    public DokanPrefixedLogger(ILoggingService loggingService)
+    {
+        _loggingService = loggingService;
+    }
 
-    public void Debug(string message, params object[] args) =>
-        _loggingService.Log($"[Dokan] {string.Format(message, args)}");
-    public void Info(string message, params object[] args) =>
-        _loggingService.Log($"[Dokan] {string.Format(message, args)}");
-    public void Warn(string message, params object[] args) =>
-        _loggingService.Log($"[Dokan] {string.Format(message, args)}");
-    public void Error(string message, params object[] args) =>
-        _loggingService.LogError($"[Dokan] {string.Format(message, args)}");
-    public void Fatal(string message, params object[] args) =>
-        _loggingService.LogError($"[Dokan] {string.Format(message, args)}");
+    public void Debug(string message, params object[] args)
+    {
+        _loggingService.Log($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+    }
+
+    public void Info(string message, params object[] args)
+    {
+        _loggingService.Log($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+    }
+
+    public void Warn(string message, params object[] args)
+    {
+        _loggingService.Log($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+    }
+
+    public void Error(string message, params object[] args)
+    {
+        _loggingService.LogError($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+    }
+
+    public void Fatal(string message, params object[] args)
+    {
+        _loggingService.LogError($"[Dokan] {string.Format(CultureInfo.InvariantCulture, message, args)}");
+    }
 }

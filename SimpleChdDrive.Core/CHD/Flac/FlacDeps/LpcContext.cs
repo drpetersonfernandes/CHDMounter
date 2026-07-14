@@ -18,72 +18,63 @@ public class LpcSubframeInfo
 
 public unsafe struct LpcWindowSection
 {
-    public enum SectionType
-    {
-        Zero,
-        One,
-        OneLarge,
-        Data,
-        OneGlue,
-        Glue
-    }
     public int MStart { get; set; }
     public int MEnd { get; set; }
-    public SectionType MType { get; set; }
+    public LpcSectionType MType { get; set; }
     public int MId { get; set; }
     public LpcWindowSection(int end)
     {
         MId = -1;
         MStart = 0;
         MEnd = end;
-        MType = SectionType.Data;
+        MType = LpcSectionType.Data;
     }
     public void SetData(int start, int end)
     {
         MId = -1;
         MStart = start;
         MEnd = end;
-        MType = SectionType.Data;
+        MType = LpcSectionType.Data;
     }
     public void setOne(int start, int end)
     {
         MId = -1;
         MStart = start;
         MEnd = end;
-        MType = SectionType.One;
+        MType = LpcSectionType.One;
     }
     public void SetGlue(int start)
     {
         MId = -1;
         MStart = start;
         MEnd = start;
-        MType = SectionType.Glue;
+        MType = LpcSectionType.Glue;
     }
     public void SetZero(int start, int end)
     {
         MId = -1;
         MStart = start;
         MEnd = end;
-        MType = SectionType.Zero;
+        MType = LpcSectionType.Zero;
     }
 
     public readonly void compute_autocorr( /*const*/ int* data, float* window, int minOrder, int order, int blocksize, double* autoc)
     {
         switch (MType)
         {
-            case SectionType.OneLarge:
+            case LpcSectionType.OneLarge:
                 Lpc.compute_autocorr_windowless_large(data + MStart, MEnd - MStart, minOrder, order, autoc);
                 break;
-            case SectionType.One:
+            case LpcSectionType.One:
                 Lpc.compute_autocorr_windowless(data + MStart, MEnd - MStart, minOrder, order, autoc);
                 break;
-            case SectionType.Data:
+            case LpcSectionType.Data:
                 Lpc.compute_autocorr(data + MStart, window + MStart, MEnd - MStart, minOrder, order, autoc);
                 break;
-            case SectionType.Glue:
+            case LpcSectionType.Glue:
                 Lpc.compute_autocorr_glue(data, window, MStart, MEnd, minOrder, order, autoc);
                 break;
-            case SectionType.OneGlue:
+            case LpcSectionType.OneGlue:
                 Lpc.compute_autocorr_glue(data + MStart, minOrder, order, autoc);
                 break;
         }
@@ -93,7 +84,7 @@ public unsafe struct LpcWindowSection
     {
         var sectionId = 0;
         var boundaries = new List<int>();
-        var types = new SectionType[windowcount, Lpc.MaxLpcSections * 2];
+        var types = new LpcSectionType[windowcount, Lpc.MaxLpcSections * 2];
         var alias = new int[windowcount, Lpc.MaxLpcSections * 2];
         var aliasSet = new int[windowcount, Lpc.MaxLpcSections * 2];
         for (var x = 0; x < sz; x++)
@@ -115,8 +106,8 @@ public unsafe struct LpcWindowSection
                 if (boundaries.Count >= Lpc.MaxLpcSections * 2) throw new InvalidOperationException();
 
                 types[i, boundaries.Count] =
-                    boundaries.Count >= Lpc.MaxLpcSections * 2 - 2 ? SectionType.Data : w == 0.0 ? SectionType.Zero : w != 1.0 ? SectionType.Data : bps * 2 + BitReader.Log2I(sz) >= 61 ? SectionType.OneLarge :
-                                    SectionType.One;
+                    boundaries.Count >= Lpc.MaxLpcSections * 2 - 2 ? LpcSectionType.Data : w == 0.0 ? LpcSectionType.Zero : w != 1.0 ? LpcSectionType.Data : bps * 2 + BitReader.Log2I(sz) >= 61 ? LpcSectionType.OneLarge :
+                                    LpcSectionType.One;
             }
             var isBoundary = false;
             for (var i = 0; i < windowcount; i++)
@@ -148,7 +139,7 @@ public unsafe struct LpcWindowSection
                 if (secs[i] >= Lpc.MaxLpcSections - 1)
                 {
                     throw new InvalidOperationException();
-                    //window_sections[secs[i] - 1].m_type = LpcWindowSection.SectionType.Data;
+                    //window_sections[secs[i] - 1].m_type = LpcSectionType.Data;
                     //window_sections[secs[i] - 1].m_end = boundaries[j + 1];
                     //continue;
                 }
@@ -160,7 +151,7 @@ public unsafe struct LpcWindowSection
                 var windowSections = sections + i * Lpc.MaxLpcSections;
                 var sec = secs[i] - 1;
                 if (sec > 0
-                    && j > 0 && (aliasSet[i, j] == aliasSet[i, j - 1] || windowSections[sec].MType == SectionType.Zero)
+                    && j > 0 && (aliasSet[i, j] == aliasSet[i, j - 1] || windowSections[sec].MType == LpcSectionType.Zero)
                     && windowSections[sec].MStart == boundaries[j]
                     && windowSections[sec].MEnd == boundaries[j + 1]
                     && windowSections[sec - 1].MEnd == boundaries[j]
@@ -173,7 +164,7 @@ public unsafe struct LpcWindowSection
                 if (sectionId >= Lpc.MaxLpcSections) throw new InvalidOperationException();
 
                 if (aliasSet[i, j] != 0
-                    && types[i, j] != SectionType.Zero)
+                    && types[i, j] != LpcSectionType.Zero)
                 {
                     for (var i1 = i; i1 < windowcount; i1++)
                         if (alias[i1, j] == i && secs[i1] > 0)
@@ -188,22 +179,22 @@ public unsafe struct LpcWindowSection
                 {
                     // TODO: section_id for glue? nontrivial, must be sure next sections are the same size
                     case > 0
-                        when (windowSections[sec].MType == SectionType.One || windowSections[sec].MType == SectionType.OneLarge)
+                        when (windowSections[sec].MType == LpcSectionType.One || windowSections[sec].MType == LpcSectionType.OneLarge)
                              && windowSections[sec].MEnd - windowSections[sec].MStart >= Lpc.MaxLpcOrder
-                             && (windowSections[sec - 1].MType == SectionType.One || windowSections[sec - 1].MType == SectionType.OneLarge)
+                             && (windowSections[sec - 1].MType == LpcSectionType.One || windowSections[sec - 1].MType == LpcSectionType.OneLarge)
                              && windowSections[sec - 1].MEnd - windowSections[sec - 1].MStart >= Lpc.MaxLpcOrder:
                         windowSections[sec + 1] = windowSections[sec];
                         windowSections[sec].MEnd = windowSections[sec].MStart;
-                        windowSections[sec].MType = SectionType.OneGlue;
+                        windowSections[sec].MType = LpcSectionType.OneGlue;
                         windowSections[sec].MId = -1;
                         secs[i]++;
                         continue;
                     case > 0
-                        when windowSections[sec].MType != SectionType.Zero
-                             && windowSections[sec - 1].MType != SectionType.Zero:
+                        when windowSections[sec].MType != LpcSectionType.Zero
+                             && windowSections[sec - 1].MType != LpcSectionType.Zero:
                         windowSections[sec + 1] = windowSections[sec];
                         windowSections[sec].MEnd = windowSections[sec].MStart;
-                        windowSections[sec].MType = SectionType.Glue;
+                        windowSections[sec].MType = LpcSectionType.Glue;
                         windowSections[sec].MId = -1;
                         secs[i]++;
                         break;
@@ -215,8 +206,8 @@ public unsafe struct LpcWindowSection
             for (var s = 0; s < secs[i]; s++)
             {
                 var windowSections = sections + i * Lpc.MaxLpcSections;
-                if (windowSections[s].MType == SectionType.Glue
-                    || windowSections[s].MType == SectionType.OneGlue)
+                if (windowSections[s].MType == LpcSectionType.Glue
+                    || windowSections[s].MType == LpcSectionType.OneGlue)
                 {
                     windowSections[s].MEnd = windowSections[s + 1].MEnd;
                 }
@@ -272,7 +263,7 @@ public unsafe class LpcContext
 
             for (var section = 0; section < Lpc.MaxLpcSections; section++)
             {
-                if (sections[section].MType == LpcWindowSection.SectionType.Zero)
+                if (sections[section].MType == LpcSectionType.Zero)
                 {
                     continue;
                 }

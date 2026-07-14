@@ -1,11 +1,11 @@
-﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
+using System.Globalization;
 using System.Text;
 using System.Windows;
 
 namespace SimpleCHDDrive;
 
-public partial class MainWindow : Window
+public partial class MainWindow
 {
     private readonly ILoggingService _loggingService;
     private readonly IMountService _mountService;
@@ -34,11 +34,12 @@ public partial class MainWindow : Window
         _loggingService.LogEntries.CollectionChanged += (_, e) =>
         {
             if (e.Action != NotifyCollectionChangedAction.Add) return;
+
             Dispatcher.InvokeAsync(() =>
             {
                 var sb = new StringBuilder(LogTextBox.Text);
                 foreach (LogEntry entry in e.NewItems!)
-                    sb.AppendLine($"[{entry.Timestamp:HH:mm:ss}] {entry.Message}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"[{entry.Timestamp:HH:mm:ss}] {entry.Message}");
                 LogTextBox.Text = sb.ToString();
                 LogTextBox.ScrollToEnd();
             });
@@ -157,11 +158,20 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OpenChd_Click(object sender, RoutedEventArgs e) => BrowseChd_Click(sender, e);
+    private void OpenChd_Click(object sender, RoutedEventArgs e)
+    {
+        BrowseChd_Click(sender, e);
+    }
 
-    private async void Mount_Click(object sender, RoutedEventArgs e) => await MountDiskAsync();
+    private async void Mount_Click(object sender, RoutedEventArgs e)
+    {
+        await MountDiskAsync();
+    }
 
-    private void MountDisk() => _ = MountDiskAsync();
+    private void MountDisk()
+    {
+        _ = MountDiskAsync();
+    }
 
     private async Task MountDiskAsync()
     {
@@ -175,14 +185,16 @@ public partial class MainWindow : Window
         {
             var type = _selectedConsoleType;
             if (ConsoleTypeComboBox.SelectedItem is ConsoleInfo sci)
+            {
                 type = sci.Type;
+            }
 
             await Task.Run(() => _mountService.Mount(_chdPath!, null, type));
 
             if (_mountService.IsMounted)
             {
                 StatusText.Text = "Mounted";
-                DriveLetterText.Text = _mountService.MountPoint ?? "";
+                DriveLetterText.Text = _mountService.MountPoint;
                 UnmountButton.IsEnabled = true;
             }
             else
@@ -215,7 +227,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Exit_Click(object sender, RoutedEventArgs e) => Close();
+    private void Exit_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
     private void About_Click(object sender, RoutedEventArgs e)
     {
         new AboutWindow { Owner = this }.ShowDialog();
@@ -223,6 +239,10 @@ public partial class MainWindow : Window
 
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        try { _mountService.Unmount(); } catch { }
+        try { _mountService.Unmount(); }
+        catch
+        {
+            // ignored
+        }
     }
 }

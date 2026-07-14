@@ -46,13 +46,13 @@ public class Iso9660Parser
 
                 if (isIso || isHs)
                 {
-                    if (type == 2 && isIso) { pvdLba = effectiveTrackStart + offset;
+                    if (type == 2 && isIso) {
                         _isHighSierra = false;
                         _isJoliet = true;
                         foundPvd = true;
                         bestVdData = sectorData;
                         break; }
-                    if (!foundPvd && (type == 1 || isHs)) { pvdLba = effectiveTrackStart + offset;
+                    if (!foundPvd && (type == 1 || isHs)) {
                         _isHighSierra = isHs;
                         _isJoliet = false;
                         foundPvd = true;
@@ -72,7 +72,7 @@ public class Iso9660Parser
                     var isHs = CheckMagic(sectorData, 9, "CDROM");
                     if (isIso || isHs)
                     {
-                        if (type == 2 && isIso) { pvdLba = offset;
+                        if (type == 2 && isIso) {
                             effectiveTrackStart = 0;
                             _reader.SetTrack(null!);
                             _isHighSierra = false;
@@ -80,7 +80,7 @@ public class Iso9660Parser
                             foundPvd = true;
                             bestVdData = sectorData;
                             break; }
-                        if (!foundPvd && (type == 1 || isHs)) { pvdLba = offset;
+                        if (!foundPvd && (type == 1 || isHs)) {
                             effectiveTrackStart = 0;
                             _reader.SetTrack(null!);
                             _isHighSierra = isHs;
@@ -100,7 +100,7 @@ public class Iso9660Parser
                 {
                     var type = sectorData[0];
                     if (type is 1 or 2 && (CheckMagic(sectorData, 1, "CD001") || CheckMagic(sectorData, 9, "CDROM")))
-                    { pvdLba = effectiveTrackStart + i;
+                    {
                         _isHighSierra = CheckMagic(sectorData, 9, "CDROM");
                         _isJoliet = type == 2;
                         foundPvd = true;

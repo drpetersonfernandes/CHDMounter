@@ -32,10 +32,10 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         return STATUS_SUCCESS;
     }
 
-    public override int Open(string FileName, uint CreateOptions, uint GrantedAccess,
-        out object FileNode, out object FileDesc, out FileInfo FileInfo, out string NormalizedName)
+    public override int Open(string fileName, uint createOptions, uint grantedAccess,
+        out object FileNode, out object fileDesc, out FileInfo fileInfo, out string normalizedName)
     {
-        return OpenOrCreate(FileName, out FileNode, out FileDesc, out FileInfo, out NormalizedName);
+        return OpenOrCreate(fileName, out FileNode, out fileDesc, out fileInfo, out normalizedName);
     }
 
     public override void Close(object FileNode, object FileDesc) { }
@@ -52,7 +52,9 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         if (entry == null)
         {
             if (fileName is "\\" or "/")
+            {
                 entry = new FileEntry { Name = "\\", IsDirectory = true };
+            }
             else
                 return STATUS_OBJECT_NAME_NOT_FOUND;
         }
@@ -78,7 +80,7 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         var readBuffer = ArrayPool<byte>.Shared.Rent((int)Length);
         try
         {
-            int read = _container.ReadFile(entry, Offset, readBuffer, 0, (int)Length);
+            var read = _container.ReadFile(entry, Offset, readBuffer, 0, (int)Length);
             if (read > 0)
                 Marshal.Copy(readBuffer, 0, Buffer, read);
             BytesTransferred = (uint)read;
@@ -104,7 +106,7 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         NormalizedName = FileName;
         FileInfo = default;
 
-        if (FileNode is not FileEntry dirEntry || !dirEntry.IsDirectory)
+        if (FileNode is not FileEntry { IsDirectory: true })
             return STATUS_OBJECT_NAME_NOT_FOUND;
 
         foreach (var child in _container.ListDirectory(ResolvePath(FileNode)))
@@ -125,28 +127,27 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         FileName = null!;
         FileInfo = default;
 
-        if (FileNode is not FileEntry dirEntry || !dirEntry.IsDirectory)
+        if (FileNode is not FileEntry { IsDirectory: true })
             return false;
 
         var entries = _container.ListDirectory(ResolvePath(FileNode)).ToList();
-        int index = Context is int i ? i : 0;
+        var index = Context is int i ? i : 0;
 
-        if (index == 0)
+        switch (index)
         {
-            FileName = ".";
-            FileInfo = new FileInfo { FileAttributes = (uint)System.IO.FileAttributes.Directory };
-            Context = 0;
-            return true;
-        }
-        if (index == 1)
-        {
-            FileName = "..";
-            FileInfo = new FileInfo { FileAttributes = (uint)System.IO.FileAttributes.Directory };
-            Context = 1;
-            return true;
+            case 0:
+                FileName = ".";
+                FileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
+                Context = 0;
+                return true;
+            case 1:
+                FileName = "..";
+                FileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
+                Context = 1;
+                return true;
         }
 
-        int entryIndex = index - 2;
+        var entryIndex = index - 2;
         if (entryIndex >= entries.Count)
             return false;
 
@@ -181,9 +182,9 @@ public sealed class ChdFs : FileSystemBase, IDisposable
     {
         return new FileInfo
         {
-            FileAttributes = (uint)(entry.IsDirectory ? System.IO.FileAttributes.Directory : System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReadOnly),
-            FileSize = (ulong)entry.Size,
-            AllocationSize = (ulong)entry.Size,
+            FileAttributes = (uint)(entry.IsDirectory ? FileAttributes.Directory : FileAttributes.Archive | FileAttributes.ReadOnly),
+            FileSize = entry.Size,
+            AllocationSize = entry.Size,
             CreationTime = DateTimeToFileTimeUtc(entry.ModifiedTime),
             LastAccessTime = DateTimeToFileTimeUtc(entry.ModifiedTime),
             LastWriteTime = DateTimeToFileTimeUtc(entry.ModifiedTime),
@@ -193,10 +194,17 @@ public sealed class ChdFs : FileSystemBase, IDisposable
     }
 
     private static string ResolvePath(object fileNode)
-        => fileNode is FileEntry e && e.Name != "\\" ? "\\" + e.Name : "\\";
+    {
+        return fileNode is FileEntry e && e.Name != "\\" ? "\\" + e.Name : "\\";
+    }
 
     private static ulong DateTimeToFileTimeUtc(DateTime dateTime)
-        => (ulong)dateTime.ToFileTimeUtc();
+    {
+        return (ulong)dateTime.ToFileTimeUtc();
+    }
 
-    public void Dispose() => _container.Dispose();
+    public void Dispose()
+    {
+        _container.Dispose();
+    }
 }

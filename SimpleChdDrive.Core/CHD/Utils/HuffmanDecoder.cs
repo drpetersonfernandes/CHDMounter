@@ -1,16 +1,5 @@
 ﻿namespace SimpleChdDrive.Core.CHD.Utils;
 
-internal enum HuffmanError
-{
-    HufferrNone = 0,
-    HufferrTooManyBits,
-    HufferrInvalidData,
-    HufferrInputBufferTooSmall,
-    HufferrOutputBufferTooSmall,
-    HufferrInternalInconsistency,
-    HufferrTooManyContexts
-}
-
 internal class NodeT
 {
     //internal node_t parent;       /* pointer to parent node */

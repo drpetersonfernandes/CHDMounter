@@ -111,42 +111,51 @@ public class UdfParser
         uint adType = (ushort)(icbFlags & 0x0007);
         uint off = 0;
 
-        if (adType == 0) // Short ADs
+        switch (adType)
         {
-            while (off + 8 <= allocDesc.Length)
+            // Short ADs
+            case 0:
             {
-                var len = LeU32(allocDesc, (int)off);
-                var loc = LeU32(allocDesc, (int)(off + 4));
-                var type = len >> 30;
-                len &= 0x3FFFFFFF;
-                if (len > 0 && type == 0)
+                while (off + 8 <= allocDesc.Length)
                 {
-                    node.Extents.Add(new FsExtent { Lba = partitionStart + loc, Size = len });
-                    if (node.Lba == 0)
+                    var len = LeU32(allocDesc, (int)off);
+                    var loc = LeU32(allocDesc, (int)(off + 4));
+                    var type = len >> 30;
+                    len &= 0x3FFFFFFF;
+                    if (len > 0 && type == 0)
                     {
-                        node.Lba = partitionStart + loc;
+                        node.Extents.Add(new FsExtent { Lba = partitionStart + loc, Size = len });
+                        if (node.Lba == 0)
+                        {
+                            node.Lba = partitionStart + loc;
+                        }
                     }
+                    off += 8;
                 }
-                off += 8;
+
+                break;
             }
-        }
-        else if (adType == 1) // Long ADs
-        {
-            while (off + 16 <= allocDesc.Length)
+            // Long ADs
+            case 1:
             {
-                var len = LeU32(allocDesc, (int)off);
-                var loc = LeU32(allocDesc, (int)(off + 4));
-                var type = len >> 30;
-                len &= 0x3FFFFFFF;
-                if (len > 0 && type == 0)
+                while (off + 16 <= allocDesc.Length)
                 {
-                    node.Extents.Add(new FsExtent { Lba = partitionStart + loc, Size = len });
-                    if (node.Lba == 0)
+                    var len = LeU32(allocDesc, (int)off);
+                    var loc = LeU32(allocDesc, (int)(off + 4));
+                    var type = len >> 30;
+                    len &= 0x3FFFFFFF;
+                    if (len > 0 && type == 0)
                     {
-                        node.Lba = partitionStart + loc;
+                        node.Extents.Add(new FsExtent { Lba = partitionStart + loc, Size = len });
+                        if (node.Lba == 0)
+                        {
+                            node.Lba = partitionStart + loc;
+                        }
                     }
+                    off += 16;
                 }
-                off += 16;
+
+                break;
             }
         }
 
@@ -176,7 +185,8 @@ public class UdfParser
                     var nameLen = sector[pos + 19];
                     var implUseLen = LeU16(sector, (int)(pos + 36));
 
-                    if (nameLen == 0) { pos += (uint)(38 + implUseLen + nameLen); continue; }
+                    if (nameLen == 0) { pos += (uint)(38 + implUseLen + nameLen);
+                        continue; }
 
                     var fidLen = 4u * ((38u + nameLen + implUseLen + 3u) / 4u);
                     if (fidLen == 0 || pos + fidLen > sector.Length) break;
@@ -206,22 +216,25 @@ public class UdfParser
         if (length <= 1) return "";
 
         var compression = data[offset];
-        if (compression == 8)
-            return Encoding.Latin1.GetString(data, offset + 1, length - 1).TrimEnd('\0');
-
-        if (compression == 16)
+        switch (compression)
         {
-            var sb = new StringBuilder();
-            for (var i = offset + 1; i + 1 < offset + length; i += 2)
+            case 8:
+                return Encoding.Latin1.GetString(data, offset + 1, length - 1).TrimEnd('\0');
+            case 16:
             {
-                var u16 = (ushort)((data[i] << 8) | data[i + 1]);
-                if (u16 == 0) break;
+                var sb = new StringBuilder();
+                for (var i = offset + 1; i + 1 < offset + length; i += 2)
+                {
+                    var u16 = (ushort)((data[i] << 8) | data[i + 1]);
+                    if (u16 == 0) break;
 
-                sb.Append(char.ConvertFromUtf32(u16));
+                    sb.Append(char.ConvertFromUtf32(u16));
+                }
+                return sb.ToString();
             }
-            return sb.ToString();
+            default:
+                return "";
         }
-        return "";
     }
 
     private static ushort LeU16(byte[] d, int o)

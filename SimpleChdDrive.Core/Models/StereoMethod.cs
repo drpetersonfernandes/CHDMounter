@@ -1,4 +1,4 @@
-﻿namespace SimpleChdDrive.Core.CHD.Flac;
+namespace SimpleChdDrive.Core.Models;
 
 public enum StereoMethod
 {

@@ -136,8 +136,8 @@ public class AudioDecoder : IAudioSource
                     var bestSt = -1;
                     for (var st = 0; st < _seekTable.Length; st++)
                     {
-                        if (_seekTable[st].number <= value &&
-                            (bestSt == -1 || _seekTable[st].number > _seekTable[bestSt].number))
+                        if (_seekTable[st].Number <= value &&
+                            (bestSt == -1 || _seekTable[st].Number > _seekTable[bestSt].Number))
                         {
                             bestSt = st;
                         }
@@ -147,8 +147,8 @@ public class AudioDecoder : IAudioSource
                         _framesBufferLength = 0;
                         _samplesInBuffer = 0;
                         _samplesBufferOffset = 0;
-                        _io.Position = _seekTable[bestSt].offset + _firstFrameOffset;
-                        _sampleOffset = _seekTable[bestSt].number;
+                        _io.Position = _seekTable[bestSt].Offset + _firstFrameOffset;
+                        _sampleOffset = _seekTable[bestSt].Number;
                     }
                 }
                 if (value < Position)
@@ -775,9 +775,9 @@ public class AudioDecoder : IAudioSource
                         _seekTable = new SeekPoint[numEntries];
                         for (var e = 0; e < numEntries; e++)
                         {
-                            _seekTable[e].number = bitreader.read_long();
-                            _seekTable[e].offset = bitreader.read_long();
-                            _seekTable[e].framesize = bitreader.read_ushort();
+                            _seekTable[e].Number = bitreader.read_long();
+                            _seekTable[e].Offset = bitreader.read_long();
+                            _seekTable[e].Framesize = bitreader.read_ushort();
                         }
 
                         break;

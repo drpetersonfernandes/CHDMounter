@@ -12,13 +12,13 @@ internal static class ChdHeaders
         using var br = new BinaryReader(file, Encoding.UTF8, true);
 
         chd.Compression = [ChdCodecType.Zlib];
-        _ = br.ReadUInt32BE();
-        _ = br.ReadUInt32BE();
-        chd.Blocksize = br.ReadUInt32BE();
-        chd.Totalblocks = br.ReadUInt32BE();
-        var cylinders = br.ReadUInt32BE();
-        var heads = br.ReadUInt32BE();
-        var sectors = br.ReadUInt32BE();
+        _ = br.ReadUInt32Be();
+        _ = br.ReadUInt32Be();
+        chd.Blocksize = br.ReadUInt32Be();
+        chd.Totalblocks = br.ReadUInt32Be();
+        var cylinders = br.ReadUInt32Be();
+        var heads = br.ReadUInt32Be();
+        var sectors = br.ReadUInt32Be();
         chd.Md5 = br.ReadBytes(16);
         chd.Parentmd5 = br.ReadBytes(16);
 
@@ -34,7 +34,7 @@ internal static class ChdHeaders
 
         for (var i = 0; i < chd.Totalblocks; i++)
         {
-            var tmpu = br.ReadUInt64BE();
+            var tmpu = br.ReadUInt64Be();
             chd.Map[i] = new MapEntry();
 
 
@@ -65,16 +65,16 @@ internal static class ChdHeaders
         using var br = new BinaryReader(file, Encoding.UTF8, true);
 
         chd.Compression = [ChdCodecType.Zlib];
-        _ = br.ReadUInt32BE();
-        _ = br.ReadUInt32BE();
-        _ = br.ReadUInt32BE();
-        chd.Totalblocks = br.ReadUInt32BE();
-        var cylinders = br.ReadUInt32BE();
-        var heads = br.ReadUInt32BE();
-        var sectors = br.ReadUInt32BE();
+        _ = br.ReadUInt32Be();
+        _ = br.ReadUInt32Be();
+        _ = br.ReadUInt32Be();
+        chd.Totalblocks = br.ReadUInt32Be();
+        var cylinders = br.ReadUInt32Be();
+        var heads = br.ReadUInt32Be();
+        var sectors = br.ReadUInt32Be();
         chd.Md5 = br.ReadBytes(16);
         chd.Parentmd5 = br.ReadBytes(16);
-        chd.Blocksize = br.ReadUInt32BE(); // blocksize added to header in V2
+        chd.Blocksize = br.ReadUInt32Be(); // blocksize added to header in V2
 
         const int hardDiskSectorSize = 512;
         chd.Totalbytes = cylinders * heads * sectors * hardDiskSectorSize;
@@ -86,7 +86,7 @@ internal static class ChdHeaders
 
         for (var i = 0; i < chd.Totalblocks; i++)
         {
-            var tmpu = br.ReadUInt64BE();
+            var tmpu = br.ReadUInt64Be();
             chd.Map[i] = new MapEntry();
 
 
@@ -116,17 +116,17 @@ internal static class ChdHeaders
         chd = new ChdHeader();
         using var br = new BinaryReader(file, Encoding.UTF8, true);
 
-        _ = br.ReadUInt32BE();
+        _ = br.ReadUInt32Be();
 
-        chd.Compression = [ChdCommon.CompTypeConv(br.ReadUInt32BE())];
-        chd.Totalblocks = br.ReadUInt32BE(); // total number of CHD Blocks
+        chd.Compression = [ChdCommon.CompTypeConv(br.ReadUInt32Be())];
+        chd.Totalblocks = br.ReadUInt32Be(); // total number of CHD Blocks
 
-        chd.Totalbytes = br.ReadUInt64BE();  // total byte size of the image
-        chd.Metaoffset = br.ReadUInt64BE();
+        chd.Totalbytes = br.ReadUInt64Be();  // total byte size of the image
+        chd.Metaoffset = br.ReadUInt64Be();
 
         chd.Md5 = br.ReadBytes(16);
         chd.Parentmd5 = br.ReadBytes(16);
-        chd.Blocksize = br.ReadUInt32BE();    // length of a CHD Block
+        chd.Blocksize = br.ReadUInt32Be();    // length of a CHD Block
         chd.Unitbytes = chd.Blocksize;
         chd.Rawsha1 = br.ReadBytes(20);
         chd.Parentsha1 = br.ReadBytes(20);
@@ -137,8 +137,8 @@ internal static class ChdHeaders
         {
             chd.Map[i] = new MapEntry
             {
-                Offset = br.ReadUInt64BE(),
-                Crc = br.ReadUInt32BE(),
+                Offset = br.ReadUInt64Be(),
+                Crc = br.ReadUInt32Be(),
                 Length = (uint)((br.ReadByte() << 8) | (br.ReadByte() << 0) | (br.ReadByte() << 16))
             };
             var mapflag = (MapFlag)br.ReadByte();
@@ -156,15 +156,15 @@ internal static class ChdHeaders
         chd = new ChdHeader();
         using var br = new BinaryReader(file, Encoding.UTF8, true);
 
-        _ = br.ReadUInt32BE();
+        _ = br.ReadUInt32Be();
 
-        chd.Compression = [ChdCommon.CompTypeConv(br.ReadUInt32BE())];
-        chd.Totalblocks = br.ReadUInt32BE(); // total number of CHD Blocks
+        chd.Compression = [ChdCommon.CompTypeConv(br.ReadUInt32Be())];
+        chd.Totalblocks = br.ReadUInt32Be(); // total number of CHD Blocks
 
-        chd.Totalbytes = br.ReadUInt64BE();  // total byte size of the image
-        chd.Metaoffset = br.ReadUInt64BE();
+        chd.Totalbytes = br.ReadUInt64Be();  // total byte size of the image
+        chd.Metaoffset = br.ReadUInt64Be();
 
-        chd.Blocksize = br.ReadUInt32BE();    // length of a CHD Block
+        chd.Blocksize = br.ReadUInt32Be();    // length of a CHD Block
         chd.Unitbytes = chd.Blocksize;
         chd.Sha1 = br.ReadBytes(20);
         chd.Parentsha1 = br.ReadBytes(20);
@@ -176,9 +176,9 @@ internal static class ChdHeaders
         {
             chd.Map[i] = new MapEntry
             {
-                Offset = br.ReadUInt64BE(),
-                Crc = br.ReadUInt32BE(),
-                Length = (uint)(br.ReadUInt16BE() | (br.ReadByte() << 16))
+                Offset = br.ReadUInt64Be(),
+                Crc = br.ReadUInt32Be(),
+                Length = (uint)(br.ReadUInt16Be() | (br.ReadByte() << 16))
             };
             var mapflag = (MapFlag)br.ReadByte();
             chd.Map[i].Comptype = ChdCommon.ConvMapFlagstoCompressionType(mapflag);
@@ -196,15 +196,15 @@ internal static class ChdHeaders
         chd.Compression = new ChdCodecType[4];
         for (var i = 0; i < 4; i++)
         {
-            chd.Compression[i] = (ChdCodecType)br.ReadUInt32BE();
+            chd.Compression[i] = (ChdCodecType)br.ReadUInt32Be();
         }
 
-        chd.Totalbytes = br.ReadUInt64BE();  // total byte size of the image
-        var mapoffset = br.ReadUInt64BE();
-        chd.Metaoffset = br.ReadUInt64BE();
+        chd.Totalbytes = br.ReadUInt64Be();  // total byte size of the image
+        var mapoffset = br.ReadUInt64Be();
+        chd.Metaoffset = br.ReadUInt64Be();
 
-        chd.Blocksize = br.ReadUInt32BE();    // length of a CHD Hunk (Block)
-        var unitbytes = br.ReadUInt32BE();
+        chd.Blocksize = br.ReadUInt32Be();    // length of a CHD Hunk (Block)
+        var unitbytes = br.ReadUInt32Be();
         chd.Unitbytes = unitbytes;
         chd.Rawsha1 = br.ReadBytes(20);
         chd.Sha1 = br.ReadBytes(20);
@@ -229,7 +229,7 @@ internal static class ChdHeaders
         for (var blockIndex = 0; blockIndex < totalblocks; blockIndex++)
         {
             map[blockIndex] = new MapEntry();
-            var offsetWord = br.ReadUInt32BE();
+            var offsetWord = br.ReadUInt32Be();
             if (offsetWord == 0)
             {
                 // Offset word 0 in an uncompressed V5 map means: take this hunk
@@ -255,9 +255,9 @@ internal static class ChdHeaders
 
         /* read the reader */
         br.BaseStream.Seek((long)mapoffset, SeekOrigin.Begin);
-        var mapbytes = br.ReadUInt32BE();   //0
-        var firstoffs = br.ReadUInt48BE(); //4
-        var mapcrc = br.ReadUInt16BE();   //10
+        var mapbytes = br.ReadUInt32Be();   //0
+        var firstoffs = br.ReadUInt48Be(); //4
+        var mapcrc = br.ReadUInt16Be();   //10
         var lengthbits = br.ReadByte();     //12
         var selfbits = br.ReadByte();       //13
         var parentbits = br.ReadByte();     //14
@@ -377,9 +377,9 @@ internal static class ChdHeaders
         {
             var rawmapIndex = blockIndex * 12;
             rawmap[rawmapIndex] = (byte)map[blockIndex].Comptype;
-            rawmap.PutUInt24BE(rawmapIndex + 1, map[blockIndex].Length);
-            rawmap.PutUInt48BE(rawmapIndex + 4, map[blockIndex].Offset);
-            rawmap.PutUInt16BE(rawmapIndex + 10, (uint)map[blockIndex].Crc16!);
+            rawmap.PutUInt24Be(rawmapIndex + 1, map[blockIndex].Length);
+            rawmap.PutUInt48Be(rawmapIndex + 4, map[blockIndex].Offset);
+            rawmap.PutUInt16Be(rawmapIndex + 10, (uint)map[blockIndex].Crc16!);
         }
         if (CRC16.calc(rawmap, (int)totalBlocks * 12) != mapcrc)
             return ChdError.Chderrdecompressionerror;

@@ -2,7 +2,7 @@ using System.Windows;
 
 namespace SimpleChdDrive.Core.Views;
 
-public partial class ConsoleSelectionWindow : Window
+public partial class ConsoleSelectionWindow
 {
     public ConsoleType SelectedConsoleType { get; private set; } = ConsoleType.Unknown;
 

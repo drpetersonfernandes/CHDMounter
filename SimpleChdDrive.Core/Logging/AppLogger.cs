@@ -18,6 +18,7 @@ public static class AppLogger
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture)
             .WriteTo.Debug(formatProvider: CultureInfo.InvariantCulture)
+            .WriteTo.Sink(new BugReportSink())
             .CreateLogger();
 
         Log.Logger = _logger;

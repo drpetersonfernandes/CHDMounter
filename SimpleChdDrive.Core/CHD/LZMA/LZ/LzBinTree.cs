@@ -152,11 +152,11 @@ internal class BinTree : InWindow
 
         if (_hashArray)
         {
-            var temp = CRC.CRC32Lookup[BufferBase![cur]] ^ BufferBase[cur + 1];
+            var temp = Crc.Crc32Lookup[BufferBase![cur]] ^ BufferBase[cur + 1];
                 hash2Value = temp & (KHash2Size - 1);
                 temp ^= (uint)BufferBase[cur + 2] << 8;
                 hash3Value = temp & (KHash3Size - 1);
-                hashValue = (temp ^ (CRC.CRC32Lookup[BufferBase[cur + 3]] << 5)) & _hashMask;
+                hashValue = (temp ^ (Crc.Crc32Lookup[BufferBase[cur + 3]] << 5)) & _hashMask;
         }
         else
         {
@@ -293,13 +293,13 @@ internal class BinTree : InWindow
 
             if (_hashArray)
             {
-                var temp = CRC.CRC32Lookup[BufferBase![cur]] ^ BufferBase[cur + 1];
+                var temp = Crc.Crc32Lookup[BufferBase![cur]] ^ BufferBase[cur + 1];
                 var hash2Value = temp & (KHash2Size - 1);
                 _hash[hash2Value] = Pos;
                 temp ^= (uint)BufferBase[cur + 2] << 8;
                 var hash3Value = temp & (KHash3Size - 1);
                 _hash[KHash3Offset + hash3Value] = Pos;
-                hashValue = (temp ^ (CRC.CRC32Lookup[BufferBase[cur + 3]] << 5)) & _hashMask;
+                hashValue = (temp ^ (Crc.Crc32Lookup[BufferBase[cur + 3]] << 5)) & _hashMask;
             }
             else
             {

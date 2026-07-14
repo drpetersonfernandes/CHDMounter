@@ -1,4 +1,4 @@
-namespace SimpleChdDrive.Core.Parsers;
+namespace SimpleChdDrive.Core.Models;
 
 public enum ConsoleType
 {

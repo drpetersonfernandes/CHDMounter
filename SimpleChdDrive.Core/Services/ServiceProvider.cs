@@ -2,16 +2,16 @@ namespace SimpleChdDrive.Core.Services;
 
 public static class ServiceProvider
 {
-    private static readonly ConcurrentDictionary<Type, object> _services = new();
+    private static readonly ConcurrentDictionary<Type, object> Services = new();
 
     public static void Register<T>(T implementation) where T : notnull
     {
-        _services[typeof(T)] = implementation;
+        Services[typeof(T)] = implementation;
     }
 
     public static T Get<T>() where T : notnull
     {
-        if (_services.TryGetValue(typeof(T), out var service))
+        if (Services.TryGetValue(typeof(T), out var service))
             return (T)service;
 
         throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
@@ -19,7 +19,7 @@ public static class ServiceProvider
 
     public static T TryGet<T>() where T : class
     {
-        if (_services.TryGetValue(typeof(T), out var service))
+        if (Services.TryGetValue(typeof(T), out var service))
             return (T)service;
 
         return null!;
@@ -27,14 +27,17 @@ public static class ServiceProvider
 
     public static void DisposeAllServices()
     {
-        foreach (var kvp in _services)
+        foreach (var kvp in Services)
         {
             if (kvp.Value is IDisposable disposable)
             {
                 try { disposable.Dispose(); }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             }
         }
-        _services.Clear();
+        Services.Clear();
     }
 }
