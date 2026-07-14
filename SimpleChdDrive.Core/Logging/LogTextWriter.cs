@@ -18,7 +18,7 @@ public class LogTextWriter : TextWriter
         _originalWriter.Write(value);
     }
 
-    public override void WriteLine(string value)
+    public override void WriteLine(string? value)
     {
         _originalWriter.WriteLine(value);
         try

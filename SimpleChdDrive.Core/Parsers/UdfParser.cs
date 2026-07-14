@@ -13,7 +13,7 @@ public class UdfParser
         _reader = reader;
     }
 
-    public bool Parse(FsNode rootNode, TrackInfo track = null)
+    public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.SetTrack(track, true);
         var sector = new byte[2048];

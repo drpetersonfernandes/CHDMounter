@@ -6,27 +6,27 @@ namespace SimpleChdDrive.Core.CHD;
 
 internal class ChdCodec
 {
-    internal AudioPcmConfig FlacSettings;
-    internal AudioDecoder FlacAudioDecoder;
-    internal AudioBuffer FlacAudioBuffer;
+    internal AudioPcmConfig FlacSettings = null!;
+    internal AudioDecoder FlacAudioDecoder = null!;
+    internal AudioBuffer FlacAudioBuffer = null!;
 
 
-    internal AudioPcmConfig AvhuffSettings;
-    internal AudioDecoder AvhuffAudioDecoder;
+    internal AudioPcmConfig AvhuffSettings = null!;
+    internal AudioDecoder AvhuffAudioDecoder = null!;
 
 
-    internal byte[] BSector;
-    internal byte[] BSubcode;
+    internal byte[] BSector = null!;
+    internal byte[] BSubcode = null!;
 
-    internal byte[] Blzma;
+    internal byte[] Blzma = null!;
 
-    internal Decompressor BZstd;
+    internal Decompressor BZstd = null!;
 
-    internal ushort[] BHuffman;
-    internal ushort[] BHuffmanHi;
-    internal ushort[] BHuffmanLo;
+    internal ushort[] BHuffman = null!;
+    internal ushort[] BHuffmanHi = null!;
+    internal ushort[] BHuffmanLo = null!;
 
-    internal ushort[] BHuffmanY;
-    internal ushort[] BHuffmanCb;
-    internal ushort[] BHuffmanCr;
+    internal ushort[] BHuffmanY = null!;
+    internal ushort[] BHuffmanCb = null!;
+    internal ushort[] BHuffmanCr = null!;
 }

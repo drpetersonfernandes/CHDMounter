@@ -13,7 +13,7 @@ internal class OutWindow
     public long Total;
     public long Limit;
 
-    public void Create(int windowSize, byte[] buffer=null)
+    public void Create(int windowSize, byte[]? buffer = null)
     {
         if (buffer != null)
         {

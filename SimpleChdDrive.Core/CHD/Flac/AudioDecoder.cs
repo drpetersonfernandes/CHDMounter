@@ -52,7 +52,7 @@ public class AudioDecoder : IAudioSource
 
     public int[] Samples { get; }
 
-    public AudioDecoder(DecoderSettings settings, string path, Stream io = null)
+    public AudioDecoder(DecoderSettings settings, string? path, Stream? io = null)
     {
         _mSettings = settings;
 

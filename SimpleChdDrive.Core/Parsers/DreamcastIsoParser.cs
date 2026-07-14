@@ -15,7 +15,7 @@ public class DreamcastIsoParser
         _lbaOffset = offset;
     }
 
-    public bool Parse(FsNode rootNode, TrackInfo track = null)
+    public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
         _reader.SetTrack(track, true);

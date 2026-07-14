@@ -43,7 +43,7 @@ public class LzmaStream : Stream
     }
 
     public LzmaStream(byte[] properties, Stream inputStream, long inputSize, long outputSize,
-        Stream presetDictionary, bool isLzma2, byte[] outWindowBuff = null)
+        Stream? presetDictionary, bool isLzma2, byte[]? outWindowBuff = null)
     {
         _inputStream = inputStream;
         _inputSize = inputSize;

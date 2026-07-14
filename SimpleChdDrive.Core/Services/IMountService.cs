@@ -3,7 +3,7 @@ namespace SimpleChdDrive.Core.Services;
 public interface IMountService
 {
     bool CanMount();
-    void Mount(string chdPath, string mountPoint, ConsoleType consoleType);
+    void Mount(string chdPath, string? mountPoint, ConsoleType consoleType);
     void Unmount();
     bool IsMounted { get; }
     string MountPoint { get; }

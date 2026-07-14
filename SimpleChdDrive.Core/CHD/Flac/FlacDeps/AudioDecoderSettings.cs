@@ -42,7 +42,7 @@ public static class IAudioDecoderSettingsExtensions
                 property.ResetValue(settings);
         }
 
-        public IAudioSource Open(string path, Stream io = null)
+        public IAudioSource? Open(string path, Stream? io = null)
         {
             return Activator.CreateInstance(settings.DecoderType, settings, path, io) as IAudioSource;
         }

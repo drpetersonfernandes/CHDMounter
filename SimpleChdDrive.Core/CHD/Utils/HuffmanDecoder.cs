@@ -45,7 +45,7 @@ internal class HuffmanDecoder
     *  decoding context
     *-------------------------------------------------
     */
-    public HuffmanDecoder(uint numcodes, byte maxbits, BitStream bitbuf, ushort[] buffLookup = null)
+    public HuffmanDecoder(uint numcodes, byte maxbits, BitStream bitbuf, ushort[]? buffLookup = null)
     {
         /* limit to 24 bits */
         if (maxbits > 24)

@@ -7,8 +7,8 @@ namespace SimpleChdDrive.Core.CHD;
 
 internal class ChdHeader
 {
-    public chdCodec[] Compression;
-    public ChdReader[] ChdReader;
+    public chdCodec[] Compression = null!;
+    public ChdReader[] ChdReader = null!;
 
     public ulong Totalbytes;
     public uint Blocksize;
@@ -23,14 +23,14 @@ internal class ChdHeader
     // word of 0 means "read this hunk from the parent" (or zero-fill if none).
     public bool UncompressedMap;
 
-    public MapEntry[] Map;
+    public MapEntry[] Map = null!;
 
-    public byte[] Md5; // just compressed data
-    public byte[] Rawsha1; // just compressed data
-    public byte[] Sha1; // includes the meta data
+    public byte[] Md5 = null!; // just compressed data
+    public byte[] Rawsha1 = null!; // just compressed data
+    public byte[] Sha1 = null!; // includes the meta data
 
-    public byte[] Parentmd5;
-    public byte[] Parentsha1;
+    public byte[] Parentmd5 = null!;
+    public byte[] Parentsha1 = null!;
 
     public ulong Metaoffset;
 }
@@ -43,14 +43,14 @@ internal class MapEntry
     public uint? Crc; // V3 & V4
     public ushort? Crc16; // V5
 
-    public MapEntry SelfMapEntry; // link to self MapEntry data used in COMPRESSION_SELF (replaces offset index)
+    public MapEntry SelfMapEntry = null!; // link to self MapEntry data used in COMPRESSION_SELF (replaces offset index)
 
     //Used to optimmize block reading so that any block in only decompressed once.
     public int UseCount;
 
-    public byte[] BuffIn;
-    public byte[] BuffOutCache;
-    public byte[] BuffOut;
+    public byte[] BuffIn = null!;
+    public byte[] BuffOutCache = null!;
+    public byte[] BuffOut = null!;
 
     // Used in Parallel decompress to keep the blocks in order when hashing.
     public bool Processed;
