@@ -19,7 +19,10 @@ public class ChdFs : IDokanOperations, IDisposable
     public NtStatus CreateFile(string fileName, DokanFileAccess access, FileShare share, FileMode mode,
         FileOptions options, FileAttributes attributes, IDokanFileInfo info)
     {
-        if (fileName == "\\") fileName = "\\";
+        if (fileName == "\\")
+        {
+            fileName = "\\";
+        }
 
         var entry = _container.FindFile(fileName);
         if (entry == null)
@@ -104,9 +107,11 @@ public class ChdFs : IDokanOperations, IDisposable
             }
         }
 
-        var result = new List<FileInformation>();
-        result.Add(new FileInformation { FileName = ".", Attributes = FileAttributes.Directory });
-        result.Add(new FileInformation { FileName = "..", Attributes = FileAttributes.Directory });
+        var result = new List<FileInformation>
+        {
+            new() { FileName = ".", Attributes = FileAttributes.Directory },
+            new() { FileName = "..", Attributes = FileAttributes.Directory }
+        };
 
         foreach (var entry in entries)
         {
@@ -193,20 +198,62 @@ public class ChdFs : IDokanOperations, IDisposable
     }
 
     public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, IDokanFileInfo info)
-    { bytesWritten = 0; return DokanResult.AccessDenied; }
+    { bytesWritten = 0;
+        return DokanResult.AccessDenied; }
 
-    public NtStatus FlushFileBuffers(string fileName, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus SetFileAttributes(string fileName, FileAttributes attributes, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus SetFileTime(string fileName, DateTime? creationTime, DateTime? lastAccessTime, DateTime? lastWriteTime, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus DeleteFile(string fileName, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus DeleteDirectory(string fileName, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus MoveFile(string oldName, string newName, bool replace, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus SetEndOfFile(string fileName, long length, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus SetAllocationSize(string fileName, long length, IDokanFileInfo info) => DokanResult.AccessDenied;
-    public NtStatus LockFile(string fileName, long offset, long length, IDokanFileInfo info) => DokanResult.Success;
-    public NtStatus UnlockFile(string fileName, long offset, long length, IDokanFileInfo info) => DokanResult.Success;
+    public NtStatus FlushFileBuffers(string fileName, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus SetFileAttributes(string fileName, FileAttributes attributes, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus SetFileTime(string fileName, DateTime? creationTime, DateTime? lastAccessTime, DateTime? lastWriteTime, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus DeleteFile(string fileName, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus DeleteDirectory(string fileName, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus MoveFile(string oldName, string newName, bool replace, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus SetEndOfFile(string fileName, long length, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus SetAllocationSize(string fileName, long length, IDokanFileInfo info)
+    {
+        return DokanResult.AccessDenied;
+    }
+
+    public NtStatus LockFile(string fileName, long offset, long length, IDokanFileInfo info)
+    {
+        return DokanResult.Success;
+    }
+
+    public NtStatus UnlockFile(string fileName, long offset, long length, IDokanFileInfo info)
+    {
+        return DokanResult.Success;
+    }
+
     public NtStatus FindStreams(string fileName, out IList<FileInformation> streams, IDokanFileInfo info)
-    { streams = Array.Empty<FileInformation>(); return DokanResult.NotImplemented; }
+    { streams = Array.Empty<FileInformation>();
+        return DokanResult.NotImplemented; }
 
     public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections, IDokanFileInfo info)
     {
@@ -240,10 +287,13 @@ public class ChdFs : IDokanOperations, IDisposable
     }
 
     public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections, IDokanFileInfo info)
-        => DokanResult.AccessDenied;
+    {
+        return DokanResult.AccessDenied;
+    }
 
     public void Dispose()
     {
         _container.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

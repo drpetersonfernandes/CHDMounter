@@ -1,8 +1,6 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
-using SimpleChdDrive.Core.Logging;
-using SimpleChdDrive.Services;
 
 namespace SimpleCHDDrive;
 
@@ -10,7 +8,7 @@ public partial class App
 {
     internal static string[] StartupArgs { get; private set; } = [];
 
-    internal static CancellationTokenSource ShutdownCts { get; } = new();
+    private static CancellationTokenSource ShutdownCts { get; } = new();
 
     private static TextWriter _originalConsoleOut;
     private static TextWriter _originalConsoleError;
