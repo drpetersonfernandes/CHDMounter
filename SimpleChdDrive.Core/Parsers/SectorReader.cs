@@ -505,9 +505,8 @@ public class SectorReader
         return tracks;
     }
 
-    private static bool TryParseTrackMetadata(string metadata, out int trackNum, out string typeStr,
-        out string subtypeStr, out uint frames, out uint padFrames, out uint pregap,
-        out string pgtypeStr, out string pgsubStr, out uint postgap)
+    private static bool TryParseTrackMetadata(string metadata, out string typeStr,
+        out uint frames, out uint pregap, out uint postgap)
     {
         var parts = metadata.Split(' ');
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -523,14 +522,9 @@ public class SectorReader
         }
 
         typeStr = map.GetValueOrDefault("TYPE", "");
-        subtypeStr = map.GetValueOrDefault("SUBTYPE", "");
-        pgtypeStr = map.GetValueOrDefault("PGTYPE", "");
-        pgsubStr = map.GetValueOrDefault("PGSUB", "");
-        _ = int.TryParse(map.GetValueOrDefault("TRACK", "0"), out trackNum);
         _ = uint.TryParse(map.GetValueOrDefault("FRAMES", "0"), out frames);
         _ = uint.TryParse(map.GetValueOrDefault("PREGAP", "0"), out pregap);
         _ = uint.TryParse(map.GetValueOrDefault("POSTGAP", "0"), out postgap);
-        _ = uint.TryParse(map.GetValueOrDefault("PAD", "0"), out padFrames);
 
         return frames > 0;
     }

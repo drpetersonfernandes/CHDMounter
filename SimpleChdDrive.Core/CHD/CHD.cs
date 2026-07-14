@@ -116,7 +116,7 @@ public static class Chd
 
         if (chd != null)
         {
-            chdSha1 = chd.Sha1 ?? chd.Rawsha1;
+            chdSha1 = chd.Sha1;
             chdMd5 = chd.Md5;
             chdVersion = version;
 
@@ -148,7 +148,7 @@ public static class Chd
             var blocksToKeep = 1024 * 1024 * 512 / (int)chd.Blocksize;
             ChdBlockRead.KeepMostRepeatedBlocks(chd, blocksToKeep);
 
-            valid = TaskCount == 0 ? DecompressData(s, chd) : DecompressDataParallel(s, chd);
+            valid = DecompressDataParallel(s, chd);
 
             if (valid != ChdError.Chderrnone)
             {
@@ -352,6 +352,8 @@ public static class Chd
 
         try
         {
+            var decompress = blocksToDecompress;
+            var ts1 = ts;
             var producerThread = Task.Factory.StartNew(() =>
             {
                 try
@@ -390,11 +392,11 @@ public static class Chd
                             file.ReadExactly(mapEntry.BuffIn, 0, (int)mapEntry.Length);
                         }
 
-                        blocksToDecompress.Add(block, ct);
+                        decompress.Add(block, ct);
                     }
                     // this must be done to tell all the decompression threads to stop working and return.
                     for (var i = 0; i < TaskCount; i++)
-                        blocksToDecompress.Add(-1);
+                        decompress.Add(-1);
                 }
                 catch
                 {
@@ -406,13 +408,17 @@ public static class Chd
                         errMaster = ChdError.Chderrinvalidfile;
                     }
 
-                    ts.Cancel();
+                    ts1.Cancel();
                 }
             });
             allTasks.Add(producerThread);
 
             for (var i = 0; i < TaskCount; i++)
             {
+                var @lock = aheadLock;
+                var toDecompress = blocksToDecompress;
+                var ts2 = ts;
+                var hash = blocksToHash;
                 var decompressionThread = Task.Factory.StartNew(() =>
                 {
                     try
@@ -420,8 +426,8 @@ public static class Chd
                         var codec = new ChdCodec();
                         while (true)
                         {
-                            aheadLock.Wait(ct);
-                            var block = blocksToDecompress.Take(ct);
+                            @lock.Wait(ct);
+                            var block = toDecompress.Take(ct);
                             if (block == -1)
                                 return;
 
@@ -430,11 +436,11 @@ public static class Chd
                             var err = ChdBlockRead.ReadBlock(mapEntry, arrPoolCache, chd.ChdReader, codec, mapEntry.BuffOut, (int)chd.Blocksize);
                             if (err != ChdError.Chderrnone)
                             {
-                                ts.Cancel();
+                                ts2.Cancel();
                                 errMaster = err;
                                 return;
                             }
-                            blocksToHash.Add(block, ct);
+                            hash.Add(block, ct);
 
                             if (mapEntry.Length > 0)
                             {
@@ -453,7 +459,7 @@ public static class Chd
                             errMaster = ChdError.Chderrdecompressionerror;
                         }
 
-                        ts.Cancel();
+                        ts2.Cancel();
                     }
                 });
 
