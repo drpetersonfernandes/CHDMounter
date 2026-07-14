@@ -2,17 +2,17 @@
 
 internal class BitStream
 {
-    private uint buffer;
-    private int bits;
-    private readonly byte[] readBuffer;
-    private int doffset;
-    private readonly int dlength;
+    private uint _buffer;
+    private int _bits;
+    private readonly byte[] _readBuffer;
+    private int _doffset;
+    private readonly int _dlength;
 
-    private readonly int initialOffset;
+    private readonly int _initialOffset;
 
-    public bool overflow()
+    public bool Overflow()
     {
-        return doffset - bits / 8 > dlength;
+        return _doffset - _bits / 8 > _dlength;
     }
 
     /*-------------------------------------------------
@@ -21,11 +21,11 @@ internal class BitStream
     */
     public BitStream(byte[] src, int offset, int length)
     {
-        buffer = 0;
-        bits = 0;
-        readBuffer = src;
-        doffset = initialOffset = offset;
-        dlength = offset + length;
+        _buffer = 0;
+        _bits = 0;
+        _readBuffer = src;
+        _doffset = _initialOffset = offset;
+        _dlength = offset + length;
     }
 
     /*-----------------------------------------------------
@@ -33,25 +33,28 @@ internal class BitStream
     *  but don't advance the input pointer
     *-----------------------------------------------------
     */
-    public uint peek(int numbits)
+    public uint Peek(int numbits)
     {
         if (numbits == 0)
             return 0;
 
         /* fetch data if we need more */
-        if (numbits > bits)
+        if (numbits > _bits)
         {
-            while (bits <= 24)
+            while (_bits <= 24)
             {
-                if (doffset < dlength)
-                    buffer |= (uint)readBuffer[doffset] << (24 - bits);
-                doffset++;
-                bits += 8;
+                if (_doffset < _dlength)
+                {
+                    _buffer |= (uint)_readBuffer[_doffset] << (24 - _bits);
+                }
+
+                _doffset++;
+                _bits += 8;
             }
         }
 
         /* return the data */
-        return buffer >> (32 - numbits);
+        return _buffer >> (32 - numbits);
     }
 
     /*-----------------------------------------------------
@@ -59,10 +62,10 @@ internal class BitStream
     *  specified number of bits
     *-----------------------------------------------------
     */
-    public void remove(int numbits)
+    public void Remove(int numbits)
     {
-        buffer <<= numbits;
-        bits -= numbits;
+        _buffer <<= numbits;
+        _bits -= numbits;
     }
 
 
@@ -70,10 +73,10 @@ internal class BitStream
     *  bitstream_read - fetch the requested number of bits
     *-----------------------------------------------------
     */
-    public uint read(int numbits)
+    public uint Read(int numbits)
     {
-        var result = peek(numbits);
-        remove(numbits);
+        var result = Peek(numbits);
+        Remove(numbits);
         return result;
     }
 
@@ -82,17 +85,15 @@ internal class BitStream
     *-------------------------------------------------
     */
 
-    public int flush()
+    public int Flush()
     {
-        while (bits >= 8)
+        while (_bits >= 8)
         {
-            doffset--;
-            bits -= 8;
+            _doffset--;
+            _bits -= 8;
         }
-        bits = 0;
-        buffer = 0;
-        return doffset - initialOffset;
+        _bits = 0;
+        _buffer = 0;
+        return _doffset - _initialOffset;
     }
-
-
 }

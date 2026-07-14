@@ -6,8 +6,8 @@ internal static class Util
     {
         if (b == null) return true;
 
-        for (var i = 0; i < b.Length; i++)
-            if (b[i] != 0) return false;
+        foreach (var t in b)
+            if (t != 0) return false;
 
         return true;
     }
@@ -45,7 +45,7 @@ internal static class Util
         return 0;
     }
 
-    internal static bool isAscii(byte[] bytes)
+    internal static bool IsAscii(IEnumerable<byte> bytes)
     {
         foreach (var b in bytes)
         {

@@ -1,9 +1,6 @@
 ﻿using System.IO.Compression;
-using SimpleChdDrive.Core.CHD.Flac;
-using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 using SimpleChdDrive.Core.CHD.LZMA;
 using SimpleChdDrive.Core.CHD.Utils;
-using ZstdSharp;
 
 namespace SimpleChdDrive.Core.CHD;
 
@@ -38,7 +35,6 @@ internal static partial class ChdReaders
     }
     private static ChdError Zstd(byte[] buffIn, int buffInStart, int buffInLength, byte[] buffOut, int buffOutStart, int buffOutLength, ChdCodec codec)
     {
-        codec.BZstd ??= new Decompressor();
         try
         {
             var written = codec.BZstd.Unwrap(
@@ -148,9 +144,6 @@ internal static partial class ChdReaders
         // Both are fixed by the CHD format and validated against each frame header
         // inside DecodeFrame(); the actual per-frame block size is also read from
         // the frame header, so no block-size hint is required here.
-        codec.FlacSettings ??= new AudioPcmConfig(16, 2, 44100);
-        codec.FlacAudioDecoder ??= new AudioDecoder(codec.FlacSettings);
-        codec.FlacAudioBuffer ??= new AudioBuffer(codec.FlacSettings, buffOutLength); //audio buffer to take decoded samples and read them to bytes.
 
         srcPos = buffInStart;
         var dstPos = 0;
@@ -198,9 +191,6 @@ internal static partial class ChdReaders
             complenBase = (complenBase << 8) | buffIn[eccBytes + 2];
         }
 
-        codec.BSector ??= new byte[frames * CdMaxSectorData];
-        codec.BSubcode ??= new byte[frames * CdMaxSubcodeData];
-
         var err = Zlib(buffIn, headerBytes, complenBase, codec.BSector, frames * CdMaxSectorData);
         if (err != ChdError.Chderrnone)
             return err;
@@ -220,7 +210,7 @@ internal static partial class ChdReaders
             if ((buffIn[framenum / 8] & (1 << (framenum % 8))) != 0)
             {
                 Array.Copy(SCdSyncHeader, 0, buffOut, sectorStart, SCdSyncHeader.Length);
-                cdRom.ecc_generate(buffOut, sectorStart);
+                CdRom.ecc_generate(buffOut, sectorStart);
             }
         }
         return ChdError.Chderrnone;
@@ -242,9 +232,6 @@ internal static partial class ChdReaders
             complenBase = (complenBase << 8) | buffIn[eccBytes + 2];
         }
 
-        codec.BSector ??= new byte[frames * CdMaxSectorData];
-        codec.BSubcode ??= new byte[frames * CdMaxSubcodeData];
-
         var err = Lzma(buffIn, headerBytes, complenBase, codec.BSector, frames * CdMaxSectorData, codec);
         if (err != ChdError.Chderrnone)
             return err;
@@ -264,19 +251,15 @@ internal static partial class ChdReaders
             if ((buffIn[framenum / 8] & (1 << (framenum % 8))) != 0)
             {
                 Array.Copy(SCdSyncHeader, 0, buffOut, sectorStart, SCdSyncHeader.Length);
-                cdRom.ecc_generate(buffOut, sectorStart);
+                CdRom.ecc_generate(buffOut, sectorStart);
             }
         }
         return ChdError.Chderrnone;
     }
 
-
     internal static ChdError Cdflac(byte[] buffIn, int buffInLength, byte[] buffOut, int buffOutLength, ChdCodec codec)
     {
         var frames = buffOutLength / CdFrameSize;
-
-        codec.BSector ??= new byte[frames * CdMaxSectorData];
-        codec.BSubcode ??= new byte[frames * CdMaxSubcodeData];
 
         var err = Flac(buffIn, 0, buffInLength, codec.BSector, frames * CdMaxSectorData, true, codec, out var pos);
         if (err != ChdError.Chderrnone)
@@ -311,9 +294,6 @@ internal static partial class ChdReaders
             complenBase = (complenBase << 8) | buffIn[eccBytes + 2];
         }
 
-        codec.BSector ??= new byte[frames * CdMaxSectorData];
-        codec.BSubcode ??= new byte[frames * CdMaxSubcodeData];
-
         var err = Zstd(buffIn, headerBytes, complenBase, codec.BSector, 0, frames * CdMaxSectorData, codec);
         if (err != ChdError.Chderrnone)
             return err;
@@ -333,7 +313,7 @@ internal static partial class ChdReaders
             if ((buffIn[framenum / 8] & (1 << (framenum % 8))) != 0)
             {
                 Array.Copy(SCdSyncHeader, 0, buffOut, sectorStart, SCdSyncHeader.Length);
-                cdRom.ecc_generate(buffOut, sectorStart);
+                CdRom.ecc_generate(buffOut, sectorStart);
             }
         }
         return ChdError.Chderrnone;

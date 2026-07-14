@@ -59,7 +59,7 @@ public class AudioDecoder : IAudioSource
         if (path != null)
         {
             Path = path;
-            _io = io ?? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 0x10000);
+            _io = io;
         }
         else
         {
@@ -71,25 +71,29 @@ public class AudioDecoder : IAudioSource
         _framesBuffer = new byte[0x20000];
         decode_metadata();
 
-        _frame = new FlacFrame(Pcm.ChannelCount);
-        _framereader = new BitReader();
-
-        //max_frame_size = 16 + ((Flake.MAX_BLOCKSIZE * PCM.BitsPerSample * PCM.ChannelCount + 1) + 7) >> 3);
-        if (((int)_maxFrameSize * Pcm.BitsPerSample * Pcm.ChannelCount * 2) >> 3 > _framesBuffer.Length)
+        if (Pcm != null)
         {
-            var temp = _framesBuffer;
-            _framesBuffer = new byte[((int)_maxFrameSize * Pcm.BitsPerSample * Pcm.ChannelCount * 2) >> 3];
-            if (_framesBufferLength > 0)
-                Array.Copy(temp, _framesBufferOffset, _framesBuffer, 0, _framesBufferLength);
-            _framesBufferOffset = 0;
+            _frame = new FlacFrame(Pcm.ChannelCount);
+            _framereader = new BitReader();
+
+            //max_frame_size = 16 + ((Flake.MAX_BLOCKSIZE * PCM.BitsPerSample * PCM.ChannelCount + 1) + 7) >> 3);
+            if (((int)_maxFrameSize * Pcm.BitsPerSample * Pcm.ChannelCount * 2) >> 3 > _framesBuffer.Length)
+            {
+                var temp = _framesBuffer;
+                _framesBuffer = new byte[((int)_maxFrameSize * Pcm.BitsPerSample * Pcm.ChannelCount * 2) >> 3];
+                if (_framesBufferLength > 0)
+                    Array.Copy(temp, _framesBufferOffset, _framesBuffer, 0, _framesBufferLength);
+                _framesBufferOffset = 0;
+            }
+
+            _samplesInBuffer = 0;
+
+            if (Pcm.BitsPerSample != 16 && Pcm.BitsPerSample != 24)
+                throw new AudioDecoderException("invalid flac file");
+
+            Samples = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
+            _residualBuffer = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
         }
-        _samplesInBuffer = 0;
-
-        if (Pcm.BitsPerSample != 16 && Pcm.BitsPerSample != 24)
-            throw new AudioDecoderException("invalid flac file");
-
-        Samples = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
-        _residualBuffer = new int[FlakeConstants.MaxBlocksize * Pcm.ChannelCount];
     }
 
     public AudioDecoder(AudioPcmConfig pcm)
@@ -354,22 +358,22 @@ public class AudioDecoder : IAudioSource
     {
         // rice-encoded block
         // coding method
-        frame.Subframes[ch].best.Rc.coding_method = (int)bitreader.Readbits(2); // ????? == 0
-        if (frame.Subframes[ch].best.Rc.coding_method != 0 && frame.Subframes[ch].best.Rc.coding_method != 1)
+        frame.Subframes[ch].best.Rc.CodingMethod = (int)bitreader.Readbits(2); // ????? == 0
+        if (frame.Subframes[ch].best.Rc.CodingMethod != 0 && frame.Subframes[ch].best.Rc.CodingMethod != 1)
             throw new AudioDecoderException("unsupported residual coding");
         // partition order
-        frame.Subframes[ch].best.Rc.porder = (int)bitreader.Readbits(4);
-        if (frame.Subframes[ch].best.Rc.porder > 8)
+        frame.Subframes[ch].best.Rc.Porder = (int)bitreader.Readbits(4);
+        if (frame.Subframes[ch].best.Rc.Porder > 8)
             throw new AudioDecoderException("invalid partition order");
 
-        var psize = frame.Blocksize >> frame.Subframes[ch].best.Rc.porder;
+        var psize = frame.Blocksize >> frame.Subframes[ch].best.Rc.Porder;
         var resCnt = psize - frame.Subframes[ch].best.Order;
 
-        var riceLen = 4 + frame.Subframes[ch].best.Rc.coding_method;
+        var riceLen = 4 + frame.Subframes[ch].best.Rc.CodingMethod;
         // residual
         var j = frame.Subframes[ch].best.Order;
         var r = frame.Subframes[ch].best.Residual + j;
-        for (var p = 0; p < 1 << frame.Subframes[ch].best.Rc.porder; p++)
+        for (var p = 0; p < 1 << frame.Subframes[ch].best.Rc.Porder; p++)
         {
             if (p == 1)
             {
@@ -378,10 +382,10 @@ public class AudioDecoder : IAudioSource
 
             var n = Math.Min(resCnt, frame.Blocksize - j);
 
-            var k = frame.Subframes[ch].best.Rc.rparams[p] = (int)bitreader.Readbits(riceLen);
+            var k = frame.Subframes[ch].best.Rc.Rparams[p] = (int)bitreader.Readbits(riceLen);
             if (k == (1 << riceLen) - 1)
             {
-                k = frame.Subframes[ch].best.Rc.esc_bps[p] = (int)bitreader.Readbits(5);
+                k = frame.Subframes[ch].best.Rc.EscBps[p] = (int)bitreader.Readbits(5);
                 for (var i = n; i > 0; i--)
                 {
                     *r++ = bitreader.readbits_signed(k);

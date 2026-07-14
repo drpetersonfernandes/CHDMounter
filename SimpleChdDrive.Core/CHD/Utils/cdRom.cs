@@ -2,41 +2,41 @@
 
 namespace SimpleChdDrive.Core.CHD.Utils;
 
-public static class cdRom
+public static class CdRom
 {
-
     /***************************************************************************
        CONSTANTS
   ***************************************************************************/
 
     /** @brief  offset within sector. */
-    private const int SYNC_OFFSET = 0x000;
+    private const int SyncOffset = 0x000;
     /** @brief  12 bytes. */
-    private const int SYNC_NUM_BYTES = 12;
+    private const int SyncNumBytes = 12;
 
     /** @brief  offset within sector. */
-    private const int MODE_OFFSET = 0x00f;
+    private const int ModeOffset = 0x00f;
 
     /** @brief  offset within sector. */
-    private const int ECC_P_OFFSET = 0x81c;
+    private const int EccPOffset = 0x81c;
     /** @brief  2 lots of 86. */
-    private const int ECC_P_NUM_BYTES = 86;
+    private const int EccPNumBytes = 86;
     /** @brief  24 bytes each. */
-    private const int ECC_P_COMP = 24;
+    private const int EccPComp = 24;
 
     /** @brief  The ECC q offset. */
-    private static readonly int ECC_Q_OFFSET = ECC_P_OFFSET + 2 * ECC_P_NUM_BYTES;
+    private const int EccQOffset = EccPOffset + 2 * EccPNumBytes;
+
     /** @brief  2 lots of 52. */
-    private const int ECC_Q_NUM_BYTES = 52;
+    private const int EccQNumBytes = 52;
     /** @brief  43 bytes each. */
-    private const int ECC_Q_COMP = 43;
+    private const int EccQComp = 43;
 
     /**
      * @brief   -------------------------------------------------
      *            ECC lookup tables pre-calculated tables for ECC data calcs
      *          -------------------------------------------------.
      */
-    private static readonly byte[] ecclow =
+    private static readonly byte[] Ecclow =
     [
         0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e,
     0x20, 0x22, 0x24, 0x26, 0x28, 0x2a, 0x2c, 0x2e, 0x30, 0x32, 0x34, 0x36, 0x38, 0x3a, 0x3c, 0x3e,
@@ -57,7 +57,7 @@ public static class cdRom
     ];
 
     /** @brief  The ecchigh[ 256]. */
-    private static readonly byte[] ecchigh =
+    private static readonly byte[] Ecchigh =
     [
         0x00, 0xf4, 0xf5, 0x01, 0xf7, 0x03, 0x02, 0xf6, 0xf3, 0x07, 0x06, 0xf2, 0x04, 0xf0, 0xf1, 0x05,
     0xfb, 0x0f, 0x0e, 0xfa, 0x0c, 0xf8, 0xf9, 0x0d, 0x08, 0xfc, 0xfd, 0x09, 0xff, 0x0b, 0x0a, 0xfe,
@@ -85,7 +85,7 @@ public static class cdRom
      */
 
     //    static readonly ushort[,] poffsets = new ushort[ECC_P_NUM_BYTE, ECC_P_COMP]
-    [SuppressMessage("ReSharper", "BadCommaSpaces")] private static readonly ushort[][] poffsets = new ushort[][]
+    [SuppressMessage("ReSharper", "BadCommaSpaces")] private static readonly ushort[][] Poffsets = new ushort[][]
     {
         [0x000,0x056,0x0ac,0x102,0x158,0x1ae,0x204,0x25a,0x2b0,0x306,0x35c,0x3b2,0x408,0x45e,0x4b4,0x50a,0x560,0x5b6,0x60c,0x662,0x6b8,0x70e,0x764,0x7ba],
         [0x001,0x057,0x0ad,0x103,0x159,0x1af,0x205,0x25b,0x2b1,0x307,0x35d,0x3b3,0x409,0x45f,0x4b5,0x50b,0x561,0x5b7,0x60d,0x663,0x6b9,0x70f,0x765,0x7bb],
@@ -183,7 +183,7 @@ public static class cdRom
      */
 
     //  static readonly ushort[,] qoffsets = new ushort[ECC_Q_NUM_BYTES, ECC_Q_COMP]
-    [SuppressMessage("ReSharper", "BadCommaSpaces")] private static readonly ushort[][] qoffsets = new ushort[][]
+    [SuppressMessage("ReSharper", "BadCommaSpaces")] private static readonly ushort[][] Qoffsets = new ushort[][]
     {
         [0x000,0x058,0x0b0,0x108,0x160,0x1b8,0x210,0x268,0x2c0,0x318,0x370,0x3c8,0x420,0x478,0x4d0,0x528,0x580,0x5d8,0x630,0x688,0x6e0,0x738,0x790,0x7e8,0x840,0x898,0x034,0x08c,0x0e4,0x13c,0x194,0x1ec,0x244,0x29c,0x2f4,0x34c,0x3a4,0x3fc,0x454,0x4ac,0x504,0x55c,0x5b4],
         [0x001,0x059,0x0b1,0x109,0x161,0x1b9,0x211,0x269,0x2c1,0x319,0x371,0x3c9,0x421,0x479,0x4d1,0x529,0x581,0x5d9,0x631,0x689,0x6e1,0x739,0x791,0x7e9,0x841,0x899,0x035,0x08d,0x0e5,0x13d,0x195,0x1ed,0x245,0x29d,0x2f5,0x34d,0x3a5,0x3fd,0x455,0x4ad,0x505,0x55d,0x5b5],
@@ -249,7 +249,7 @@ public static class cdRom
     private static byte ecc_source_byte(byte[] data, int sectorOffset, int offset)
     {
         /* in mode 2 always treat these as 0 bytes */
-        return data[sectorOffset + MODE_OFFSET] == 2 && offset < 4 ? (byte)0x00 : data[sectorOffset + SYNC_OFFSET + SYNC_NUM_BYTES + offset];
+        return data[sectorOffset + ModeOffset] == 2 && offset < 4 ? (byte)0x00 : data[sectorOffset + SyncOffset + SyncNumBytes + offset];
     }
 
     /**
@@ -265,7 +265,6 @@ public static class cdRom
      * @param [in,out]  val1    The first value.
      * @param [in,out]  val2    The second value.
      */
-
     private static void ecc_compute_bytes(byte[] data, int sectorOffset, ushort[] row, int rowlen, int val1Index, int val2Index)
     {
         int component;
@@ -275,9 +274,9 @@ public static class cdRom
         {
             data[val1Index] ^= ecc_source_byte(data, sectorOffset, row[component]);
             data[val2Index] ^= ecc_source_byte(data, sectorOffset, row[component]);
-            data[val1Index] = ecclow[data[val1Index]];
+            data[val1Index] = Ecclow[data[val1Index]];
         }
-        data[val1Index] = ecchigh[ecclow[data[val1Index]] ^ data[val2Index]];
+        data[val1Index] = Ecchigh[Ecclow[data[val1Index]] ^ data[val2Index]];
         data[val2Index] ^= data[val1Index];
     }
 
@@ -291,15 +290,14 @@ public static class cdRom
      *
      * @param [in,out]  sector  If non-null, the sector.
      */
-
     public static void ecc_generate(byte[] data, int sectorOffset)
     {
         /* first verify P is */
-        for (var i = 0; i < ECC_P_NUM_BYTES; i++)
-            ecc_compute_bytes(data, sectorOffset, poffsets[i], ECC_P_COMP, sectorOffset + ECC_P_OFFSET + i, sectorOffset + ECC_P_OFFSET + ECC_P_NUM_BYTES + i);
+        for (var i = 0; i < EccPNumBytes; i++)
+            ecc_compute_bytes(data, sectorOffset, Poffsets[i], EccPComp, sectorOffset + EccPOffset + i, sectorOffset + EccPOffset + EccPNumBytes + i);
 
         /* then verify Q is */
-        for (var i = 0; i < ECC_Q_NUM_BYTES; i++)
-            ecc_compute_bytes(data, sectorOffset, qoffsets[i], ECC_Q_COMP, sectorOffset + ECC_Q_OFFSET + i, sectorOffset + ECC_Q_OFFSET + ECC_Q_NUM_BYTES + i);
+        for (var i = 0; i < EccQNumBytes; i++)
+            ecc_compute_bytes(data, sectorOffset, Qoffsets[i], EccQComp, sectorOffset + EccQOffset + i, sectorOffset + EccQOffset + EccQNumBytes + i);
     }
 }

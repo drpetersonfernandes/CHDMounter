@@ -324,17 +324,17 @@ internal static class ChdHeaders
                 case CompressionType.Compressiontype1:
                 case CompressionType.Compressiontype2:
                 case CompressionType.Compressiontype3:
-                    curoffset += length = bitbuf.read(lengthbits);
-                    crc16 = (ushort)bitbuf.read(16);
+                    curoffset += length = bitbuf.Read(lengthbits);
+                    crc16 = (ushort)bitbuf.Read(16);
                     break;
 
                 case CompressionType.Compressionnone:
                     curoffset += length = blocksize;
-                    crc16 = (ushort)bitbuf.read(16);
+                    crc16 = (ushort)bitbuf.Read(16);
                     break;
 
                 case CompressionType.Compressionself:
-                    lastSelf = (uint)(offset = bitbuf.read(selfbits));
+                    lastSelf = (uint)(offset = bitbuf.Read(selfbits));
                     break;
 
                 /* pseudo-types; convert into base types */
@@ -353,7 +353,7 @@ internal static class ChdHeaders
                     break;
 
                 case CompressionType.Compressionparent:
-                    offset = bitbuf.read(parentbits);
+                    offset = bitbuf.Read(parentbits);
                     lastParent = offset;
                     break;
 

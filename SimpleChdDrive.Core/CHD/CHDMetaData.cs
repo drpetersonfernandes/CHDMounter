@@ -30,7 +30,7 @@ internal static class ChdMetaData
             Log.Debug("{MetaTag}  Length: {MetaLength}",
                 $"{(char)((metaTag >> 24) & 0xFF)}{(char)((metaTag >> 16) & 0xFF)}{(char)((metaTag >> 8) & 0xFF)}{(char)((metaTag >> 0) & 0xFF)}",
                 metaLength);
-            if (Util.isAscii(metaData))
+            if (Util.IsAscii(metaData))
                 Log.Debug("Data: {MetaData}", Encoding.ASCII.GetString(metaData));
             else
                 Log.Debug("Data: Binary Data Length {Length}", metaData.Length);
@@ -64,7 +64,7 @@ internal static class ChdMetaData
         sha1Total.TransformFinalBlock(tmp, 0, 0);
 
         // compare the calculated metaData + rawData SHA1 with sha1 from the CHD header
-        if (!Util.IsAllZeroArray(chd.Sha1) && !Util.ByteArrEquals(chd.Sha1, sha1Total.Hash))
+        if (!Util.IsAllZeroArray(chd.Sha1) && sha1Total.Hash != null && !Util.ByteArrEquals(chd.Sha1, sha1Total.Hash))
             return ChdError.Chderrinvalidmetadata;
 
         return ChdError.Chderrnone;

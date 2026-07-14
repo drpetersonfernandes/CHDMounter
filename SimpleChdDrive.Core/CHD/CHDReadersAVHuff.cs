@@ -166,8 +166,6 @@ internal static partial class ChdReaders
                     // rate is irrelevant to decoding (see notes in CHDReaders.flac);
                     // bit-depth is fixed at 16. These match how MAME encodes AVHuff
                     // audio, so the values are correct for every AVHuff CHD.
-                    codec.AvhuffSettings ??= new AudioPcmConfig(16, 1, 48000);
-                    codec.AvhuffAudioDecoder ??= new AudioDecoder(codec.AvhuffSettings); //read the data and decode it in to a 1D array of samples - the buffer seems to want 2D :S
                     var audioBuffer = new AudioBuffer(codec.AvhuffSettings, blockSize); //audio buffer to take decoded samples and read them to bytes.
                     var inPos = (int)buffInOffset;
                     var outPos = (int)audioChannelDestStart[channelNumber];
@@ -224,9 +222,9 @@ internal static partial class ChdReaders
             if (hufferr != huffman_error.HUFFERR_NONE)
                 return ChdError.Chderrinvaliddata;
 
-            bitbuf.flush();
+            bitbuf.Flush();
             hufferr = mAudioloDecoder.ImportTreeRLE();
-            if (hufferr != huffman_error.HUFFERR_NONE || bitbuf.flush() != treesize)
+            if (hufferr != huffman_error.HUFFERR_NONE || bitbuf.Flush() != treesize)
                 return ChdError.Chderrinvaliddata;
 
             buffInOffset += treesize;
@@ -277,7 +275,7 @@ internal static partial class ChdReaders
                         buffOut[curdest.Value + 1] = (byte)newsample;
                         curdest += 2;
                     }
-                    if (bitbuf.overflow())
+                    if (bitbuf.Overflow())
                         return ChdError.Chderrinvaliddata;
                 }
             }
@@ -302,7 +300,7 @@ internal static partial class ChdReaders
 
         // skip the first byte
         var bitbuf = new BitStream(buffIn, (int)buffInOffset, (int)buffInLength);
-        bitbuf.read(8);
+        bitbuf.Read(8);
 
         if (codec.BHuffmanY == null)
         {
@@ -328,17 +326,17 @@ internal static partial class ChdReaders
         if (hufferr != huffman_error.HUFFERR_NONE)
             return ChdError.Chderrinvaliddata;
 
-        bitbuf.flush();
+        bitbuf.Flush();
         hufferr = mCbcontext.ImportTreeRLE();
         if (hufferr != huffman_error.HUFFERR_NONE)
             return ChdError.Chderrinvaliddata;
 
-        bitbuf.flush();
+        bitbuf.Flush();
         hufferr = mCrcontext.ImportTreeRLE();
         if (hufferr != huffman_error.HUFFERR_NONE)
             return ChdError.Chderrinvaliddata;
 
-        bitbuf.flush();
+        bitbuf.Flush();
 
         // decode to the destination
         mYcontext.Reset();
@@ -362,7 +360,7 @@ internal static partial class ChdReaders
         }
 
         // check for errors if we overflowed or decoded too little data
-        if (bitbuf.overflow() || bitbuf.flush() != buffInLength)
+        if (bitbuf.Overflow() || bitbuf.Flush() != buffInLength)
             return ChdError.Chderrinvaliddata;
 
         return ChdError.Chderrnone;

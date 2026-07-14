@@ -82,11 +82,11 @@ internal class HuffmanDecoder
     public uint DecodeOne()
     {
         /* peek ahead to get maxbits worth of data */
-        var bits = bitbuf.peek(maxbits);
+        var bits = bitbuf.Peek(maxbits);
 
         /* look it up, then remove the actual number of bits for this code */
         uint lookup = this.lookup[bits];
-        bitbuf.remove((int)(lookup & 0x1f));
+        bitbuf.Remove((int)(lookup & 0x1f));
 
         /* return the value */
         return lookup >> 5;
@@ -122,7 +122,7 @@ internal class HuffmanDecoder
         for (curnode = 0; curnode < numcodes;)
         {
             /* a non-one value is just raw */
-            var nodebits = (int)bitbuf.read(numbits);
+            var nodebits = (int)bitbuf.Read(numbits);
             if (nodebits != 1)
             {
                 huffnode[curnode++].numbits = (byte)nodebits;
@@ -131,7 +131,7 @@ internal class HuffmanDecoder
             else
             {
                 /* a double 1 is just a single 1 */
-                nodebits = (int)bitbuf.read(numbits);
+                nodebits = (int)bitbuf.Read(numbits);
                 if (nodebits == 1)
                 {
                     huffnode[curnode++].numbits = (byte)nodebits;
@@ -139,7 +139,7 @@ internal class HuffmanDecoder
                 /* otherwise, we need one for value for the repeat count */
                 else
                 {
-                    var repcount = (int)bitbuf.read(numbits) + 3;
+                    var repcount = (int)bitbuf.Read(numbits) + 3;
                     if (repcount + curnode > numcodes)
                         return huffman_error.HUFFERR_INVALID_DATA;
 
@@ -164,7 +164,7 @@ internal class HuffmanDecoder
         BuildLookupTable();
 
         /* determine final input length and report errors */
-        return bitbuf.overflow() ? huffman_error.HUFFERR_INPUT_BUFFER_TOO_SMALL : huffman_error.HUFFERR_NONE;
+        return bitbuf.Overflow() ? huffman_error.HUFFERR_INPUT_BUFFER_TOO_SMALL : huffman_error.HUFFERR_NONE;
     }
 
 
@@ -186,8 +186,8 @@ internal class HuffmanDecoder
         huffman_error error;
         /* start by parsing the lengths for the small tree */
         var smallhuff = new HuffmanDecoder(24, 6, bitbuf);
-        smallhuff.huffnode[0].numbits = (byte)bitbuf.read(3);
-        start = (int)bitbuf.read(3) + 1;
+        smallhuff.huffnode[0].numbits = (byte)bitbuf.Read(3);
+        start = (int)bitbuf.Read(3) + 1;
         for (index = 1; index < 24; index++)
         {
             if (index < start || count == 7)
@@ -197,7 +197,7 @@ internal class HuffmanDecoder
             }
             else
             {
-                count = (int)bitbuf.read(3);
+                count = (int)bitbuf.Read(3);
                 smallhuff.huffnode[index].numbits = (byte)(count == 7 ? 0 : count);
             }
         }
@@ -226,10 +226,10 @@ internal class HuffmanDecoder
             }
             else
             {
-                count = (int)bitbuf.read(3) + 2;
+                count = (int)bitbuf.Read(3) + 2;
                 if (count == 7 + 2)
                 {
-                    count += (int)bitbuf.read(rlefullbits);
+                    count += (int)bitbuf.Read(rlefullbits);
                 }
 
                 for (; count != 0 && curcode < numcodes; count--)
@@ -252,7 +252,7 @@ internal class HuffmanDecoder
         BuildLookupTable();
 
         /* determine final input length and report errors */
-        return bitbuf.overflow() ? huffman_error.HUFFERR_INPUT_BUFFER_TOO_SMALL : huffman_error.HUFFERR_NONE;
+        return bitbuf.Overflow() ? huffman_error.HUFFERR_INPUT_BUFFER_TOO_SMALL : huffman_error.HUFFERR_NONE;
     }
 
 

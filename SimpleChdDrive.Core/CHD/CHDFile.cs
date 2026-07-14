@@ -36,16 +36,16 @@ public sealed class ChdFile : IDisposable
     private readonly ChdCodec _codec;
 
     // Parent CHD for differential (child) files. Null for standalone CHDs.
-    private ChdFile _parent;
+    private ChdFile? _parent;
     private bool _ownsParent;
 
     // Reusable buffer + cache for byte-range reads.
-    private byte[] _hunkBuffer;
+    private byte[]? _hunkBuffer;
     private long _cachedHunk = -1;
 
     // Scratch buffer used when stitching two parent hunks for an unaligned
     // V5 COMPRESSION_PARENT reference.
-    private byte[] _parentScratch;
+    private byte[]? _parentScratch;
 
     private ChdFile(Stream stream, bool leaveOpen, ChdHeader chd, uint version)
     {
@@ -69,7 +69,7 @@ public sealed class ChdFile : IDisposable
     public uint HunkCount => _chd.Totalblocks;
 
     /// <summary>SHA1 of the full image (including metadata for V4/V5), or the raw SHA1 when that is all that is available. May be null for V1/V2.</summary>
-    public byte[] Sha1 => _chd.Sha1 ?? _chd.Rawsha1;
+    public byte[] Sha1 => _chd.Sha1;
 
     /// <summary>SHA1 of ONLY the raw (decompressed) image data, excluding metadata. This is what a full sequential read of the image hashes to. Null for V1/V2.</summary>
     public byte[] RawSha1 => _chd.Rawsha1;
@@ -89,7 +89,7 @@ public sealed class ChdFile : IDisposable
     /// </summary>
     public static ChdError Open(string filename, out ChdFile chdFile)
     {
-        return Open(filename, (ChdFile)null, out chdFile);
+        return Open(filename, (ChdFile?)null, out chdFile);
     }
 
     /// <summary>
@@ -99,12 +99,12 @@ public sealed class ChdFile : IDisposable
     /// </summary>
     public static ChdError Open(string filename, string parentFilename, out ChdFile chdFile)
     {
-        chdFile = null;
+        chdFile = null!;
 
-        ChdFile parent = null;
+        ChdFile? parent = null;
         if (!string.IsNullOrEmpty(parentFilename))
         {
-            var perr = Open(parentFilename, (ChdFile)null, out parent);
+            var perr = Open(parentFilename, (ChdFile?)null, out parent);
             if (perr != ChdError.Chderrnone)
                 return perr;
         }
@@ -131,9 +131,9 @@ public sealed class ChdFile : IDisposable
     /// ownership of <paramref name="parent"/> (it is not disposed by this
     /// instance). Pass null for a standalone CHD.
     /// </summary>
-    public static ChdError Open(string filename, ChdFile parent, out ChdFile chdFile)
+    public static ChdError Open(string filename, ChdFile? parent, out ChdFile chdFile)
     {
-        chdFile = null;
+        chdFile = null!;
         if (!File.Exists(filename))
             return ChdError.Chderrfilenotfound;
 
@@ -168,9 +168,9 @@ public sealed class ChdFile : IDisposable
     /// Opens a (possibly child) CHD from an existing seekable stream, resolving
     /// parent references against <paramref name="parent"/> (null = standalone).
     /// </summary>
-    public static ChdError Open(Stream stream, bool leaveOpen, ChdFile parent, out ChdFile chdFile)
+    public static ChdError Open(Stream stream, bool leaveOpen, ChdFile? parent, out ChdFile chdFile)
     {
-        chdFile = null;
+        chdFile = null!;
         if (stream is not { CanRead: true } || !stream.CanSeek)
             return ChdError.Chderrinvalidparameter;
 
@@ -236,7 +236,7 @@ public sealed class ChdFile : IDisposable
             return ChdError.Chderrinvalidparent;
 
         var childSha1 = child.Parentsha1;
-        var parentSha1 = parent.Sha1 ?? parent.Rawsha1;
+        var parentSha1 = parent.Sha1;
         if (childSha1 != null && parentSha1 != null &&
             !Util.IsAllZeroArray(childSha1) && !Util.IsAllZeroArray(parentSha1) &&
             !Util.ByteArrEquals(childSha1, parentSha1))
@@ -276,7 +276,7 @@ public sealed class ChdFile : IDisposable
 
         // Resolve the entry that actually holds compressed data (follow SELF links).
         var dataEntry = me;
-        while (dataEntry.Comptype == CompressionType.Compressionself && dataEntry.SelfMapEntry != null)
+        while (dataEntry is { Comptype: CompressionType.Compressionself })
         {
             dataEntry = dataEntry.SelfMapEntry;
         }
@@ -296,7 +296,7 @@ public sealed class ChdFile : IDisposable
                 loaded = true;
             }
 
-            return ChdBlockRead.ReadBlock(me, null, _chd.ChdReader, _codec, buffer, (int)_chd.Blocksize);
+            return ChdBlockRead.ReadBlock(me, null!, _chd.ChdReader, _codec, buffer, (int)_chd.Blocksize);
         }
         catch
         {

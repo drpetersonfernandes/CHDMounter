@@ -1,3 +1,4 @@
+using System.Globalization;
 using Serilog;
 
 namespace SimpleChdDrive.Core.Logging;
@@ -14,8 +15,9 @@ public static class AppLogger
                 logFilePath,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-            .WriteTo.Debug()
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                formatProvider: CultureInfo.InvariantCulture)
+            .WriteTo.Debug(formatProvider: CultureInfo.InvariantCulture)
             .CreateLogger();
 
         Log.Logger = _logger;
