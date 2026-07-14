@@ -23,7 +23,7 @@ public class DreamcastIsoParser
         _isHighSierra = false;
         _isJoliet = false;
 
-        var trackStartLba = track?.StartLBA ?? 0;
+        var trackStartLba = track?.StartLba ?? 0;
         var sectorData = new byte[2048];
 
         var volumeStarts = new List<uint>();

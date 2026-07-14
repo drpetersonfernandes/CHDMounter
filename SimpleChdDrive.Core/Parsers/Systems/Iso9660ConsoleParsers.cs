@@ -5,7 +5,7 @@ public class PspParser : Iso9660Wrapper
     public PspParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
-        return ConsoleType.PSP;
+        return ConsoleType.Psp;
     }
 
     public override string GetConsoleName()
@@ -19,7 +19,7 @@ public class PcEngineCdParser : Iso9660Wrapper
     public PcEngineCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
-        return ConsoleType.PcEngineCD;
+        return ConsoleType.PcEngineCd;
     }
 
     public override string GetConsoleName()
@@ -47,7 +47,7 @@ public class SegaGenesisCdParser : Iso9660Wrapper
     public SegaGenesisCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
-        return ConsoleType.SegaGenesisCD;
+        return ConsoleType.SegaGenesisCd;
     }
 
     public override string GetConsoleName()
@@ -75,7 +75,7 @@ public class NeoGeoCdParser : Iso9660Wrapper
     public NeoGeoCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
-        return ConsoleType.NeoGeoCD;
+        return ConsoleType.NeoGeoCd;
     }
 
     public override string GetConsoleName()
@@ -89,7 +89,7 @@ public class AmigaCd32Parser : Iso9660Wrapper
     public AmigaCd32Parser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
-        return ConsoleType.AmigaCD32;
+        return ConsoleType.AmigaCd32;
     }
 
     public override string GetConsoleName()
@@ -103,7 +103,7 @@ public class AmigaCdParser : Iso9660Wrapper
     public AmigaCdParser(SectorReader reader) : base(reader) { }
     public override ConsoleType GetConsoleType()
     {
-        return ConsoleType.AmigaCD;
+        return ConsoleType.AmigaCd;
     }
 
     public override string GetConsoleName()

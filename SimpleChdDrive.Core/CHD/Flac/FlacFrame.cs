@@ -62,10 +62,10 @@ public unsafe class FlacFrame
 
     public void ChooseBestSubframe(int ch)
     {
-        if (Current.Size >= Subframes[ch].best.Size)
+        if (Current.Size >= Subframes[ch].Best.Size)
             return;
 
-        (Subframes[ch].best, Current) = (Current, Subframes[ch].best);
+        (Subframes[ch].Best, Current) = (Current, Subframes[ch].Best);
     }
 
     public void SwapSubframes(int ch1, int ch2)

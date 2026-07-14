@@ -102,7 +102,7 @@ public class ThreeDoConsoleParser : IConsoleParser
 
     public ConsoleType GetConsoleType()
     {
-        return ConsoleType.ThreeDO;
+        return ConsoleType.ThreeDo;
     }
 
     public string GetConsoleName()
@@ -142,7 +142,7 @@ public class GenericIso9660Parser : IConsoleParser
 
     public ConsoleType GetConsoleType()
     {
-        return ConsoleType.GenericISO9660;
+        return ConsoleType.GenericIso9660;
     }
 
     public string GetConsoleName()

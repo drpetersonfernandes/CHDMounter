@@ -27,6 +27,9 @@ public class LogTextWriter : TextWriter
             if (value != null)
                 loggingService?.Log(value);
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
     }
 }

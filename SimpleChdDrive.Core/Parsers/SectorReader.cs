@@ -129,7 +129,7 @@ public class SectorReader
 
         if (_trackLocked && CurrentTrack != null)
         {
-            var relative = (long)lba - CurrentTrack.StartLBA;
+            var relative = (long)lba - CurrentTrack.StartLba;
             if (relative >= 0 && relative < CurrentTrack.Frames)
             {
                 chdFrame = CurrentTrack.ChdOffset + (uint)relative;
@@ -144,10 +144,10 @@ public class SectorReader
         {
             var adjustedLba = (uint)(lba + LbaOffset);
 
-            if (CurrentTrack != null && adjustedLba >= CurrentTrack.StartLBA &&
-                adjustedLba < CurrentTrack.StartLBA + CurrentTrack.Frames)
+            if (CurrentTrack != null && adjustedLba >= CurrentTrack.StartLba &&
+                adjustedLba < CurrentTrack.StartLba + CurrentTrack.Frames)
             {
-                chdFrame = CurrentTrack.ChdOffset + (adjustedLba - CurrentTrack.StartLBA);
+                chdFrame = CurrentTrack.ChdOffset + (adjustedLba - CurrentTrack.StartLba);
                 found = true;
             }
 
@@ -155,9 +155,9 @@ public class SectorReader
             {
                 foreach (var track in Tracks)
                 {
-                    if (adjustedLba >= track.StartLBA && adjustedLba < track.StartLBA + track.Frames)
+                    if (adjustedLba >= track.StartLba && adjustedLba < track.StartLba + track.Frames)
                     {
-                        chdFrame = track.ChdOffset + (adjustedLba - track.StartLBA);
+                        chdFrame = track.ChdOffset + (adjustedLba - track.StartLba);
                         CurrentTrack = track;
                         found = true;
                         break;
@@ -206,7 +206,7 @@ public class SectorReader
             if (_trackOffsetCache.TryGetValue(trackIdx, out var cachedOffset))
             {
                 SectorHeaderOffset = cachedOffset;
-                var isMode2 = CurrentTrack is { TrackType: not null } &&
+                var isMode2 = CurrentTrack is not null &&
                               (CurrentTrack.TrackType.Contains("MODE2") || CurrentTrack.TrackType.Contains("CDI"));
                 var headerSize = isMode2 ? 24u : 16u;
                 SyncOffset = SectorHeaderOffset >= headerSize ? SectorHeaderOffset - headerSize : 0;
@@ -385,8 +385,8 @@ public class SectorReader
             var trackIndex = tracks.Count + 1;
             var metaValue = entry.Value;
 
-            var parsed = TryParseTrackMetadata(metaValue, out _, out var typeStr, out _,
-                out var frames, out _, out var pregap, out _, out _, out var postgap);
+            var parsed = TryParseTrackMetadata(metaValue, out var typeStr,
+                out var frames, out var pregap, out var postgap);
 
             if (!parsed || frames == 0)
                 continue;
@@ -458,7 +458,7 @@ public class SectorReader
                 currentLogicalLba = gdHighDensityLba;
             }
 
-            track.StartLBA = currentLogicalLba;
+            track.StartLba = currentLogicalLba;
             track.ChdOffset = currentFileFrame;
 
             currentLogicalLba += track.Frames;
@@ -468,7 +468,7 @@ public class SectorReader
 
         foreach (var track in tracks)
         {
-            if (!track.IsDataTrack && track.TrackType == "AUDIO" && track.Frames > 16 && chd.UnitBytes > 0)
+            if (!track.IsDataTrack && track is { TrackType: "AUDIO", Frames: > 16 } && chd.UnitBytes > 0)
             {
                 var sectorsPerHunk = chd.HunkBytes / chd.UnitBytes;
                 if (sectorsPerHunk > 0)

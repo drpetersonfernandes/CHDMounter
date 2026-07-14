@@ -19,20 +19,17 @@ public class ThreeDoParser
         _reader.SetTrack(track!, true);
 
         var sectorData = new byte[2048];
-        var trackStart = track?.StartLBA ?? 0;
-        var foundVh = false;
-
-        if (_reader.ReadSector(trackStart, sectorData) && CheckMagic(sectorData, 0, OperaMagic))
-        {
-            foundVh = true;
-        }
+        var trackStart = track?.StartLba ?? 0;
+        var foundVh = _reader.ReadSector(trackStart, sectorData) && CheckMagic(sectorData, 0, OperaMagic);
 
         if (!foundVh)
         {
             for (uint i = 0; i < 100; i++)
             {
                 if (_reader.ReadSector(trackStart + i, sectorData) && CheckMagic(sectorData, 0, OperaMagic))
-                { trackStart += i; foundVh = true; break; }
+                { trackStart += i;
+                    foundVh = true;
+                    break; }
             }
         }
 
@@ -69,9 +66,7 @@ public class ThreeDoParser
 
         while (true)
         {
-            if (visited.Contains(currentBlock)) break;
-
-            visited.Add(currentBlock);
+            if (!visited.Add(currentBlock)) break;
 
             var currentLba = trackStart + currentBlock * (blockSize / 2048);
             if (!_reader.ReadSector(currentLba, sectorData)) return false;
@@ -98,7 +93,6 @@ public class ThreeDoParser
 
                 var byteCount = Be24(sectorData, (int)pos + 0x11);
                 uint avCnt = sectorData[pos + 0x43];
-                if (avCnt > 255) break;
 
                 var extent = Be24(sectorData, (int)pos + 0x45);
 
@@ -127,7 +121,9 @@ public class ThreeDoParser
     }
 
     private static bool CheckMagic(byte[] d, int o, byte[] m)
-    { for (var i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; } return true; }
+    { for (var i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; }
+
+        return true; }
 
     private static uint Be24(byte[] d, int o)
     {

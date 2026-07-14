@@ -2,7 +2,7 @@ using System.Windows;
 
 namespace SimpleChdDrive.Core.Views;
 
-public partial class AboutWindow : Window
+public partial class AboutWindow
 {
     public AboutWindow()
     {

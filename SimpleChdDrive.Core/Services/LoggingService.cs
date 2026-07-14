@@ -6,16 +6,11 @@ namespace SimpleChdDrive.Core.Services;
 public class LoggingService : ILoggingService
 {
     private const int MaxEntries = 5000;
-    private readonly Dispatcher _dispatcher;
+    private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
     private string _lastMessage = "";
     private DateTime _lastMessageTime;
 
     public ObservableCollection<LogEntry> LogEntries { get; } = [];
-
-    public LoggingService()
-    {
-        _dispatcher = Dispatcher.CurrentDispatcher;
-    }
 
     public void Log(string message)
     {

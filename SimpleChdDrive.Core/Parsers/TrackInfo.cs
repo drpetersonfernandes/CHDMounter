@@ -3,7 +3,7 @@ namespace SimpleChdDrive.Core.Parsers;
 public class TrackInfo
 {
     public int Index { get; set; }
-    public uint StartLBA { get; set; }
+    public uint StartLba { get; set; }
     public uint ChdOffset { get; set; }
     public uint Frames { get; set; }
     public string TrackType { get; set; } = string.Empty;

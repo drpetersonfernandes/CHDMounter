@@ -2,10 +2,10 @@ using Serilog;
 
 namespace SimpleChdDrive.Core.Logging;
 
-public class ErrorLoggerStatic
+public static class ErrorLoggerStatic
 {
     private static ErrorLogger? _instance;
-    private static readonly ConcurrentQueue<Action> _pendingReports = new();
+    private static readonly ConcurrentQueue<Action> PendingReports = new();
 
     public static ErrorLogger Instance
     {
@@ -39,7 +39,10 @@ public class ErrorLoggerStatic
             DiagnosticLogger.Log($"  Stack: {ex.StackTrace}");
             Log.Error(ex, context);
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
     }
 
     public static void ReportSilentException(Exception ex, string context, bool includeStackTrace)
@@ -50,7 +53,10 @@ public class ErrorLoggerStatic
             if (includeStackTrace)
                 DiagnosticLogger.Log($"  Stack: {ex.StackTrace}");
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
     }
 
     public static void WaitForPendingReports(TimeSpan timeout)
@@ -60,5 +66,8 @@ public class ErrorLoggerStatic
 
 public class ErrorLogger : IDisposable
 {
-    public void Dispose() { }
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+    }
 }

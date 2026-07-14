@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using SimpleChdDrive.Core.CHD;
 
@@ -138,8 +139,9 @@ public class ChdContainer
         var sb = new StringBuilder();
         foreach (var part in parts)
         {
-            if (part == "\\") { sb.Append("\\"); }
-            else { if (sb.Length > 0 && sb[^1] != '\\') sb.Append('\\'); sb.Append(part); }
+            if (part == "\\") { sb.Append('\\'); }
+            else { if (sb.Length > 0 && sb[^1] != '\\') sb.Append('\\');
+                sb.Append(part); }
         }
         var path = sb.ToString().ToLowerInvariant();
         if (path.Length > 1 && path[^1] == '\\')
@@ -237,7 +239,9 @@ public class ChdContainer
                         foreach (var ext in entry.Extents)
                         {
                             if (curOff >= extentStart && curOff < extentStart + ext.Size)
-                            { baseLba = ext.Lba; offsetInExtent = curOff - extentStart; break; }
+                            { baseLba = ext.Lba;
+                                offsetInExtent = curOff - extentStart;
+                                break; }
                             extentStart += ext.Size;
                         }
                     }
@@ -289,7 +293,7 @@ public class ChdContainer
         uint cumulativeFrames = 0;
         _cueBinSize = 0;
         var sb = new StringBuilder();
-        sb.AppendLine($"FILE \"{_cueBinStemName}.bin\" BINARY");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"FILE \"{_cueBinStemName}.bin\" BINARY");
 
         var trackNum = 0;
         foreach (var t in tracks)
@@ -299,16 +303,16 @@ public class ChdContainer
                 ? t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? $"MODE2/{rawSize}" : $"MODE1/{rawSize}"
                 : "AUDIO";
 
-            sb.AppendLine($"  TRACK {trackNum:D2} {mode}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  TRACK {trackNum:D2} {mode}");
 
             if (t.Pregap > 0)
             {
-                sb.AppendLine($"    INDEX 00 {SectorToMsf(cumulativeFrames)}");
-                sb.AppendLine($"    INDEX 01 {SectorToMsf(cumulativeFrames + t.Pregap)}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 00 {SectorToMsf(cumulativeFrames)}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames + t.Pregap)}");
             }
             else
             {
-                sb.AppendLine($"    INDEX 01 {SectorToMsf(cumulativeFrames)}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames)}");
             }
 
             cumulativeFrames += t.Frames;
@@ -381,7 +385,7 @@ public class ChdContainer
                 var offsetInTrack = currentOffset - trackByteOffset;
                 var frameInTrack = (uint)(offsetInTrack / _cueBinRawSectorSize);
                 var byteInFrame = (uint)(offsetInTrack % _cueBinRawSectorSize);
-                var logicalLba = targetTrack.StartLBA + frameInTrack;
+                var logicalLba = targetTrack.StartLba + frameInTrack;
 
                 if (reader.ReadRawSector(logicalLba, out var rawSector) && rawSector != null)
                 {

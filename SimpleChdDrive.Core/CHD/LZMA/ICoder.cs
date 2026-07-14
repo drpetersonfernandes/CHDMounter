@@ -30,11 +30,10 @@ public interface ICodeProgress
     void SetProgress(long inSize, long outSize);
 }
 
-
 /// <summary>
 /// Provides the fields that represent properties idenitifiers for compressing.
 /// </summary>
-internal enum CoderPropID
+internal enum CoderPropId
 {
     /// <summary>
     /// Specifies default property.

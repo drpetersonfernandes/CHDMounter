@@ -27,7 +27,7 @@ public class Iso9660Parser
         _isHighSierra = false;
         _isJoliet = false;
 
-        var trackStartLba = track?.StartLBA ?? 0;
+        var trackStartLba = track?.StartLba ?? 0;
         var effectiveTrackStart = _lbaOffset < 0 ? 45000u : trackStartLba;
 
         uint[] vdOffsets = [16, 17, 166, 167]; // 16+150, 17+150

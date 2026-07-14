@@ -218,13 +218,13 @@ internal static partial class ChdReaders
             mAudiohiDecoder = new HuffmanDecoder(256, 16, bitbuf, codec.BHuffmanHi);
             mAudioloDecoder = new HuffmanDecoder(256, 16, bitbuf, codec.BHuffmanLo);
 
-            var hufferr = mAudiohiDecoder.ImportTreeRLE();
-            if (hufferr != huffman_error.HUFFERR_NONE)
+            var hufferr = mAudiohiDecoder.ImportTreeRle();
+            if (hufferr != HuffmanError.HufferrNone)
                 return ChdError.Chderrinvaliddata;
 
             bitbuf.Flush();
-            hufferr = mAudioloDecoder.ImportTreeRLE();
-            if (hufferr != huffman_error.HUFFERR_NONE || bitbuf.Flush() != treesize)
+            hufferr = mAudioloDecoder.ImportTreeRle();
+            if (hufferr != HuffmanError.HufferrNone || bitbuf.Flush() != treesize)
                 return ChdError.Chderrinvaliddata;
 
             buffInOffset += treesize;
@@ -317,23 +317,23 @@ internal static partial class ChdReaders
             codec.BHuffmanCr = new ushort[1 << 16];
         }
 
-        var mYcontext = new HuffmanDecoderRLE(256 + 16, 16, bitbuf, codec.BHuffmanY);
-        var mCbcontext = new HuffmanDecoderRLE(256 + 16, 16, bitbuf, codec.BHuffmanCb);
-        var mCrcontext = new HuffmanDecoderRLE(256 + 16, 16, bitbuf, codec.BHuffmanCr);
+        var mYcontext = new HuffmanDecoderRle(256 + 16, 16, bitbuf, codec.BHuffmanY);
+        var mCbcontext = new HuffmanDecoderRle(256 + 16, 16, bitbuf, codec.BHuffmanCb);
+        var mCrcontext = new HuffmanDecoderRle(256 + 16, 16, bitbuf, codec.BHuffmanCr);
 
         // import the tables
-        var hufferr = mYcontext.ImportTreeRLE();
-        if (hufferr != huffman_error.HUFFERR_NONE)
+        var hufferr = mYcontext.ImportTreeRle();
+        if (hufferr != HuffmanError.HufferrNone)
             return ChdError.Chderrinvaliddata;
 
         bitbuf.Flush();
-        hufferr = mCbcontext.ImportTreeRLE();
-        if (hufferr != huffman_error.HUFFERR_NONE)
+        hufferr = mCbcontext.ImportTreeRle();
+        if (hufferr != HuffmanError.HufferrNone)
             return ChdError.Chderrinvaliddata;
 
         bitbuf.Flush();
-        hufferr = mCrcontext.ImportTreeRLE();
-        if (hufferr != huffman_error.HUFFERR_NONE)
+        hufferr = mCrcontext.ImportTreeRle();
+        if (hufferr != HuffmanError.HufferrNone)
             return ChdError.Chderrinvaliddata;
 
         bitbuf.Flush();
@@ -354,9 +354,9 @@ internal static partial class ChdReaders
                 buffOut[row + 3] = (byte)mCrcontext.DecodeOne();
                 row += 4;
             }
-            mYcontext.FlushRLE();
-            mCbcontext.FlushRLE();
-            mCrcontext.FlushRLE();
+            mYcontext.FlushRle();
+            mCbcontext.FlushRle();
+            mCrcontext.FlushRle();
         }
 
         // check for errors if we overflowed or decoded too little data

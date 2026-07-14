@@ -33,7 +33,8 @@ public class UdfParser
             if (!_reader.ReadSector(vdsLoc + i, sector)) break;
 
             var tagId = LeU16(sector, 0);
-            if (tagId == 6) { fsdLoc = LeU32(sector, 304); _blockSize = LeU32(sector, 264); }
+            if (tagId == 6) { fsdLoc = LeU32(sector, 304);
+                _blockSize = LeU32(sector, 264); }
             else if (tagId == 5)
             {
                 _partitionStart = LeU32(sector, 420);
@@ -62,40 +63,45 @@ public class UdfParser
         if (!_reader.ReadSector(partitionStart + logicalBlockNum, sector)) return false;
 
         var tagId = LeU16(sector, 0);
-        ulong infoLength = 0;
+        ulong infoLength;
         byte[] allocDesc;
-        ushort icbFlags = 0;
-        byte fileType = 0;
+        ushort icbFlags;
+        byte fileType;
 
-        if (tagId == 261) // File Entry
+        switch (tagId)
         {
-            infoLength = LeU64(sector, 56);
-            var lEA = LeU32(sector, 168);
-            var lAD = LeU32(sector, 172);
-            var baseOff = 176 + (int)lEA;
-            if (baseOff > sector.Length) return false;
+            // File Entry
+            case 261:
+            {
+                infoLength = LeU64(sector, 56);
+                var lEa = LeU32(sector, 168);
+                var lAd = LeU32(sector, 172);
+                var baseOff = 176 + (int)lEa;
+                if (baseOff > sector.Length) return false;
 
-            allocDesc = new byte[lAD];
-            Array.Copy(sector, baseOff, allocDesc, 0, Math.Min(lAD, (uint)(sector.Length - baseOff)));
-            icbFlags = LeU16(sector, 52);
-            fileType = sector[17];
-        }
-        else if (tagId == 266) // Extended File Entry
-        {
-            infoLength = LeU64(sector, 56);
-            var lEA = LeU32(sector, 212);
-            var lAD = LeU32(sector, 216);
-            var baseOff = 220 + (int)lEA;
-            if (baseOff > sector.Length) return false;
+                allocDesc = new byte[lAd];
+                Array.Copy(sector, baseOff, allocDesc, 0, Math.Min(lAd, (uint)(sector.Length - baseOff)));
+                icbFlags = LeU16(sector, 52);
+                fileType = sector[17];
+                break;
+            }
+            // Extended File Entry
+            case 266:
+            {
+                infoLength = LeU64(sector, 56);
+                var lEa = LeU32(sector, 212);
+                var lAd = LeU32(sector, 216);
+                var baseOff = 220 + (int)lEa;
+                if (baseOff > sector.Length) return false;
 
-            allocDesc = new byte[lAD];
-            Array.Copy(sector, baseOff, allocDesc, 0, Math.Min(lAD, (uint)(sector.Length - baseOff)));
-            icbFlags = LeU16(sector, 52);
-            fileType = sector[17];
-        }
-        else
-        {
-            return false;
+                allocDesc = new byte[lAd];
+                Array.Copy(sector, baseOff, allocDesc, 0, Math.Min(lAd, (uint)(sector.Length - baseOff)));
+                icbFlags = LeU16(sector, 52);
+                fileType = sector[17];
+                break;
+            }
+            default:
+                return false;
         }
 
         node.Size = infoLength;

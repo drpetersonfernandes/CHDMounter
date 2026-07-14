@@ -271,8 +271,8 @@ internal static class ChdHeaders
         /* first decode the compression types */
         var decoder = new HuffmanDecoder(16, 8, bitbuf);
 
-        var err = decoder.ImportTreeRLE();
-        if (err != huffman_error.HUFFERR_NONE)
+        var err = decoder.ImportTreeRle();
+        if (err != HuffmanError.HufferrNone)
         {
             return ChdError.Chderrdecompressionerror;
         }

@@ -108,14 +108,14 @@ public partial class MainWindow : Window
     {
         return arg.ToLowerInvariant() switch
         {
-            "ps1" or "playstation" or "psx" => ConsoleType.PS1, "ps2" => ConsoleType.PS2, "ps3" => ConsoleType.PS3,
-            "psp" => ConsoleType.PSP, "xbox" => ConsoleType.Xbox, "xbox360" or "x360" => ConsoleType.Xbox360,
-            "dreamcast" or "dc" => ConsoleType.Dreamcast, "3do" => ConsoleType.ThreeDO,
+            "ps1" or "playstation" or "psx" => ConsoleType.Ps1, "ps2" => ConsoleType.Ps2, "ps3" => ConsoleType.Ps3,
+            "psp" => ConsoleType.Psp, "xbox" => ConsoleType.Xbox, "xbox360" or "x360" => ConsoleType.Xbox360,
+            "dreamcast" or "dc" => ConsoleType.Dreamcast, "3do" => ConsoleType.ThreeDo,
             "cdi" or "cd-i" => ConsoleType.CDi, "saturn" => ConsoleType.Saturn,
-            "neogeo" or "ngcd" => ConsoleType.NeoGeoCD, "pcengine" or "pce" or "tgcd" => ConsoleType.PcEngineCD,
-            "pcfx" => ConsoleType.PcFx, "segagenesis" or "megacd" or "segacd" => ConsoleType.SegaGenesisCD,
-            "amigacd32" or "amiga" => ConsoleType.AmigaCD32, "amigacd" => ConsoleType.AmigaCD,
-            "iso9660" or "generic" or "iso" => ConsoleType.GenericISO9660, "cuebin" or "cue" => ConsoleType.GenericCueBin,
+            "neogeo" or "ngcd" => ConsoleType.NeoGeoCd, "pcengine" or "pce" or "tgcd" => ConsoleType.PcEngineCd,
+            "pcfx" => ConsoleType.PcFx, "segagenesis" or "megacd" or "segacd" => ConsoleType.SegaGenesisCd,
+            "amigacd32" or "amiga" => ConsoleType.AmigaCd32, "amigacd" => ConsoleType.AmigaCd,
+            "iso9660" or "generic" or "iso" => ConsoleType.GenericIso9660, "cuebin" or "cue" => ConsoleType.GenericCueBin,
             _ => ConsoleType.Unknown
         };
     }

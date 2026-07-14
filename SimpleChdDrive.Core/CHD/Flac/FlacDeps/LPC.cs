@@ -516,9 +516,9 @@ public class Lpc
 
         // find maximum coefficient value
         var cmax = 0.0F;
-        for (int i = 0; i < order; i++)
+        for (var i = 0; i < order; i++)
         {
-            float d = Math.Abs(lpcIn[i]);
+            var d = Math.Abs(lpcIn[i]);
             if (d > cmax)
             {
                 cmax = d;
@@ -528,7 +528,7 @@ public class Lpc
         if (cmax * (1 << maxShift) < 1.0)
         {
             shift = zeroShift;
-            for (int i = 0; i < order; i++)
+            for (var i = 0; i < order; i++)
             {
                 lpcOut[i] = 0;
             }
@@ -548,7 +548,7 @@ public class Lpc
         if (sh == 0 && cmax > qmax)
         {
             var scale = qmax / cmax;
-            for (int i = 0; i < order; i++)
+            for (var i = 0; i < order; i++)
             {
                 lpcIn[i] *= scale;
             }
@@ -556,10 +556,10 @@ public class Lpc
 
         // output quantized coefficients and level shift
         float error = 0;
-        for (int i = 0; i < order; i++)
+        for (var i = 0; i < order; i++)
         {
             error += lpcIn[i] * (1 << sh);
-            int q = (int)(error + 0.5);
+            var q = (int)(error + 0.5);
             if (q < -(qmax + 1))
             {
                 q = -(qmax + 1);

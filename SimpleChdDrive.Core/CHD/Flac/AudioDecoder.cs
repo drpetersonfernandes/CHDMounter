@@ -341,16 +341,16 @@ public class AudioDecoder : IAudioSource
 
     private static unsafe void decode_subframe_constant(BitReader bitreader, FlacFrame frame, int ch)
     {
-        var obits = frame.Subframes[ch].obits;
-        frame.Subframes[ch].best.Residual[0] = bitreader.readbits_signed(obits);
+        var obits = frame.Subframes[ch].Obits;
+        frame.Subframes[ch].Best.Residual[0] = bitreader.readbits_signed(obits);
     }
 
     private static unsafe void decode_subframe_verbatim(BitReader bitreader, FlacFrame frame, int ch)
     {
-        var obits = frame.Subframes[ch].obits;
+        var obits = frame.Subframes[ch].Obits;
         for (var i = 0; i < frame.Blocksize; i++)
         {
-            frame.Subframes[ch].best.Residual[i] = bitreader.readbits_signed(obits);
+            frame.Subframes[ch].Best.Residual[i] = bitreader.readbits_signed(obits);
         }
     }
 
@@ -358,22 +358,22 @@ public class AudioDecoder : IAudioSource
     {
         // rice-encoded block
         // coding method
-        frame.Subframes[ch].best.Rc.CodingMethod = (int)bitreader.Readbits(2); // ????? == 0
-        if (frame.Subframes[ch].best.Rc.CodingMethod != 0 && frame.Subframes[ch].best.Rc.CodingMethod != 1)
+        frame.Subframes[ch].Best.Rc.CodingMethod = (int)bitreader.Readbits(2); // ????? == 0
+        if (frame.Subframes[ch].Best.Rc.CodingMethod != 0 && frame.Subframes[ch].Best.Rc.CodingMethod != 1)
             throw new AudioDecoderException("unsupported residual coding");
         // partition order
-        frame.Subframes[ch].best.Rc.Porder = (int)bitreader.Readbits(4);
-        if (frame.Subframes[ch].best.Rc.Porder > 8)
+        frame.Subframes[ch].Best.Rc.Porder = (int)bitreader.Readbits(4);
+        if (frame.Subframes[ch].Best.Rc.Porder > 8)
             throw new AudioDecoderException("invalid partition order");
 
-        var psize = frame.Blocksize >> frame.Subframes[ch].best.Rc.Porder;
-        var resCnt = psize - frame.Subframes[ch].best.Order;
+        var psize = frame.Blocksize >> frame.Subframes[ch].Best.Rc.Porder;
+        var resCnt = psize - frame.Subframes[ch].Best.Order;
 
-        var riceLen = 4 + frame.Subframes[ch].best.Rc.CodingMethod;
+        var riceLen = 4 + frame.Subframes[ch].Best.Rc.CodingMethod;
         // residual
-        var j = frame.Subframes[ch].best.Order;
-        var r = frame.Subframes[ch].best.Residual + j;
-        for (var p = 0; p < 1 << frame.Subframes[ch].best.Rc.Porder; p++)
+        var j = frame.Subframes[ch].Best.Order;
+        var r = frame.Subframes[ch].Best.Residual + j;
+        for (var p = 0; p < 1 << frame.Subframes[ch].Best.Rc.Porder; p++)
         {
             if (p == 1)
             {
@@ -382,10 +382,10 @@ public class AudioDecoder : IAudioSource
 
             var n = Math.Min(resCnt, frame.Blocksize - j);
 
-            var k = frame.Subframes[ch].best.Rc.Rparams[p] = (int)bitreader.Readbits(riceLen);
+            var k = frame.Subframes[ch].Best.Rc.Rparams[p] = (int)bitreader.Readbits(riceLen);
             if (k == (1 << riceLen) - 1)
             {
-                k = frame.Subframes[ch].best.Rc.EscBps[p] = (int)bitreader.Readbits(5);
+                k = frame.Subframes[ch].Best.Rc.EscBps[p] = (int)bitreader.Readbits(5);
                 for (var i = n; i > 0; i--)
                 {
                     *r++ = bitreader.readbits_signed(k);
@@ -403,10 +403,10 @@ public class AudioDecoder : IAudioSource
     private static unsafe void decode_subframe_fixed(BitReader bitreader, FlacFrame frame, int ch)
     {
         // warm-up samples
-        var obits = frame.Subframes[ch].obits;
-        for (var i = 0; i < frame.Subframes[ch].best.Order; i++)
+        var obits = frame.Subframes[ch].Obits;
+        for (var i = 0; i < frame.Subframes[ch].Best.Order; i++)
         {
-            frame.Subframes[ch].best.Residual[i] = bitreader.readbits_signed(obits);
+            frame.Subframes[ch].Best.Residual[i] = bitreader.readbits_signed(obits);
         }
 
         // residual
@@ -416,24 +416,24 @@ public class AudioDecoder : IAudioSource
     private static unsafe void decode_subframe_lpc(BitReader bitreader, FlacFrame frame, int ch)
     {
         // warm-up samples
-        var obits = frame.Subframes[ch].obits;
-        for (var i = 0; i < frame.Subframes[ch].best.Order; i++)
+        var obits = frame.Subframes[ch].Obits;
+        for (var i = 0; i < frame.Subframes[ch].Best.Order; i++)
         {
-            frame.Subframes[ch].best.Residual[i] = bitreader.readbits_signed(obits);
+            frame.Subframes[ch].Best.Residual[i] = bitreader.readbits_signed(obits);
         }
 
         // LPC coefficients
-        frame.Subframes[ch].best.Cbits = (int)bitreader.Readbits(4) + 1; // lpc_precision
-        if (frame.Subframes[ch].best.Cbits >= 16)
+        frame.Subframes[ch].Best.Cbits = (int)bitreader.Readbits(4) + 1; // lpc_precision
+        if (frame.Subframes[ch].Best.Cbits >= 16)
             throw new AudioDecoderException("cbits >= 16");
 
-        frame.Subframes[ch].best.Shift = bitreader.readbits_signed(5);
-        if (frame.Subframes[ch].best.Shift < 0)
+        frame.Subframes[ch].Best.Shift = bitreader.readbits_signed(5);
+        if (frame.Subframes[ch].Best.Shift < 0)
             throw new AudioDecoderException("negative shift");
 
-        for (var i = 0; i < frame.Subframes[ch].best.Order; i++)
+        for (var i = 0; i < frame.Subframes[ch].Best.Order; i++)
         {
-            frame.Subframes[ch].best.Coefs[i] = bitreader.readbits_signed(frame.Subframes[ch].best.Cbits);
+            frame.Subframes[ch].Best.Coefs[i] = bitreader.readbits_signed(frame.Subframes[ch].Best.Cbits);
         }
 
         // residual
@@ -452,39 +452,39 @@ public class AudioDecoder : IAudioSource
                     throw new AudioDecoderException("unsupported subframe coding (ch == " + ch + ")");
 
                 var typeCode = (int)bitreader.Readbits(6);
-                frame.Subframes[ch].wbits = (int)bitreader.Readbit();
-                if (frame.Subframes[ch].wbits != 0)
+                frame.Subframes[ch].Wbits = (int)bitreader.Readbit();
+                if (frame.Subframes[ch].Wbits != 0)
                 {
-                    frame.Subframes[ch].wbits += (int)bitreader.read_unary();
+                    frame.Subframes[ch].Wbits += (int)bitreader.read_unary();
                 }
 
-                frame.Subframes[ch].obits = Pcm.BitsPerSample - frame.Subframes[ch].wbits;
+                frame.Subframes[ch].Obits = Pcm.BitsPerSample - frame.Subframes[ch].Wbits;
                 switch (frame.ChMode)
                 {
                     case ChannelMode.MidSide:
-                    case ChannelMode.LeftSide: frame.Subframes[ch].obits += ch; break;
-                    case ChannelMode.RightSide: frame.Subframes[ch].obits += 1 - ch; break;
+                    case ChannelMode.LeftSide: frame.Subframes[ch].Obits += ch; break;
+                    case ChannelMode.RightSide: frame.Subframes[ch].Obits += 1 - ch; break;
                 }
 
-                frame.Subframes[ch].best.Type = (SubframeType)typeCode;
-                frame.Subframes[ch].best.Order = 0;
+                frame.Subframes[ch].Best.Type = (SubframeType)typeCode;
+                frame.Subframes[ch].Best.Order = 0;
 
-                if ((typeCode & (uint)SubframeType.LPC) != 0)
+                if ((typeCode & (uint)SubframeType.Lpc) != 0)
                 {
-                    frame.Subframes[ch].best.Order = typeCode - (int)SubframeType.LPC + 1;
-                    frame.Subframes[ch].best.Type = SubframeType.LPC;
+                    frame.Subframes[ch].Best.Order = typeCode - (int)SubframeType.Lpc + 1;
+                    frame.Subframes[ch].Best.Type = SubframeType.Lpc;
                 }
                 else if ((typeCode & (uint)SubframeType.Fixed) != 0)
                 {
-                    frame.Subframes[ch].best.Order = typeCode - (int)SubframeType.Fixed;
-                    frame.Subframes[ch].best.Type = SubframeType.Fixed;
+                    frame.Subframes[ch].Best.Order = typeCode - (int)SubframeType.Fixed;
+                    frame.Subframes[ch].Best.Type = SubframeType.Fixed;
                 }
 
-                frame.Subframes[ch].best.Residual = r + ch * FlakeConstants.MaxBlocksize;
-                frame.Subframes[ch].samples = s + ch * FlakeConstants.MaxBlocksize;
+                frame.Subframes[ch].Best.Residual = r + ch * FlakeConstants.MaxBlocksize;
+                frame.Subframes[ch].Samples = s + ch * FlakeConstants.MaxBlocksize;
 
                 // subframe
-                switch (frame.Subframes[ch].best.Type)
+                switch (frame.Subframes[ch].Best.Type)
                 {
                     case SubframeType.Constant:
                         decode_subframe_constant(bitreader, frame, ch);
@@ -495,7 +495,7 @@ public class AudioDecoder : IAudioSource
                     case SubframeType.Fixed:
                         decode_subframe_fixed(bitreader, frame, ch);
                         break;
-                    case SubframeType.LPC:
+                    case SubframeType.Lpc:
                         decode_subframe_lpc(bitreader, frame, ch);
                         break;
                     default:
@@ -509,12 +509,12 @@ public class AudioDecoder : IAudioSource
     {
         var sub = frame.Subframes[ch];
 
-        AudioSamples.MemCpy(sub.samples, sub.best.Residual, sub.best.Order);
-        var data = sub.samples + sub.best.Order;
-        var residual = sub.best.Residual + sub.best.Order;
-        var dataLen = frame.Blocksize - sub.best.Order;
+        AudioSamples.MemCpy(sub.Samples, sub.Best.Residual, sub.Best.Order);
+        var data = sub.Samples + sub.Best.Order;
+        var residual = sub.Best.Residual + sub.Best.Order;
+        var dataLen = frame.Blocksize - sub.Best.Order;
         int s1;
-        switch (sub.best.Order)
+        switch (sub.Best.Order)
         {
             case 0:
                 AudioSamples.MemCpy(data, residual, dataLen);
@@ -561,17 +561,17 @@ public class AudioDecoder : IAudioSource
     {
         var sub = frame.Subframes[ch];
         ulong csum = 0;
-        fixed (int* coefs = sub.best.Coefs)
+        fixed (int* coefs = sub.Best.Coefs)
         {
-            for (var i = sub.best.Order; i > 0; i--)
+            for (var i = sub.Best.Order; i > 0; i--)
             {
                 csum += (ulong)Math.Abs(coefs[i - 1]);
             }
 
-            if (csum << sub.obits >= 1UL << 32)
-                Lpc.decode_residual_long(sub.best.Residual, sub.samples, frame.Blocksize, sub.best.Order, coefs, sub.best.Shift);
+            if (csum << sub.Obits >= 1UL << 32)
+                Lpc.decode_residual_long(sub.Best.Residual, sub.Samples, frame.Blocksize, sub.Best.Order, coefs, sub.Best.Shift);
             else
-                Lpc.decode_residual(sub.best.Residual, sub.samples, frame.Blocksize, sub.best.Order, coefs, sub.best.Shift);
+                Lpc.decode_residual(sub.Best.Residual, sub.Samples, frame.Blocksize, sub.Best.Order, coefs, sub.Best.Shift);
         }
     }
 
@@ -579,25 +579,25 @@ public class AudioDecoder : IAudioSource
     {
         for (var ch = 0; ch < Pcm.ChannelCount; ch++)
         {
-            switch (frame.Subframes[ch].best.Type)
+            switch (frame.Subframes[ch].Best.Type)
             {
                 case SubframeType.Constant:
-                    AudioSamples.MemSet(frame.Subframes[ch].samples, frame.Subframes[ch].best.Residual[0], frame.Blocksize);
+                    AudioSamples.MemSet(frame.Subframes[ch].Samples, frame.Subframes[ch].Best.Residual[0], frame.Blocksize);
                     break;
                 case SubframeType.Verbatim:
-                    AudioSamples.MemCpy(frame.Subframes[ch].samples, frame.Subframes[ch].best.Residual, frame.Blocksize);
+                    AudioSamples.MemCpy(frame.Subframes[ch].Samples, frame.Subframes[ch].Best.Residual, frame.Blocksize);
                     break;
                 case SubframeType.Fixed:
                     restore_samples_fixed(frame, ch);
                     break;
-                case SubframeType.LPC:
+                case SubframeType.Lpc:
                     restore_samples_lpc(frame, ch);
                     break;
             }
-            if (frame.Subframes[ch].wbits != 0)
+            if (frame.Subframes[ch].Wbits != 0)
             {
-                var s = frame.Subframes[ch].samples;
-                var x = frame.Subframes[ch].wbits;
+                var s = frame.Subframes[ch].Samples;
+                var x = frame.Subframes[ch].Wbits;
                 for (var i = frame.Blocksize; i > 0; i--)
                 {
                     *s++ <<= x;
@@ -606,8 +606,8 @@ public class AudioDecoder : IAudioSource
         }
         if (frame.ChMode != ChannelMode.NotStereo)
         {
-            var l = frame.Subframes[0].samples;
-            var r = frame.Subframes[1].samples;
+            var l = frame.Subframes[0].Samples;
+            var r = frame.Subframes[1].Samples;
             switch (frame.ChMode)
             {
                 case ChannelMode.LeftRight:

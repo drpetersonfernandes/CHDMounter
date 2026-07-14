@@ -1527,14 +1527,14 @@ internal class Encoder
         return -1;
     }
 
-    public void SetCoderProperties(CoderPropID[] propIDs, object[] properties)
+    public void SetCoderProperties(CoderPropId[] propIDs, object[] properties)
     {
         for (uint i = 0; i < properties.Length; i++)
         {
             var prop = properties[i];
             switch (propIDs[i])
             {
-                case CoderPropID.NumFastBytes:
+                case CoderPropId.NumFastBytes:
                 {
                     if (prop is not int numFastBytes || numFastBytes < 5 || numFastBytes > Base.KMatchMaxLen)
                         throw new InvalidParamException();
@@ -1542,7 +1542,7 @@ internal class Encoder
                     _numFastBytes = (uint)numFastBytes;
                     break;
                 }
-                case CoderPropID.Algorithm:
+                case CoderPropId.Algorithm:
                 {
                     /*
                     if (!(prop is Int32))
@@ -1553,7 +1553,7 @@ internal class Encoder
                     */
                     break;
                 }
-                case CoderPropID.MatchFinder:
+                case CoderPropId.MatchFinder:
                 {
                     if (prop is not string s)
                         throw new InvalidParamException();
@@ -1571,7 +1571,7 @@ internal class Encoder
                     }
                     break;
                 }
-                case CoderPropID.DictionarySize:
+                case CoderPropId.DictionarySize:
                 {
                     const int kDicLogSizeMaxCompress = 30;
                     if (prop is not int dictionarySize ||
@@ -1588,7 +1588,7 @@ internal class Encoder
                     _distTableSize = (uint)dicLogSize * 2;
                     break;
                 }
-                case CoderPropID.PosStateBits:
+                case CoderPropId.PosStateBits:
                 {
                     if (prop is not int bits || bits < 0 || bits > (uint)Base.KNumPosStatesBitsEncodingMax)
                         throw new InvalidParamException();
@@ -1597,7 +1597,7 @@ internal class Encoder
                     _posStateMask = ((uint)1 << _posStateBits) - 1;
                     break;
                 }
-                case CoderPropID.LitPosBits:
+                case CoderPropId.LitPosBits:
                 {
                     if (prop is not int bits || bits < 0 || bits > Base.KNumLitPosStatesBitsEncodingMax)
                         throw new InvalidParamException();
@@ -1605,7 +1605,7 @@ internal class Encoder
                     _numLiteralPosStateBits = bits;
                     break;
                 }
-                case CoderPropID.LitContextBits:
+                case CoderPropId.LitContextBits:
                 {
                     if (prop is not int bits || bits < 0 || bits > Base.KNumLitContextBitsMax)
                         throw new InvalidParamException();
@@ -1613,7 +1613,7 @@ internal class Encoder
                     _numLiteralContextBits = bits;
                     break;
                 }
-                case CoderPropID.EndMarker:
+                case CoderPropId.EndMarker:
                 {
                     if (prop is not bool b)
                         throw new InvalidParamException();

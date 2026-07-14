@@ -2,7 +2,7 @@
 
 public class LzmaEncoderProperties
 {
-    internal readonly CoderPropID[] PropIDs;
+    internal readonly CoderPropId[] PropIDs;
     internal readonly object[] Properties;
 
     public LzmaEncoderProperties()
@@ -25,14 +25,14 @@ public class LzmaEncoderProperties
 
         PropIDs =
         [
-            CoderPropID.DictionarySize,
-            CoderPropID.PosStateBits,
-            CoderPropID.LitContextBits,
-            CoderPropID.LitPosBits,
-            CoderPropID.Algorithm,
-            CoderPropID.NumFastBytes,
-            CoderPropID.MatchFinder,
-            CoderPropID.EndMarker
+            CoderPropId.DictionarySize,
+            CoderPropId.PosStateBits,
+            CoderPropId.LitContextBits,
+            CoderPropId.LitPosBits,
+            CoderPropId.Algorithm,
+            CoderPropId.NumFastBytes,
+            CoderPropId.MatchFinder,
+            CoderPropId.EndMarker
         ];
         Properties =
         [

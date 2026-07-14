@@ -19,7 +19,7 @@ public class CDiFsParser
         _lbaOffset = 0;
 
         var sectorData = new byte[2048];
-        var trackStart = track?.StartLBA ?? 0;
+        var trackStart = track?.StartLba ?? 0;
 
         uint pvdLba = 0;
         var foundVd = false;
@@ -40,7 +40,10 @@ public class CDiFsParser
                 var rootSize = ReadCDiU32(sectorData, 166);
 
                 if (rootSize > 0 || ReadCDiU32(sectorData, 148) > 0)
-                { pvdLba = currentLba; bestVdData = sectorData; foundVd = true; break; }
+                { pvdLba = currentLba;
+                    bestVdData = sectorData;
+                    foundVd = true;
+                    break; }
             }
             if (type == 255) break;
         }
@@ -94,7 +97,8 @@ public class CDiFsParser
                 var nameLen = sectorData[pos + 32];
 
                 if (33 + nameLen > recordLen || pos + 33 + nameLen > 2048)
-                { pos += recordLen; if ((pos & 1) != 0)
+                { pos += recordLen;
+                    if ((pos & 1) != 0)
                     {
                         pos++;
                     }
@@ -113,32 +117,35 @@ public class CDiFsParser
                     fileNumber = sectorData[pos + suOffset + 8];
                 }
 
-                if (!isDir && recordLen > 25)
+                if (!isDir)
                 {
                     isDir = (sectorData[pos + 25] & 0x02) != 0;
                 }
 
-                if (recordLen > 26 && sectorData[pos + 26] > 1)
+                if (sectorData[pos + 26] > 1)
                 {
                     isInterleaved = true;
                 }
 
                 string name;
-                if (nameLen == 1 && sectorData[pos + 33] == 0x00)
+                switch (nameLen)
                 {
-                    name = ".";
-                }
-                else if (nameLen == 1 && sectorData[pos + 33] == 0x01)
-                {
-                    name = "..";
-                }
-                else
-                {
-                    name = Encoding.ASCII.GetString(sectorData, (int)pos + 33, nameLen);
-                    var semi = name.IndexOf(';');
-                    if (semi >= 0)
+                    case 1 when sectorData[pos + 33] == 0x00:
+                        name = ".";
+                        break;
+                    case 1 when sectorData[pos + 33] == 0x01:
+                        name = "..";
+                        break;
+                    default:
                     {
-                        name = name[..semi];
+                        name = Encoding.ASCII.GetString(sectorData, (int)pos + 33, nameLen);
+                        var semi = name.IndexOf(';');
+                        if (semi >= 0)
+                        {
+                            name = name[..semi];
+                        }
+
+                        break;
                     }
                 }
 

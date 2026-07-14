@@ -87,87 +87,85 @@ public class XdvdfsParser
         return ParseDirectoryTree(rootNode.Lba, 0, rootNode, volumeOffsetSectors, rootDirExtentSize, 0, visited, true);
     }
 
-    private bool ParseDirectoryTree(uint dirSector, uint dirOffset, FsNode parentNode,
-        uint volumeOffsetSectors, uint dirExtentSize, int depth, HashSet<ulong> visited, bool inLlCompat)
+    private bool ParseDirectoryTree(uint dirSector, uint dirOffset, FsNode parentNode, uint volumeOffsetSectors, uint dirExtentSize, int depth, HashSet<ulong> visited, bool inLlCompat)
     {
-        if (depth > 2048) return false;
-
-        if (dirOffset >= dirExtentSize) return true;
-
-        var absoluteSector = dirSector + dirOffset / 2048;
-        var offsetInSector = dirOffset % 2048;
-
-        var nodeId = ((ulong)absoluteSector << 32) | offsetInSector;
-        if (visited.Contains(nodeId)) return true;
-
-        visited.Add(nodeId);
-
-        var sectorData = new byte[2048];
-        if (!_reader.ReadSector(absoluteSector, sectorData)) return false;
-
-        if (offsetInSector + 14 > 2048)
+        while (true)
         {
-            var nextOffset = dirOffset + (2048 - offsetInSector);
-            return ParseDirectoryTree(dirSector, nextOffset, parentNode, volumeOffsetSectors, dirExtentSize, depth, visited, inLlCompat);
-        }
+            if (depth > 2048) return false;
 
-        var entryOff = offsetInSector;
-        var leftSubTree = LeU16(sectorData, (int)entryOff);
-        var rightSubTree = LeU16(sectorData, (int)(entryOff + 2));
-        var startSector = LeU32(sectorData, (int)(entryOff + 4));
-        var fileSize = LeU32(sectorData, (int)(entryOff + 8));
-        var attributes = sectorData[entryOff + 12];
-        var nameLen = sectorData[entryOff + 13];
+            if (dirOffset >= dirExtentSize) return true;
 
-        if (leftSubTree == 0xFFFF)
-        {
-            if (dirOffset == 0) return true;
+            var absoluteSector = dirSector + dirOffset / 2048;
+            var offsetInSector = dirOffset % 2048;
 
-            var nextOffset = dirOffset + (2048 - dirOffset % 2048);
-            if (nextOffset >= dirExtentSize) return true;
+            var nodeId = ((ulong)absoluteSector << 32) | offsetInSector;
+            if (!visited.Add(nodeId)) return true;
 
-            return ParseDirectoryTree(dirSector, nextOffset, parentNode, volumeOffsetSectors, dirExtentSize, depth, visited, inLlCompat);
-        }
+            var sectorData = new byte[2048];
+            if (!_reader.ReadSector(absoluteSector, sectorData)) return false;
 
-        if (offsetInSector + 14 + nameLen > 2048)
-        {
-            var nextOffset = dirOffset + (2048 - offsetInSector);
-            if (nextOffset >= dirExtentSize) return true;
-
-            return ParseDirectoryTree(dirSector, nextOffset, parentNode, volumeOffsetSectors, dirExtentSize, depth, visited, inLlCompat);
-        }
-
-        var localLlCompat = inLlCompat;
-        if (leftSubTree != 0 && leftSubTree != 0xFFFF)
-        {
-            localLlCompat = false;
-            ParseDirectoryTree(dirSector, (uint)(leftSubTree * 4), parentNode, volumeOffsetSectors, dirExtentSize, depth + 1, visited, localLlCompat);
-        }
-
-        if (nameLen > 0)
-        {
-            var node = new FsNode
+            if (offsetInSector + 14 > 2048)
             {
-                Name = Encoding.ASCII.GetString(sectorData, (int)(entryOff + 14), nameLen),
-                Lba = volumeOffsetSectors + startSector,
-                Size = fileSize,
-                IsDirectory = (attributes & 0x10) != 0
-            };
-
-            if (node.IsDirectory && node.Size > 0)
-            {
-                var subVisited = new HashSet<ulong>();
-                ParseDirectoryTree(node.Lba, 0, node, volumeOffsetSectors, fileSize, depth + 1, subVisited, localLlCompat);
+                var nextOffset = dirOffset + (2048 - offsetInSector);
+                dirOffset = nextOffset;
+                continue;
             }
-            parentNode.Children.Add(node);
-        }
 
-        if (rightSubTree != 0 && rightSubTree != 0xFFFF)
-        {
-            ParseDirectoryTree(dirSector, (uint)(rightSubTree * 4), parentNode, volumeOffsetSectors, dirExtentSize, depth + 1, visited, localLlCompat);
-        }
+            var entryOff = offsetInSector;
+            var leftSubTree = LeU16(sectorData, (int)entryOff);
+            var rightSubTree = LeU16(sectorData, (int)(entryOff + 2));
+            var startSector = LeU32(sectorData, (int)(entryOff + 4));
+            var fileSize = LeU32(sectorData, (int)(entryOff + 8));
+            var attributes = sectorData[entryOff + 12];
+            var nameLen = sectorData[entryOff + 13];
 
-        return true;
+            if (leftSubTree == 0xFFFF)
+            {
+                if (dirOffset == 0) return true;
+
+                var nextOffset = dirOffset + (2048 - dirOffset % 2048);
+                if (nextOffset >= dirExtentSize) return true;
+
+                dirOffset = nextOffset;
+                continue;
+            }
+
+            if (offsetInSector + 14 + nameLen > 2048)
+            {
+                var nextOffset = dirOffset + (2048 - offsetInSector);
+                if (nextOffset >= dirExtentSize) return true;
+
+                dirOffset = nextOffset;
+                continue;
+            }
+
+            var localLlCompat = inLlCompat;
+            if (leftSubTree != 0)
+            {
+                localLlCompat = false;
+                ParseDirectoryTree(dirSector, (uint)(leftSubTree * 4), parentNode, volumeOffsetSectors, dirExtentSize, depth + 1, visited, localLlCompat);
+            }
+
+            if (nameLen > 0)
+            {
+                var node = new FsNode { Name = Encoding.ASCII.GetString(sectorData, (int)(entryOff + 14), nameLen), Lba = volumeOffsetSectors + startSector, Size = fileSize, IsDirectory = (attributes & 0x10) != 0 };
+
+                if (node is { IsDirectory: true, Size: > 0 })
+                {
+                    var subVisited = new HashSet<ulong>();
+                    ParseDirectoryTree(node.Lba, 0, node, volumeOffsetSectors, fileSize, depth + 1, subVisited, localLlCompat);
+                }
+
+                parentNode.Children.Add(node);
+            }
+
+            if (rightSubTree != 0 && rightSubTree != 0xFFFF)
+            {
+                ParseDirectoryTree(dirSector, (uint)(rightSubTree * 4), parentNode, volumeOffsetSectors, dirExtentSize, depth + 1, visited, localLlCompat);
+            }
+
+            return true;
+        }
     }
 
     private static bool CheckMagic(byte[] data, int offset, byte[] magic)

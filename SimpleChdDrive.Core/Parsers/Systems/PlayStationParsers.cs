@@ -12,7 +12,7 @@ public class PlayStation1Parser : IConsoleParser
 
     public ConsoleType GetConsoleType()
     {
-        return ConsoleType.PS1;
+        return ConsoleType.Ps1;
     }
 
     public string GetConsoleName()
@@ -52,7 +52,7 @@ public class PlayStation2Parser : IConsoleParser
 
     public ConsoleType GetConsoleType()
     {
-        return ConsoleType.PS2;
+        return ConsoleType.Ps2;
     }
 
     public string GetConsoleName()
@@ -92,7 +92,7 @@ public class PlayStation3Parser : IConsoleParser
 
     public ConsoleType GetConsoleType()
     {
-        return ConsoleType.PS3;
+        return ConsoleType.Ps3;
     }
 
     public string GetConsoleName()
@@ -136,7 +136,7 @@ public class PlayStation3SingleFileParser : IConsoleParser
 
     public ConsoleType GetConsoleType()
     {
-        return ConsoleType.PS3SingleFile;
+        return ConsoleType.Ps3SingleFile;
     }
 
     public string GetConsoleName()
