@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace SimpleChdDrive.Core.Logging;
 
 public class ErrorLoggerStatic
@@ -35,7 +37,7 @@ public class ErrorLoggerStatic
         {
             DiagnosticLogger.Log($"ERROR [{context}]: {ex.Message}");
             DiagnosticLogger.Log($"  Stack: {ex.StackTrace}");
-            Serilog.Log.Error(ex, context);
+            Log.Error(ex, context);
         }
         catch { }
     }

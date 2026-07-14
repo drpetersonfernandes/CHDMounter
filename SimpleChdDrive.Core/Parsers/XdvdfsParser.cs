@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace SimpleChdDrive.Core.Parsers;
 
 public class XdvdfsParser
@@ -146,7 +148,7 @@ public class XdvdfsParser
         {
             var node = new FsNode
             {
-                Name = System.Text.Encoding.ASCII.GetString(sectorData, (int)(entryOff + 14), nameLen),
+                Name = Encoding.ASCII.GetString(sectorData, (int)(entryOff + 14), nameLen),
                 Lba = volumeOffsetSectors + startSector,
                 Size = fileSize,
                 IsDirectory = (attributes & 0x10) != 0

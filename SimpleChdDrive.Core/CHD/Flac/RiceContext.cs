@@ -1,6 +1,6 @@
 ﻿namespace SimpleChdDrive.Core.CHD.Flac;
 
-public unsafe class RiceContext
+public class RiceContext
 {
     public RiceContext()
     {
@@ -26,4 +26,4 @@ public unsafe class RiceContext
     /// bps if using escape code
     /// </summary>
     public readonly int[] esc_bps;
-};
+}

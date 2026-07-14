@@ -2,13 +2,13 @@ namespace SimpleChdDrive.Core.CHD.LZMA.LZ;
 
 internal class OutWindow
 {
-    byte[] _buffer;
-    int _windowSize;
-    int _pos;
-    int _streamPos;
-    int _pendingLen;
-    int _pendingDist;
-    Stream _stream;
+    private byte[] _buffer;
+    private int _windowSize;
+    private int _pos;
+    private int _streamPos;
+    private int _pendingLen;
+    private int _pendingDist;
+    private Stream _stream;
 
     public long Total;
     public long Limit;

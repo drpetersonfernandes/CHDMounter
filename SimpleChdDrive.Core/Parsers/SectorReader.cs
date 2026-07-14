@@ -1,3 +1,4 @@
+using System.Text;
 using SimpleChdDrive.Core.CHD;
 
 namespace SimpleChdDrive.Core.Parsers;
@@ -335,7 +336,7 @@ public class SectorReader
 
     private bool CheckSignature(int offset, string signature, int offsetInSignature)
     {
-        var sig = System.Text.Encoding.ASCII.GetBytes(signature);
+        var sig = Encoding.ASCII.GetBytes(signature);
         if (offset + offsetInSignature + sig.Length > _cachedHunk.Length)
             return false;
 

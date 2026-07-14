@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace SimpleChdDrive.Core.Parsers;
 
 public class ThreeDoParser
@@ -92,7 +94,7 @@ public class ThreeDoParser
 
                 var isDir = (flags & 0x07) == 0x07;
 
-                var name = System.Text.Encoding.ASCII.GetString(sectorData, (int)pos + 0x20, 32).TrimEnd('\0');
+                var name = Encoding.ASCII.GetString(sectorData, (int)pos + 0x20, 32).TrimEnd('\0');
 
                 var byteCount = Be24(sectorData, (int)pos + 0x11);
                 uint avCnt = sectorData[pos + 0x43];

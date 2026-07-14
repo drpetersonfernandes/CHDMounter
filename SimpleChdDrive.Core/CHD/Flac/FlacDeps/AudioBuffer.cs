@@ -338,7 +338,7 @@ public class AudioBuffer
 
     public AudioBuffer(IAudioSource source, int size)
     {
-        Pcm = source.PCM;
+        Pcm = source.Pcm;
         Size = size;
     }
 
@@ -350,7 +350,7 @@ public class AudioBuffer
 
     public void Prepare(IAudioSource source, int maxLength)
     {
-        if (source.PCM.ChannelCount != Pcm.ChannelCount || source.PCM.BitsPerSample != Pcm.BitsPerSample)
+        if (source.Pcm.ChannelCount != Pcm.ChannelCount || source.Pcm.BitsPerSample != Pcm.BitsPerSample)
             throw new Exception("AudioBuffer format mismatch");
 
         Length = Size;

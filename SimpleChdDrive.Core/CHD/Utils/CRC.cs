@@ -102,11 +102,11 @@ public class CRC
             return result;
         }
     }
-    public Int32 Crc32Result => unchecked((Int32)~_crc);
+    public int Crc32Result => unchecked((int)~_crc);
 
     public uint Crc32ResultU => ~_crc;
 
-    public Int64 TotalBytesRead { get; private set; }
+    public long TotalBytesRead { get; private set; }
 
     public static uint CalculateDigest(byte[] data, uint offset, uint size)
     {

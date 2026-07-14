@@ -29,7 +29,7 @@ public class DreamcastParser : IConsoleParser
     {
         var parser = new DreamcastIsoParser(_reader);
 
-        var offsets = new int[] { -45000, -45150, -150, 0, 45000, 45150 };
+        var offsets = new[] { -45000, -45150, -150, 0, 45000, 45150 };
         foreach (var offset in offsets)
         {
             parser.SetLbaOffset(offset);

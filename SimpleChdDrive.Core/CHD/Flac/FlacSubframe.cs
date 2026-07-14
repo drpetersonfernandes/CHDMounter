@@ -14,4 +14,4 @@ public unsafe class FlacSubframe
     public int Shift { get; set; }
     public int[] Coefs { get; } = new int[Lpc.MAX_LPC_ORDER];
     public int Window { get; set; }
-};
+}

@@ -3,6 +3,7 @@ using SimpleChdDrive.Core.CHD.Flac;
 using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 using SimpleChdDrive.Core.CHD.LZMA;
 using SimpleChdDrive.Core.CHD.Utils;
+using ZstdSharp;
 
 namespace SimpleChdDrive.Core.CHD;
 
@@ -37,7 +38,7 @@ internal static partial class ChdReaders
     }
     private static chd_error Zstd(byte[] buffIn, int buffInStart, int buffInLength, byte[] buffOut, int buffOutStart, int buffOutLength, ChdCodec codec)
     {
-        codec.BZstd ??= new ZstdSharp.Decompressor();
+        codec.BZstd ??= new Decompressor();
         try
         {
             var written = codec.BZstd.Unwrap(

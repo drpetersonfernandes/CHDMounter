@@ -2,33 +2,28 @@
 
 public class LzmaEncoderProperties
 {
-    internal readonly CoderPropID[] propIDs;
-    internal readonly object[] properties;
+    internal readonly CoderPropID[] PropIDs;
+    internal readonly object[] Properties;
 
     public LzmaEncoderProperties()
         : this(false)
     {
     }
 
-    public LzmaEncoderProperties(bool eos)
-        : this(eos, 1 << 20)
-    {
-    }
-
-    public LzmaEncoderProperties(bool eos, int dictionary)
+    public LzmaEncoderProperties(bool eos, int dictionary = 1 << 20)
         : this(eos, dictionary, 32)
     {
     }
 
     public LzmaEncoderProperties(bool eos, int dictionary, int numFastBytes)
     {
-        var posStateBits = 2;
-        var litContextBits = 4;
-        var litPosBits = 0;
-        var algorithm = 2;
-        var mf = "bt4";
+        const int posStateBits = 2;
+        const int litContextBits = 4;
+        const int litPosBits = 0;
+        const int algorithm = 2;
+        const string mf = "bt4";
 
-        propIDs =
+        PropIDs =
         [
             CoderPropID.DictionarySize,
             CoderPropID.PosStateBits,
@@ -39,7 +34,7 @@ public class LzmaEncoderProperties
             CoderPropID.MatchFinder,
             CoderPropID.EndMarker
         ];
-        properties =
+        Properties =
         [
             dictionary,
             posStateBits,

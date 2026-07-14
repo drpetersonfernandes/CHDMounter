@@ -47,4 +47,4 @@ public unsafe class FlacSubframeInfo
     public readonly ulong[] best_fixed;
     public readonly LpcContext[] lpc_ctx;
     public readonly LpcSubframeInfo sf;
-};
+}

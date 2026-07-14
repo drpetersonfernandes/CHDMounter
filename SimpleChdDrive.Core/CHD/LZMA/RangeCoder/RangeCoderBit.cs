@@ -4,11 +4,11 @@ internal struct BitEncoder
 {
     public const int kNumBitModelTotalBits = 11;
     public const uint kBitModelTotal = 1 << kNumBitModelTotalBits;
-    const int kNumMoveBits = 5;
-    const int kNumMoveReducingBits = 2;
+    private const int kNumMoveBits = 5;
+    private const int kNumMoveReducingBits = 2;
     public const int kNumBitPriceShiftBits = 6;
 
-    uint Prob;
+    private uint Prob;
 
     public void Init() { Prob = kBitModelTotal >> 1; }
 
@@ -47,38 +47,38 @@ internal struct BitEncoder
         }
     }
 
-    private static UInt32[] ProbPrices = new UInt32[kBitModelTotal >> kNumMoveReducingBits];
+    private static readonly uint[] ProbPrices = new uint[kBitModelTotal >> kNumMoveReducingBits];
 
     static BitEncoder()
     {
         const int kNumBits = kNumBitModelTotalBits - kNumMoveReducingBits;
         for (var i = kNumBits - 1; i >= 0; i--)
         {
-            var start = (UInt32)1 << (kNumBits - i - 1);
-            var end = (UInt32)1 << (kNumBits - i);
+            var start = (uint)1 << (kNumBits - i - 1);
+            var end = (uint)1 << (kNumBits - i);
             for (var j = start; j < end; j++)
             {
-                ProbPrices[j] = ((UInt32)i << kNumBitPriceShiftBits) +
+                ProbPrices[j] = ((uint)i << kNumBitPriceShiftBits) +
                                 (((end - j) << kNumBitPriceShiftBits) >> (kNumBits - i - 1));
             }
         }
     }
 
-    public uint GetPrice(uint symbol)
+    public readonly uint GetPrice(uint symbol)
     {
         return ProbPrices[(((Prob - symbol) ^ -(int)symbol) & (kBitModelTotal - 1)) >> kNumMoveReducingBits];
     }
-    public uint GetPrice0() { return ProbPrices[Prob >> kNumMoveReducingBits]; }
-    public uint GetPrice1() { return ProbPrices[(kBitModelTotal - Prob) >> kNumMoveReducingBits]; }
+    public readonly uint GetPrice0() { return ProbPrices[Prob >> kNumMoveReducingBits]; }
+    public readonly uint GetPrice1() { return ProbPrices[(kBitModelTotal - Prob) >> kNumMoveReducingBits]; }
 }
 
 internal struct BitDecoder
 {
     public const int kNumBitModelTotalBits = 11;
     public const uint kBitModelTotal = 1 << kNumBitModelTotalBits;
-    const int kNumMoveBits = 5;
+    private const int kNumMoveBits = 5;
 
-    uint Prob;
+    private uint Prob;
 
     public void UpdateModel(int numMoveBits, uint symbol)
     {

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 
 namespace SimpleChdDrive.Core.Logging;
@@ -45,7 +46,7 @@ public static class DiagnosticLogger
     {
         var line = $"[{DateTime.Now:HH:mm:ss.fff}] {message}";
         _buffer.AppendLine(line);
-        System.Diagnostics.Debug.WriteLine($"[DIAG] {message}");
+        Debug.WriteLine($"[DIAG] {message}");
 
         if (LogFilePath != null)
         {

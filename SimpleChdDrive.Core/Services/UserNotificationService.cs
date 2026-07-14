@@ -1,3 +1,5 @@
+using System.Windows;
+
 namespace SimpleChdDrive.Core.Services;
 
 public interface IUserNotificationService
@@ -19,18 +21,18 @@ public class UserNotificationService : IUserNotificationService
     public void ShowInfo(string message, string title)
     {
         _loggingService.Log($"[{title}] {message}");
-        System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     public void ShowWarning(string message, string title)
     {
         _loggingService.LogError($"[{title}] {message}");
-        System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     public void ShowError(string message, string title)
     {
         _loggingService.LogError($"[{title}] {message}");
-        System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 }

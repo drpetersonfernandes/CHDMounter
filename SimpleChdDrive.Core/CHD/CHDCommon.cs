@@ -103,7 +103,7 @@ public enum compression_type
     COMPRESSION_MINI = 100,
     /* ADDED HERE: as an internal error state */
     COMPRESSION_ERROR = 101
-};
+}
 
 
 
@@ -138,4 +138,4 @@ public enum chd_error
     CHDERR_NO_ASYNC_OPERATION,
     CHDERR_UNSUPPORTED_FORMAT,
     CHDERR_CANNOT_OPEN_FILE
-};
+}

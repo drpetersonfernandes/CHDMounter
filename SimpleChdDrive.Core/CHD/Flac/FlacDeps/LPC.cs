@@ -136,25 +136,25 @@ public class Lpc
     }
 
 #if XXX
-		static public unsafe void
-			compute_corr_int(/*const*/ short* data1, short* data2, int len, int min, int lag, int* autoc)
-		{
-			for (int i = min; i <= lag; ++i)
-			{
-				int temp = 0;
-				int temp2 = 0;
+        static public unsafe void
+            compute_corr_int(/*const*/ short* data1, short* data2, int len, int min, int lag, int* autoc)
+        {
+            for (int i = min; i <= lag; ++i)
+            {
+                int temp = 0;
+                int temp2 = 0;
 
-				for (int j = 0; j <= lag - i; ++j)
-					temp += data1[j + i] * data2[j];
+                for (int j = 0; j <= lag - i; ++j)
+                    temp += data1[j + i] * data2[j];
 
-				for (int j = lag + 1 - i; j < len - i; j += 2)
-				{
-					temp += data1[j + i] * data2[j];
-					temp2 += data1[j + i + 1] * data2[j + 1];
-				}
-				autoc[i] = temp + temp2;
-			}
-		}
+                for (int j = lag + 1 - i; j < len - i; j += 2)
+                {
+                    temp += data1[j + i] * data2[j];
+                    temp2 += data1[j + i + 1] * data2[j + 1];
+                }
+                autoc[i] = temp + temp2;
+            }
+        }
 #endif
 
     /**
@@ -165,29 +165,29 @@ public class Lpc
         compute_autocorr(/*const*/ int* data, float* window, int len, int min, int lag, double* autoc)
     {
 #if FPAC
-			short* data1 = stackalloc short[len + 1];
-			short* data2 = stackalloc short[len + 1];
-			int* c1 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
-			int* c2 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
-			int* c3 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
-			int* c4 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
+            short* data1 = stackalloc short[len + 1];
+            short* data2 = stackalloc short[len + 1];
+            int* c1 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
+            int* c2 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
+            int* c3 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
+            int* c4 = stackalloc int[Lpc.MAX_LPC_ORDER + 1];
 
-			for (int i = 0; i < len; i++)
-			{
-				int val = (int)(data[i] * window[i]);
-				data1[i] = (short)(sign_only(val) * (Math.Abs(val) >> 9));
-				data2[i] = (short)(sign_only(val) * (Math.Abs(val) & 0x1ff));
-			}
-			data1[len] = 0;
-			data2[len] = 0;
+            for (int i = 0; i < len; i++)
+            {
+                int val = (int)(data[i] * window[i]);
+                data1[i] = (short)(sign_only(val) * (Math.Abs(val) >> 9));
+                data2[i] = (short)(sign_only(val) * (Math.Abs(val) & 0x1ff));
+            }
+            data1[len] = 0;
+            data2[len] = 0;
 
-			compute_corr_int(data1, data1, len, min, lag, c1);
-			compute_corr_int(data1, data2, len, min, lag, c2);
-			compute_corr_int(data2, data1, len, min, lag, c3);
-			compute_corr_int(data2, data2, len, min, lag, c4);
+            compute_corr_int(data1, data1, len, min, lag, c1);
+            compute_corr_int(data1, data2, len, min, lag, c2);
+            compute_corr_int(data2, data1, len, min, lag, c3);
+            compute_corr_int(data2, data2, len, min, lag, c4);
 
-			for (int coeff = min; coeff <= lag; coeff++)
-			    autoc[coeff] = (c1[coeff] * (double)(1 << 18) + (c2[coeff] + c3[coeff]) * (double)(1 << 9) + c4[coeff]);
+            for (int coeff = min; coeff <= lag; coeff++)
+                autoc[coeff] = (c1[coeff] * (double)(1 << 18) + (c2[coeff] + c3[coeff]) * (double)(1 << 9) + c4[coeff]);
 #else
 #if XXX
             if (min == 0 && lag >= 4)

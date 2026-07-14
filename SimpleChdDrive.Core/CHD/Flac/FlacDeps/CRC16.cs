@@ -2,7 +2,7 @@ namespace SimpleChdDrive.Core.CHD.Flac.FlacDeps;
 
 public static class Crc16
 {
-    const int GF2_DIM = 16;
+    private const int GF2_DIM = 16;
     public static readonly ushort[] table = new ushort[256];
     private static readonly ushort[,] combineTable = new ushort[GF2_DIM, GF2_DIM];
     private static readonly ushort[,] substractTable = new ushort[GF2_DIM, GF2_DIM];
@@ -28,8 +28,8 @@ public static class Crc16
         return crc;
     }
 
-    const ushort polynomial = 0x8005;
-    const ushort reversePolynomial = 0x4003;
+    private const ushort polynomial = 0x8005;
+    private const ushort reversePolynomial = 0x4003;
 
     static unsafe Crc16()
     {
@@ -61,7 +61,7 @@ public static class Crc16
         fixed (ushort* ct = &combineTable[0, 0], st = &substractTable[0, 0])
         {
             //for (int i = 0; i < GF2_DIM; i++)
-            //	st[32 + i] = ct[i];
+            //  st[32 + i] = ct[i];
             //invert_binary_matrix(st + 32, st, GF2_DIM);
 
             for (var i = 1; i < GF2_DIM; i++)

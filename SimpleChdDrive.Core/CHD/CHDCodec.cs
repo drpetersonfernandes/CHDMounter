@@ -1,5 +1,6 @@
 ﻿using SimpleChdDrive.Core.CHD.Flac;
 using SimpleChdDrive.Core.CHD.Flac.FlacDeps;
+using ZstdSharp;
 
 namespace SimpleChdDrive.Core.CHD;
 
@@ -19,7 +20,7 @@ internal class ChdCodec
 
     internal byte[] Blzma;
 
-    internal ZstdSharp.Decompressor BZstd;
+    internal Decompressor BZstd;
 
     internal ushort[] BHuffman;
     internal ushort[] BHuffmanHi;

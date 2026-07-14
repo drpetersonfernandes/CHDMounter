@@ -1,3 +1,5 @@
+using System.Security.Principal;
+
 namespace SimpleChdDrive.Core.Services;
 
 public static class CheckForAdministratorRole
@@ -6,9 +8,9 @@ public static class CheckForAdministratorRole
     {
         try
         {
-            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
-            var principal = new System.Security.Principal.WindowsPrincipal(identity);
-            return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            using var identity = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
         catch
         {

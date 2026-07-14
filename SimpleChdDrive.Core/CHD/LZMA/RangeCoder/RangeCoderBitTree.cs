@@ -2,8 +2,8 @@ namespace SimpleChdDrive.Core.CHD.LZMA.RangeCoder;
 
 internal struct BitTreeEncoder
 {
-    BitEncoder[] Models;
-    int NumBitLevels;
+    private readonly BitEncoder[] Models;
+    private readonly int NumBitLevels;
 
     public BitTreeEncoder(int numBitLevels)
     {
@@ -11,15 +11,15 @@ internal struct BitTreeEncoder
         Models = new BitEncoder[1 << numBitLevels];
     }
 
-    public void Init()
+    public readonly void Init()
     {
         for (uint i = 1; i < 1 << NumBitLevels; i++)
             Models[i].Init();
     }
 
-    public void Encode(Encoder rangeEncoder, UInt32 symbol)
+    public readonly void Encode(Encoder rangeEncoder, uint symbol)
     {
-        UInt32 m = 1;
+        uint m = 1;
         for (var bitIndex = NumBitLevels; bitIndex > 0; )
         {
             bitIndex--;
@@ -29,10 +29,10 @@ internal struct BitTreeEncoder
         }
     }
 
-    public void ReverseEncode(Encoder rangeEncoder, UInt32 symbol)
+    public readonly void ReverseEncode(Encoder rangeEncoder, uint symbol)
     {
-        UInt32 m = 1;
-        for (UInt32 i = 0; i < NumBitLevels; i++)
+        uint m = 1;
+        for (uint i = 0; i < NumBitLevels; i++)
         {
             var bit = symbol & 1;
             Models[m].Encode(rangeEncoder, bit);
@@ -41,10 +41,10 @@ internal struct BitTreeEncoder
         }
     }
 
-    public UInt32 GetPrice(UInt32 symbol)
+    public readonly uint GetPrice(uint symbol)
     {
-        UInt32 price = 0;
-        UInt32 m = 1;
+        uint price = 0;
+        uint m = 1;
         for (var bitIndex = NumBitLevels; bitIndex > 0; )
         {
             bitIndex--;
@@ -55,10 +55,10 @@ internal struct BitTreeEncoder
         return price;
     }
 
-    public UInt32 ReverseGetPrice(UInt32 symbol)
+    public readonly uint ReverseGetPrice(uint symbol)
     {
-        UInt32 price = 0;
-        UInt32 m = 1;
+        uint price = 0;
+        uint m = 1;
         for (var i = NumBitLevels; i > 0; i--)
         {
             var bit = symbol & 1;
@@ -69,11 +69,11 @@ internal struct BitTreeEncoder
         return price;
     }
 
-    public static UInt32 ReverseGetPrice(BitEncoder[] Models, UInt32 startIndex,
-        int NumBitLevels, UInt32 symbol)
+    public static uint ReverseGetPrice(BitEncoder[] Models, uint startIndex,
+        int NumBitLevels, uint symbol)
     {
-        UInt32 price = 0;
-        UInt32 m = 1;
+        uint price = 0;
+        uint m = 1;
         for (var i = NumBitLevels; i > 0; i--)
         {
             var bit = symbol & 1;
@@ -84,10 +84,10 @@ internal struct BitTreeEncoder
         return price;
     }
 
-    public static void ReverseEncode(BitEncoder[] Models, UInt32 startIndex,
-        Encoder rangeEncoder, int NumBitLevels, UInt32 symbol)
+    public static void ReverseEncode(BitEncoder[] Models, uint startIndex,
+        Encoder rangeEncoder, int NumBitLevels, uint symbol)
     {
-        UInt32 m = 1;
+        uint m = 1;
         for (var i = 0; i < NumBitLevels; i++)
         {
             var bit = symbol & 1;
@@ -100,8 +100,8 @@ internal struct BitTreeEncoder
 
 internal struct BitTreeDecoder
 {
-    BitDecoder[] Models;
-    int NumBitLevels;
+    private readonly BitDecoder[] Models;
+    private readonly int NumBitLevels;
 
     public BitTreeDecoder(int numBitLevels)
     {
@@ -109,13 +109,13 @@ internal struct BitTreeDecoder
         Models = new BitDecoder[1 << numBitLevels];
     }
 
-    public void Init()
+    public readonly void Init()
     {
         for (uint i = 1; i < 1 << NumBitLevels; i++)
             Models[i].Init();
     }
 
-    public uint Decode(Decoder rangeDecoder)
+    public readonly uint Decode(Decoder rangeDecoder)
     {
         uint m = 1;
         for (var bitIndex = NumBitLevels; bitIndex > 0; bitIndex--)
@@ -126,7 +126,7 @@ internal struct BitTreeDecoder
         return m - ((uint)1 << NumBitLevels);
     }
 
-    public uint ReverseDecode(Decoder rangeDecoder)
+    public readonly uint ReverseDecode(Decoder rangeDecoder)
     {
         uint m = 1;
         uint symbol = 0;
@@ -140,7 +140,7 @@ internal struct BitTreeDecoder
         return symbol;
     }
 
-    public static uint ReverseDecode(BitDecoder[] Models, UInt32 startIndex,
+    public static uint ReverseDecode(BitDecoder[] Models, uint startIndex,
         Decoder rangeDecoder, int NumBitLevels)
     {
         uint m = 1;

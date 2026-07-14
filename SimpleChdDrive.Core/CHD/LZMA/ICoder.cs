@@ -27,8 +27,8 @@ public interface ICodeProgress
     /// <param name="outSize">
     /// output size. -1 if unknown.
     /// </param>
-    void SetProgress(Int64 inSize, Int64 outSize);
-};
+    void SetProgress(long inSize, long outSize);
+}
 
 
 /// <summary>
@@ -96,4 +96,4 @@ internal enum CoderPropID
     /// Specifies mode with end marker.
     /// </summary>
     EndMarker
-};
+}
