@@ -31,6 +31,7 @@ public sealed class ChdFs : FileSystemBase, IDisposable
             host.VolumeCreationTime = DateTimeToFileTimeUtc(DateTime.Now);
             host.VolumeSerialNumber = (uint)Environment.TickCount;
         }
+
         return STATUS_SUCCESS;
     }
 
@@ -40,7 +41,9 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         return OpenOrCreate(FileName, out FileNode, out FileDesc, out FileInfo, out NormalizedName);
     }
 
-    public override void Close(object FileNode, object FileDesc) { }
+    public override void Close(object FileNode, object FileDesc)
+    {
+    }
 
     private int OpenOrCreate(string FileName, out object FileNode, out object FileDesc,
         out FileInfo FileInfo, out string NormalizedName)
@@ -98,6 +101,7 @@ public sealed class ChdFs : FileSystemBase, IDisposable
             FileInfo = EntryToFileInfo(entry);
             return STATUS_SUCCESS;
         }
+
         FileInfo = default;
         return STATUS_UNSUCCESSFUL;
     }
@@ -120,6 +124,7 @@ public sealed class ChdFs : FileSystemBase, IDisposable
                 return STATUS_SUCCESS;
             }
         }
+
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
 

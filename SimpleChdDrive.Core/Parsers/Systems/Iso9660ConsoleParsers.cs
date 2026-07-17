@@ -2,7 +2,10 @@ namespace SimpleChdDrive.Core.Parsers.Systems;
 
 public class PspParser : Iso9660Wrapper
 {
-    public PspParser(SectorReader reader) : base(reader) { }
+    public PspParser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.Psp;
@@ -16,7 +19,10 @@ public class PspParser : Iso9660Wrapper
 
 public class PcEngineCdParser : Iso9660Wrapper
 {
-    public PcEngineCdParser(SectorReader reader) : base(reader) { }
+    public PcEngineCdParser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.PcEngineCd;
@@ -30,7 +36,10 @@ public class PcEngineCdParser : Iso9660Wrapper
 
 public class PcFxParser : Iso9660Wrapper
 {
-    public PcFxParser(SectorReader reader) : base(reader) { }
+    public PcFxParser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.PcFx;
@@ -44,7 +53,10 @@ public class PcFxParser : Iso9660Wrapper
 
 public class SegaGenesisCdParser : Iso9660Wrapper
 {
-    public SegaGenesisCdParser(SectorReader reader) : base(reader) { }
+    public SegaGenesisCdParser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.SegaGenesisCd;
@@ -58,7 +70,10 @@ public class SegaGenesisCdParser : Iso9660Wrapper
 
 public class SegaSaturnParser : Iso9660Wrapper
 {
-    public SegaSaturnParser(SectorReader reader) : base(reader) { }
+    public SegaSaturnParser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.Saturn;
@@ -72,7 +87,10 @@ public class SegaSaturnParser : Iso9660Wrapper
 
 public class NeoGeoCdParser : Iso9660Wrapper
 {
-    public NeoGeoCdParser(SectorReader reader) : base(reader) { }
+    public NeoGeoCdParser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.NeoGeoCd;
@@ -86,7 +104,10 @@ public class NeoGeoCdParser : Iso9660Wrapper
 
 public class AmigaCd32Parser : Iso9660Wrapper
 {
-    public AmigaCd32Parser(SectorReader reader) : base(reader) { }
+    public AmigaCd32Parser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.AmigaCd32;
@@ -100,7 +121,10 @@ public class AmigaCd32Parser : Iso9660Wrapper
 
 public class AmigaCdParser : Iso9660Wrapper
 {
-    public AmigaCdParser(SectorReader reader) : base(reader) { }
+    public AmigaCdParser(SectorReader reader) : base(reader)
+    {
+    }
+
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.AmigaCd;

@@ -1,11 +1,9 @@
-using System.Windows.Threading;
-
 namespace SimpleChdDrive.Core.Tests.Services;
 
 public class ServiceProviderTests
 {
     [Fact]
-    public void Register_ThenGet_ReturnsSameInstance()
+    public void RegisterThenGetReturnsSameInstance()
     {
         var service = new TestService();
         ServiceProvider.Register<ITestService>(service);
@@ -14,20 +12,20 @@ public class ServiceProviderTests
     }
 
     [Fact]
-    public void Get_UnregisteredService_ThrowsInvalidOperationException()
+    public void GetUnregisteredServiceThrowsInvalidOperationException()
     {
-        Assert.Throws<InvalidOperationException>(() => ServiceProvider.Get<INeverRegisteredService>());
+        Assert.Throws<InvalidOperationException>(static () => ServiceProvider.Get<INeverRegisteredService>());
     }
 
     [Fact]
-    public void TryGet_UnregisteredService_ReturnsNull()
+    public void TryGetUnregisteredServiceReturnsNull()
     {
         var result = ServiceProvider.TryGet<INeverRegisteredService>();
         Assert.Null(result);
     }
 
     [Fact]
-    public void TryGet_RegisteredService_ReturnsInstance()
+    public void TryGetRegisteredServiceReturnsInstance()
     {
         var service = new TestService();
         ServiceProvider.Register<ITestService>(service);
@@ -36,7 +34,7 @@ public class ServiceProviderTests
     }
 
     [Fact]
-    public void Register_Twice_OverwritesWithLast()
+    public void RegisterTwiceOverwritesWithLast()
     {
         var service1 = new TestService();
         var service2 = new TestService();
@@ -46,7 +44,7 @@ public class ServiceProviderTests
     }
 
     [Fact]
-    public void DisposeAllServices_DisposesDisposableServices()
+    public void DisposeAllServicesDisposesDisposableServices()
     {
         var disposable = new DisposableTestService();
         ServiceProvider.Register<IDisposableService>(disposable);
@@ -55,25 +53,25 @@ public class ServiceProviderTests
     }
 
     [Fact]
-    public void DisposeAllServices_NonDisposableServices_DoNotThrow()
+    public void DisposeAllServicesNonDisposableServicesDoNotThrow()
     {
         var service = new TestService();
         ServiceProvider.Register<ITestService>(service);
-        var exception = Record.Exception(() => ServiceProvider.DisposeAllServices());
+        var exception = Record.Exception(static () => ServiceProvider.DisposeAllServices());
         Assert.Null(exception);
     }
 
     [Fact]
-    public void DisposeAllServices_DisposeException_DoesNotThrow()
+    public void DisposeAllServicesDisposeExceptionDoesNotThrow()
     {
         var throwing = new ThrowingDisposableService();
         ServiceProvider.Register<IThrowingDisposable>(throwing);
-        var exception = Record.Exception(() => ServiceProvider.DisposeAllServices());
+        var exception = Record.Exception(static () => ServiceProvider.DisposeAllServices());
         Assert.Null(exception);
     }
 
     [Fact]
-    public void DisposeAllServices_ClearsAllServices()
+    public void DisposeAllServicesClearsAllServices()
     {
         var service = new TestService();
         ServiceProvider.Register<ITestService>(service);
@@ -81,21 +79,33 @@ public class ServiceProviderTests
         Assert.Null(ServiceProvider.TryGet<ITestService>());
     }
 
-    public interface ITestService { }
-    public interface INeverRegisteredService { }
-    public interface IDisposableService : IDisposable { }
-    public interface IThrowingDisposable : IDisposable { }
+    public interface ITestService;
 
-    public class TestService : ITestService { }
+    public interface INeverRegisteredService;
+
+    public interface IDisposableService : IDisposable;
+
+    public interface IThrowingDisposable : IDisposable;
+
+    public class TestService : ITestService;
 
     public class DisposableTestService : IDisposableService
     {
         public bool IsDisposed { get; private set; }
-        public void Dispose() { IsDisposed = true; }
+
+        public void Dispose()
+        {
+            IsDisposed = true;
+            GC.SuppressFinalize(this);
+        }
     }
 
     public class ThrowingDisposableService : IThrowingDisposable
     {
-        public void Dispose() => throw new InvalidOperationException("Test exception");
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            throw new InvalidOperationException("Test exception");
+        }
     }
 }

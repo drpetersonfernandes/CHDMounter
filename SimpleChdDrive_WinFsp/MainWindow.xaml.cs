@@ -88,6 +88,7 @@ public partial class MainWindow
                     SelectConsoleTypeInCombo(ct);
                 }
             }
+
             ValidateAndEnableMount();
             if (_selectedConsoleType != ConsoleType.Unknown)
                 MountDisk();
@@ -197,9 +198,14 @@ public partial class MainWindow
         Close();
     }
 
-    private void About_Click(object sender, RoutedEventArgs e) { new AboutWindow { Owner = this }.ShowDialog(); }
+    private void About_Click(object sender, RoutedEventArgs e)
+    {
+        new AboutWindow { Owner = this }.ShowDialog();
+    }
 
-    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e) { try { _mountService.Unmount(); }
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        try { _mountService.Unmount(); }
         catch
         {
             // ignored

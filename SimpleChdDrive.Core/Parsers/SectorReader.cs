@@ -7,7 +7,6 @@ namespace SimpleChdDrive.Core.Parsers;
 public class SectorReader
 {
     private readonly ChdFile _chd;
-    private readonly uint _unitBytes;
     private bool _trackLocked;
 
     private uint _cachedHunkNum = 0xFFFFFFFF;
@@ -29,13 +28,14 @@ public class SectorReader
     public int LbaOffset { get; set; }
 
     public uint HunkBytes => _chd.HunkBytes;
-    public uint UnitBytes => _unitBytes;
+    public uint UnitBytes { get; }
+
     public uint TotalBytes => (uint)_chd.TotalBytes;
 
     public SectorReader(ChdFile chd, uint unitBytes)
     {
         _chd = chd;
-        _unitBytes = unitBytes;
+        UnitBytes = unitBytes;
         Tracks = ParseTracksWithLba(chd, unitBytes);
     }
 
@@ -92,7 +92,7 @@ public class SectorReader
         if (!PrepareHunk(lba, out var rawOffset))
             return false;
 
-        var unitBytes = (int)_unitBytes;
+        var unitBytes = (int)UnitBytes;
         if (rawOffset + unitBytes > _cachedHunk.Length)
             return false;
 
@@ -106,7 +106,7 @@ public class SectorReader
         if (!PrepareHunk(lba, out var rawOffset))
             return 0xFF;
 
-        var unitBytes = (int)_unitBytes;
+        var unitBytes = (int)UnitBytes;
         if (unitBytes < 2352)
             return 0xFF;
 
@@ -122,11 +122,10 @@ public class SectorReader
         rawOffsetInHunk = 0;
 
         var hunkBytes = _chd.HunkBytes;
-        var unitBytes = _unitBytes;
-        if (hunkBytes == 0 || unitBytes == 0)
+        if (hunkBytes == 0 || UnitBytes == 0)
             return false;
 
-        var sectorsPerHunk = hunkBytes / unitBytes;
+        var sectorsPerHunk = hunkBytes / UnitBytes;
         uint chdFrame = 0;
 
         if (_trackLocked && CurrentTrack != null)
@@ -194,18 +193,20 @@ public class SectorReader
                     swapped[i] = buffer[i + 1];
                     swapped[i + 1] = buffer[i];
                 }
+
                 _cachedHunk = swapped;
             }
             else
             {
                 _cachedHunk = buffer;
             }
+
             _cachedHunkNum = hunkNum;
             _cachedHunkSwapped = needsSwap;
             _isOffsetDetected = false;
         }
 
-        rawOffsetInHunk = sectorInHunk * unitBytes;
+        rawOffsetInHunk = sectorInHunk * UnitBytes;
 
         var trackIdx = CurrentTrack?.Index ?? -1;
         if (!_isOffsetDetected || hunkNum != _offsetDetectedHunk || CurrentTrack != _offsetDetectedTrack)
@@ -218,7 +219,7 @@ public class SectorReader
                 var headerSize = isMode2 ? 24u : 16u;
                 SyncOffset = SectorHeaderOffset >= headerSize ? SectorHeaderOffset - headerSize : 0;
             }
-            else if (unitBytes >= 2352)
+            else if (UnitBytes >= 2352)
             {
                 DetectSectorOffset(rawOffsetInHunk, trackIdx);
             }
@@ -239,8 +240,7 @@ public class SectorReader
 
     private void DetectSectorOffset(uint rawOffsetInHunk, int trackIdx)
     {
-        var unitBytes = _unitBytes;
-        var searchRange = (int)Math.Min(128, unitBytes - 16);
+        var searchRange = (int)Math.Min(128, UnitBytes - 16);
         var foundSyncOffset = -1;
 
         for (var i = 0; i < searchRange; i++)
@@ -257,6 +257,7 @@ public class SectorReader
                     break;
                 }
             }
+
             if (match)
             {
                 foundSyncOffset = i;
@@ -300,6 +301,7 @@ public class SectorReader
                     { operaMatch = false;
                         break; }
                 }
+
                 if (operaMatch)
                 {
                     isCooked = true;
@@ -354,6 +356,7 @@ public class SectorReader
             if (_cachedHunk[offset + offsetInSignature + i] != sig[i])
                 return false;
         }
+
         return true;
     }
 
@@ -385,7 +388,7 @@ public class SectorReader
             var t3 = tag[3];
 
             var isTrackMeta = t0 == 'C' && t1 == 'H' &&
-                              ((t2 == 'T' && (t3 == '2' || t3 == 'R')) || (t2 == 'G' && (t3 == 'D' || t3 == 'T')));
+                              ((t2 == 'T' && t3 is '2' or 'R') || (t2 == 'G' && t3 is 'D' or 'T'));
 
             var metaText = entry.GetText();
             if (!isTrackMeta || string.IsNullOrEmpty(metaText))
@@ -426,12 +429,13 @@ public class SectorReader
             var t2 = tag[2];
             var t3 = tag[3];
 
-            if (t0 == 'C' && t1 == 'H' && t2 == 'G' && (t3 == 'D' || t3 == 'T'))
+            if (t0 == 'C' && t1 == 'H' && t2 == 'G' && t3 is 'D' or 'T')
             {
                 isGdrom = true;
                 break;
             }
         }
+
         if (!isGdrom)
         {
             foreach (var t in tracks)
@@ -441,6 +445,7 @@ public class SectorReader
                     break; }
             }
         }
+
         if (!isGdrom && tracks.Count >= 3)
         {
             uint totalFrames = 0;
@@ -504,6 +509,7 @@ public class SectorReader
                             { match = false;
                                 break; }
                         }
+
                         if (match)
                         {
                             track.IsDataTrack = true;

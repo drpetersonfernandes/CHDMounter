@@ -18,13 +18,12 @@ public class CDiFsParser
         if (track != null)
             _reader.SetTrack(track, true);
         else
-            _reader.SetTrack(null!, false);
+            _reader.SetTrack(null!);
         _lbaOffset = 0;
 
         var sectorData = new byte[2048];
         var trackStart = track?.StartLba ?? 0;
 
-        uint pvdLba = 0;
         var foundVd = false;
         byte[]? bestVdData = null;
 
@@ -39,15 +38,16 @@ public class CDiFsParser
 
             if (hasCdi || hasIso)
             {
-                var rootRelLba = ReadCDiU32(sectorData, 158);
+                ReadCDiU32(sectorData, 158);
                 var rootSize = ReadCDiU32(sectorData, 166);
 
                 if (rootSize > 0 || ReadCDiU32(sectorData, 148) > 0)
-                { pvdLba = currentLba;
+                {
                     bestVdData = sectorData;
                     foundVd = true;
                     break; }
             }
+
             if (type == 255) break;
         }
 
@@ -174,8 +174,10 @@ public class CDiFsParser
                     pos++;
                 }
             }
+
             if (!hasRecords) break;
         }
+
         return true;
     }
 

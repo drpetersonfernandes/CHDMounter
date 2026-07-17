@@ -110,13 +110,12 @@ public class XdvdfsParser
                 continue;
             }
 
-            var entryOff = offsetInSector;
-            var leftSubTree = LeU16(sectorData, (int)entryOff);
-            var rightSubTree = LeU16(sectorData, (int)(entryOff + 2));
-            var startSector = LeU32(sectorData, (int)(entryOff + 4));
-            var fileSize = LeU32(sectorData, (int)(entryOff + 8));
-            var attributes = sectorData[entryOff + 12];
-            var nameLen = sectorData[entryOff + 13];
+            var leftSubTree = LeU16(sectorData, (int)offsetInSector);
+            var rightSubTree = LeU16(sectorData, (int)(offsetInSector + 2));
+            var startSector = LeU32(sectorData, (int)(offsetInSector + 4));
+            var fileSize = LeU32(sectorData, (int)(offsetInSector + 8));
+            var attributes = sectorData[offsetInSector + 12];
+            var nameLen = sectorData[offsetInSector + 13];
 
             if (leftSubTree == 0xFFFF)
             {
@@ -147,7 +146,7 @@ public class XdvdfsParser
 
             if (nameLen > 0)
             {
-                var node = new FsNode { Name = Encoding.ASCII.GetString(sectorData, (int)(entryOff + 14), nameLen), Lba = volumeOffsetSectors + startSector, Size = fileSize, IsDirectory = (attributes & 0x10) != 0 };
+                var node = new FsNode { Name = Encoding.ASCII.GetString(sectorData, (int)(offsetInSector + 14), nameLen), Lba = volumeOffsetSectors + startSector, Size = fileSize, IsDirectory = (attributes & 0x10) != 0 };
 
                 if (node is { IsDirectory: true, Size: > 0 })
                 {

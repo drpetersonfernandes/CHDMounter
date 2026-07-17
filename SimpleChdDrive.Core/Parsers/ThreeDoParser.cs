@@ -19,7 +19,7 @@ public class ThreeDoParser
         if (track != null)
             _reader.SetTrack(track, true);
         else
-            _reader.SetTrack(null!, false);
+            _reader.SetTrack(null!);
 
         var sectorData = new byte[2048];
         var trackStart = track?.StartLba ?? 0;
@@ -58,7 +58,6 @@ public class ThreeDoParser
     {
         var sectorData = new byte[2048];
         var currentBlock = dirBlock;
-        var baseBlockLocation = dirBlock;
         var visited = new HashSet<uint>();
 
         while (true)
@@ -112,15 +111,18 @@ public class ThreeDoParser
 
             if (nextBlockOffset == 0xFFFF) break;
 
-            currentBlock = baseBlockLocation + nextBlockOffset;
+            currentBlock = dirBlock + nextBlockOffset;
         }
+
         return true;
     }
 
     private static bool CheckMagic(byte[] d, int o, byte[] m)
-    { for (var i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; }
+    {
+        for (var i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; }
 
-        return true; }
+        return true;
+    }
 
     private static uint Be24(byte[] d, int o)
     {

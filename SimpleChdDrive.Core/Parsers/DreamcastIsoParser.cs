@@ -9,7 +9,11 @@ public class DreamcastIsoParser
     private bool _isJoliet;
     private int _lbaOffset;
 
-    public DreamcastIsoParser(SectorReader reader) { _reader = reader; }
+    public DreamcastIsoParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
+
     public void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
@@ -21,7 +25,7 @@ public class DreamcastIsoParser
         if (track != null)
             _reader.SetTrack(track, true);
         else
-            _reader.SetTrack(null!, false);
+            _reader.SetTrack(null!);
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
@@ -58,6 +62,7 @@ public class DreamcastIsoParser
                             foundPvd = true;
                             bestVdData = sectorData;
                             break; }
+
                         if (!foundPvd && type == 1) { effectiveStart = startLba;
                             _isHighSierra = isHs;
                             _isJoliet = false;
@@ -66,6 +71,7 @@ public class DreamcastIsoParser
                     }
                 }
             }
+
             if (_isJoliet) break;
             if (foundPvd) break;
         }
@@ -90,6 +96,7 @@ public class DreamcastIsoParser
                         }
                     }
                 }
+
                 if (foundPvd) break;
             }
         }
@@ -186,6 +193,7 @@ public class DreamcastIsoParser
                 }
             }
         }
+
         return true;
     }
 
@@ -234,15 +242,19 @@ public class DreamcastIsoParser
 
             sb.Append(char.ConvertFromUtf32(u16));
         }
+
         var name = sb.ToString();
         var semi = name.IndexOf(';');
         return semi >= 0 ? name[..semi] : name;
     }
 
     private static bool CheckMagic(byte[] d, int o, string m)
-    { for (var i = 0; i < m.Length; i++) if (d[o + i] != m[i]) return false;
+    {
+        for (var i = 0; i < m.Length; i++) if (d[o + i] != m[i]) return false;
 
-        return true; }
+        return true;
+    }
+
     private static uint LeU32(byte[] d, int o)
     {
         return (uint)(d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24));

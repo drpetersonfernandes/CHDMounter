@@ -191,15 +191,20 @@ public class ChdFs : IDokanOperations, IDisposable
         return DokanResult.Success;
     }
 
-    public void Cleanup(string fileName, IDokanFileInfo info) { }
+    public void Cleanup(string fileName, IDokanFileInfo info)
+    {
+    }
+
     public void CloseFile(string fileName, IDokanFileInfo info)
     {
         info.Context = null;
     }
 
     public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, IDokanFileInfo info)
-    { bytesWritten = 0;
-        return DokanResult.AccessDenied; }
+    {
+        bytesWritten = 0;
+        return DokanResult.AccessDenied;
+    }
 
     public NtStatus FlushFileBuffers(string fileName, IDokanFileInfo info)
     {
@@ -252,8 +257,10 @@ public class ChdFs : IDokanOperations, IDisposable
     }
 
     public NtStatus FindStreams(string fileName, out IList<FileInformation> streams, IDokanFileInfo info)
-    { streams = Array.Empty<FileInformation>();
-        return DokanResult.NotImplemented; }
+    {
+        streams = Array.Empty<FileInformation>();
+        return DokanResult.NotImplemented;
+    }
 
     public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections, IDokanFileInfo info)
     {
@@ -281,6 +288,7 @@ public class ChdFs : IDokanOperations, IDisposable
                 fs.SetGroup(everyoneSid);
                 security = fs;
             }
+
             return DokanResult.Success;
         }
         catch { return DokanResult.Error; }

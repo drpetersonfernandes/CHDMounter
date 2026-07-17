@@ -25,7 +25,7 @@ public class Iso9660Parser
         if (track != null)
             _reader.SetTrack(track, true);
         else
-            _reader.SetTrack(null!, false);
+            _reader.SetTrack(null!);
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
@@ -54,6 +54,7 @@ public class Iso9660Parser
                         foundPvd = true;
                         bestVdData = sectorData;
                         break; }
+
                     if (!foundPvd && (type == 1 || isHs)) {
                         _isHighSierra = isHs;
                         _isJoliet = false;
@@ -82,6 +83,7 @@ public class Iso9660Parser
                             foundPvd = true;
                             bestVdData = sectorData;
                             break; }
+
                         if (!foundPvd && (type == 1 || isHs)) {
                             effectiveTrackStart = 0;
                             _reader.SetTrack(null!);
@@ -203,6 +205,7 @@ public class Iso9660Parser
                 }
             }
         }
+
         return true;
     }
 
@@ -251,6 +254,7 @@ public class Iso9660Parser
 
             sb.Append(Utf16ToChar(u16));
         }
+
         var name = sb.ToString();
         var semi = name.IndexOf(';');
         return semi >= 0 ? name[..semi] : name;

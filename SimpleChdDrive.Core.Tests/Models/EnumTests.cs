@@ -3,7 +3,7 @@ namespace SimpleChdDrive.Core.Tests.Models;
 public class ConsoleTypeTests
 {
     [Fact]
-    public void ConsoleType_AllMembers_AreDefined()
+    public void ConsoleTypeAllMembersAreDefined()
     {
         var values = Enum.GetValues<ConsoleType>();
         Assert.Contains(ConsoleType.Xbox, values);
@@ -19,13 +19,13 @@ public class ConsoleTypeTests
     }
 
     [Fact]
-    public void ConsoleType_Unknown_IsZero()
+    public void ConsoleTypeUnknownIsZero()
     {
         Assert.Equal(0, (int)ConsoleType.Unknown);
     }
 
     [Fact]
-    public void ConsoleType_Count_GreaterThan20()
+    public void ConsoleTypeCountGreaterThan20()
     {
         var count = Enum.GetValues<ConsoleType>().Length;
         Assert.True(count >= 21);

@@ -43,7 +43,7 @@ public class ChdContainer
         ConsoleType = consoleType;
 
         var err = ChdFile.Open(_chdPath, out var chd);
-        if (err != ChdError.Chderrnone)
+        if (err != ChdError.Chderrnone || chd is null)
             return false;
 
         _primaryChd = chd;
@@ -140,6 +140,7 @@ public class ChdContainer
             parts.Add(_entries[(int)current].Name);
             current = _parentHandles[(int)current];
         }
+
         parts.Reverse();
         var sb = new StringBuilder();
         foreach (var part in parts)
@@ -148,6 +149,7 @@ public class ChdContainer
             else { if (sb.Length > 0 && sb[^1] != '\\') sb.Append('\\');
                 sb.Append(part); }
         }
+
         var path = sb.ToString().ToLowerInvariant();
         if (path.Length > 1 && path[^1] == '\\')
         {
@@ -215,6 +217,7 @@ public class ChdContainer
                 Encoding.ASCII.GetBytes(_cueBinText, (int)offset, cueRead, buffer, bufOffset);
                 return cueRead;
             }
+
             if (lowerName == _cueBinStemName + ".bin")
                 return ReadVirtualBin(offset, buffer, bufOffset, bytesToRead);
         }
@@ -246,9 +249,11 @@ public class ChdContainer
                             { baseLba = ext.Lba;
                                 offsetInExtent = curOff - extentStart;
                                 break; }
+
                             extentStart += ext.Size;
                         }
                     }
+
                     var secNum = baseLba + (uint)(offsetInExtent / SectorSize);
                     var secOff = (uint)(offsetInExtent % SectorSize);
                     var sec = new byte[SectorSize];
@@ -278,6 +283,7 @@ public class ChdContainer
                     totalRead += toCopy;
                 }
             }
+
             return totalRead;
         }
         finally { ReleaseReader(reader); }
@@ -379,6 +385,7 @@ public class ChdContainer
                         trackByteOffset = cumulative;
                         break;
                     }
+
                     cumulative += trackBytes;
                 }
 
@@ -409,6 +416,7 @@ public class ChdContainer
                     break;
                 }
             }
+
             return totalRead;
         }
         finally { ReleaseReader(reader); }
@@ -429,6 +437,7 @@ public class ChdContainer
             if (_poolShutdown) return null!;
             if (_availableReaders.TryTake(out var reader)) return reader;
         }
+
         return _readerPool.Count > 0 ? _readerPool[0] : null!;
     }
 
@@ -440,6 +449,7 @@ public class ChdContainer
     public void Dispose()
     {
         lock (_poolLock) { _poolShutdown = true; }
+
         _readerPool.Clear();
         _availableReaders.Clear();
         _cachedTracks = null;

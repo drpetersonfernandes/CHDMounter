@@ -1,6 +1,8 @@
 using Fsp;
 
+#pragma warning disable CA1707
 namespace SimpleChdDrive_WinFsp.Services;
+#pragma warning restore CA1707
 
 public class MountService : IMountService, IDisposable
 {
@@ -26,6 +28,7 @@ public class MountService : IMountService, IDisposable
             if (key == null)
             { _loggingService.LogError("WinFsp not found.");
                 return false; }
+
             _loggingService.Log("WinFsp detected.");
             return true;
         }
@@ -56,7 +59,7 @@ public class MountService : IMountService, IDisposable
 
         _currentFs = new ChdFs(_container, _loggingService);
         _host = new FileSystemHost(_currentFs);
-        _host.Mount(MountPoint, null, true, 0);
+        _host.Mount(MountPoint, null, true);
 
         IsMounted = true;
         _loggingService.Log($"Mounted at {MountPoint} (WinFsp).");
@@ -85,7 +88,7 @@ public class MountService : IMountService, IDisposable
 
     private static string PickDriveLetter()
     {
-        var drives = DriveInfo.GetDrives().Select(d => d.Name[0]).ToHashSet();
+        var drives = DriveInfo.GetDrives().Select(static d => d.Name[0]).ToHashSet();
         for (var c = 'M'; c <= 'Q'; c++)
             if (!drives.Contains(c))
                 return $"{c}:";

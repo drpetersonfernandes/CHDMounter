@@ -38,6 +38,7 @@ public static class ServiceProvider
                 }
             }
         }
+
         Services.Clear();
     }
 }

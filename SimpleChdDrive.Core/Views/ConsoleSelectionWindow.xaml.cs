@@ -23,6 +23,7 @@ public partial class ConsoleSelectionWindow
             SelectedConsoleType = ci.Type;
             DialogResult = true;
         }
+
         Close();
     }
 

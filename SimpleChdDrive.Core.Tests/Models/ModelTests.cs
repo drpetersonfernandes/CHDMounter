@@ -3,7 +3,7 @@ namespace SimpleChdDrive.Core.Tests.Models;
 public class FsNodeTests
 {
     [Fact]
-    public void NewFsNode_HasDefaultValues()
+    public void NewFsNodeHasDefaultValues()
     {
         var node = new FsNode();
         Assert.Equal("", node.Name);
@@ -21,7 +21,7 @@ public class FsNodeTests
     }
 
     [Fact]
-    public void FsNode_CanSetProperties()
+    public void FsNodeCanSetProperties()
     {
         var node = new FsNode
         {
@@ -46,7 +46,7 @@ public class FsNodeTests
     }
 
     [Fact]
-    public void FsNode_Children_CanBeAdded()
+    public void FsNodeChildrenCanBeAdded()
     {
         var parent = new FsNode { Name = "parent" };
         var child = new FsNode { Name = "child" };
@@ -56,7 +56,7 @@ public class FsNodeTests
     }
 
     [Fact]
-    public void FsNode_Extents_CanBeAdded()
+    public void FsNodeExtentsCanBeAdded()
     {
         var node = new FsNode();
         var extent = new FsExtent { Lba = 50, Size = 100 };
@@ -70,7 +70,7 @@ public class FsNodeTests
 public class FileEntryTests
 {
     [Fact]
-    public void NewFileEntry_HasDefaultValues()
+    public void NewFileEntryHasDefaultValues()
     {
         var entry = new FileEntry();
         Assert.Equal("", entry.Name);
@@ -89,7 +89,7 @@ public class FileEntryTests
     }
 
     [Fact]
-    public void FileEntry_CanSetProperties()
+    public void FileEntryCanSetProperties()
     {
         var entry = new FileEntry
         {
@@ -116,7 +116,7 @@ public class FileEntryTests
     }
 
     [Fact]
-    public void FileEntry_ModifiedTime_HasValue()
+    public void FileEntryModifiedTimeHasValue()
     {
         var entry = new FileEntry();
         Assert.True(entry.ModifiedTime <= DateTime.Now);
@@ -124,7 +124,7 @@ public class FileEntryTests
     }
 
     [Fact]
-    public void FileEntry_Children_CanBeNested()
+    public void FileEntryChildrenCanBeNested()
     {
         var root = new FileEntry { Name = "root", IsDirectory = true };
         var child = new FileEntry { Name = "child" };
@@ -133,7 +133,7 @@ public class FileEntryTests
     }
 
     [Fact]
-    public void FileEntry_Extents_CanBeAdded()
+    public void FileEntryExtentsCanBeAdded()
     {
         var entry = new FileEntry();
         var extent = new FileExtent { Lba = 42, Size = 1024 };
@@ -147,7 +147,7 @@ public class FileEntryTests
 public class TrackInfoTests
 {
     [Fact]
-    public void NewTrackInfo_HasDefaultValues()
+    public void NewTrackInfoHasDefaultValues()
     {
         var track = new TrackInfo();
         Assert.Equal(0, track.Index);
@@ -162,7 +162,7 @@ public class TrackInfoTests
     }
 
     [Fact]
-    public void TrackInfo_CanSetProperties()
+    public void TrackInfoCanSetProperties()
     {
         var track = new TrackInfo
         {
@@ -189,7 +189,7 @@ public class TrackInfoTests
     }
 
     [Fact]
-    public void TrackInfo_IsNotDataTrack_ForAudioTracks()
+    public void TrackInfoIsNotDataTrackForAudioTracks()
     {
         var track = new TrackInfo
         {
@@ -204,7 +204,7 @@ public class TrackInfoTests
 public class LogEntryTests
 {
     [Fact]
-    public void NewLogEntry_HasDefaultValues()
+    public void NewLogEntryHasDefaultValues()
     {
         var entry = new LogEntry();
         Assert.Equal("", entry.Message);
@@ -212,7 +212,7 @@ public class LogEntryTests
     }
 
     [Fact]
-    public void LogEntry_Timestamp_IsSetOnCreation()
+    public void LogEntryTimestampIsSetOnCreation()
     {
         var entry = new LogEntry();
         Assert.True(entry.Timestamp <= DateTime.Now);
@@ -220,7 +220,7 @@ public class LogEntryTests
     }
 
     [Fact]
-    public void LogEntry_CanSetProperties()
+    public void LogEntryCanSetProperties()
     {
         var timestamp = DateTime.Now;
         var entry = new LogEntry
@@ -238,7 +238,7 @@ public class LogEntryTests
 public class ConsoleInfoTests
 {
     [Fact]
-    public void ConsoleInfo_Record_StoresValues()
+    public void ConsoleInfoRecordStoresValues()
     {
         var info = new ConsoleInfo(ConsoleType.Xbox, "Xbox");
         Assert.Equal(ConsoleType.Xbox, info.Type);
@@ -246,7 +246,7 @@ public class ConsoleInfoTests
     }
 
     [Fact]
-    public void ConsoleInfo_ValueEquality_Works()
+    public void ConsoleInfoValueEqualityWorks()
     {
         var a = new ConsoleInfo(ConsoleType.Ps1, "PS1");
         var b = new ConsoleInfo(ConsoleType.Ps1, "PS1");
@@ -254,7 +254,7 @@ public class ConsoleInfoTests
     }
 
     [Fact]
-    public void ConsoleInfo_DifferentValues_AreNotEqual()
+    public void ConsoleInfoDifferentValuesAreNotEqual()
     {
         var a = new ConsoleInfo(ConsoleType.Ps1, "PS1");
         var b = new ConsoleInfo(ConsoleType.Ps2, "PS2");

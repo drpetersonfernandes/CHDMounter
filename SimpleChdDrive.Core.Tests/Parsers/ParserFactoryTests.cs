@@ -3,27 +3,27 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 public class ParserFactoryTests
 {
     [Fact]
-    public void GetAllSupportedConsoles_ReturnsAll21Plus()
+    public void GetAllSupportedConsolesReturnsAll21Plus()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
         Assert.True(consoles.Count >= 21);
     }
 
     [Fact]
-    public void GetAllSupportedConsoles_ContainsExpectedConsoles()
+    public void GetAllSupportedConsolesContainsExpectedConsoles()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
-        Assert.Contains(consoles, c => c.Type == ConsoleType.Xbox);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.Ps1);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.Dreamcast);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.CDi);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.ThreeDo);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericIso9660);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueBin);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.Xbox);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.Ps1);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.Dreamcast);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.CDi);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.ThreeDo);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericIso9660);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericCueBin);
     }
 
     [Fact]
-    public void GetAllSupportedConsoles_AllHaveNonEmptyName()
+    public void GetAllSupportedConsolesAllHaveNonEmptyName()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles();
         foreach (var console in consoles)
@@ -33,18 +33,18 @@ public class ParserFactoryTests
     }
 
     [Fact]
-    public void GetAllSupportedConsoles_NamesAreUnique()
+    public void GetAllSupportedConsolesNamesAreUnique()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles();
-        var names = consoles.Select(c => c.Name).ToList();
+        var names = consoles.Select(static c => c.Name).ToList();
         Assert.Equal(names.Distinct().Count(), names.Count);
     }
 
     [Fact]
-    public void GetAllSupportedConsoles_TypesAreUnique()
+    public void GetAllSupportedConsolesTypesAreUnique()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles();
-        var types = consoles.Select(c => c.Type).ToList();
+        var types = consoles.Select(static c => c.Type).ToList();
         Assert.Equal(types.Distinct().Count(), types.Count);
     }
 }

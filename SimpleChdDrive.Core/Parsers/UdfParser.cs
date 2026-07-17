@@ -131,6 +131,7 @@ public class UdfParser
                             node.Lba = partitionStart + loc;
                         }
                     }
+
                     off += 8;
                 }
 
@@ -153,6 +154,7 @@ public class UdfParser
                             node.Lba = partitionStart + loc;
                         }
                     }
+
                     off += 16;
                 }
 
@@ -209,6 +211,7 @@ public class UdfParser
                 }
             }
         }
+
         return true;
     }
 
@@ -231,6 +234,7 @@ public class UdfParser
 
                     sb.Append(char.ConvertFromUtf32(u16));
                 }
+
                 return sb.ToString();
             }
             default:

@@ -20,7 +20,7 @@ internal static class ChdHeaderReader
 
         return version switch
         {
-            1 or 2 => ReadV1V2UnitBytes(fs, version),
+            1 or 2 => ReadV1V2UnitBytes(fs),
             3 => ReadV3UnitBytes(fs),
             4 => ReadV4UnitBytes(fs),
             5 => ReadV5UnitBytes(fs),
@@ -28,14 +28,12 @@ internal static class ChdHeaderReader
         };
     }
 
-    private static uint ReadV1V2UnitBytes(FileStream fs, uint version)
+    private static uint ReadV1V2UnitBytes(FileStream fs)
     {
         Span<byte> buf = stackalloc byte[8];
         fs.Seek(24, SeekOrigin.Begin);
         fs.ReadExactly(buf);
-        var hunkBytes = BinaryPrimitives.ReadUInt32BigEndian(buf);
-        // V1/V2 have one unit per hunk
-        return hunkBytes;
+        return BinaryPrimitives.ReadUInt32BigEndian(buf);
     }
 
     private static uint ReadV3UnitBytes(FileStream fs)

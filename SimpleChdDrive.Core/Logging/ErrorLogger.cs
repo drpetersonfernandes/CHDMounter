@@ -6,13 +6,13 @@ public static class ErrorLoggerStatic
 {
     public static void InitializeGlobalExceptionHandlers()
     {
-        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        AppDomain.CurrentDomain.UnhandledException += static (_, args) =>
         {
             if (args.ExceptionObject is Exception ex)
                 LogErrorSync(ex, "Unhandled exception");
         };
 
-        TaskScheduler.UnobservedTaskException += (_, args) =>
+        TaskScheduler.UnobservedTaskException += static (_, args) =>
         {
             LogErrorSync(args.Exception, "Unobserved task exception");
             args.SetObserved();
