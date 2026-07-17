@@ -123,7 +123,24 @@ public partial class MainWindow
 
     private void ValidateAndEnableMount()
     {
-        MountButton.IsEnabled = !string.IsNullOrEmpty(_chdPath) && _selectedConsoleType != ConsoleType.Unknown && File.Exists(_chdPath);
+        var type = ConsoleTypeComboBox.SelectedItem is ConsoleInfo ci ? ci.Type : _selectedConsoleType;
+        MountButton.IsEnabled = !string.IsNullOrEmpty(_chdPath) && type != ConsoleType.Unknown && File.Exists(_chdPath) && !_mountService.IsMounted;
+    }
+
+    private void ConsoleType_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (ConsoleTypeComboBox.SelectedItem is ConsoleInfo ci)
+        {
+            _selectedConsoleType = ci.Type;
+        }
+
+        ValidateAndEnableMount();
+    }
+
+    private void ChdFilePath_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        _chdPath = ChdFilePathTextBox.Text.Trim().Trim('"');
+        ValidateAndEnableMount();
     }
 
     private void BrowseChd_Click(object sender, RoutedEventArgs e)
