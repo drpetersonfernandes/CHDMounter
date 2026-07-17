@@ -126,6 +126,9 @@ public class SectorReader
             return false;
 
         var sectorsPerHunk = hunkBytes / UnitBytes;
+        if (sectorsPerHunk == 0)
+            return false;
+
         uint chdFrame = 0;
 
         if (_trackLocked && CurrentTrack != null)

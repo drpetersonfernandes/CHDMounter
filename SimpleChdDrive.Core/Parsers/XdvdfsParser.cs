@@ -6,6 +6,22 @@ public class XdvdfsParser
 {
     private readonly SectorReader _reader;
     private TrackInfo? _currentTrack;
+    private int _lbaOffset;
+
+    private static readonly Encoding XdvdfsEncoding = CreateXdvdfsEncoding();
+
+    private static Encoding CreateXdvdfsEncoding()
+    {
+        try
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            return Encoding.GetEncoding(1252);
+        }
+        catch (Exception)
+        {
+            return Encoding.Latin1;
+        }
+    }
 
     public XdvdfsParser(SectorReader reader)
     {
@@ -14,7 +30,15 @@ public class XdvdfsParser
 
     public void SetTrack(TrackInfo track)
     {
+        if (track is not { Frames: > 0 }) return;
+
         _currentTrack = track;
+        _reader.SetTrack(track, true);
+    }
+
+    public void SetLbaOffset(int offset)
+    {
+        _lbaOffset = offset;
     }
 
     private static readonly byte[] XdvdfsMagic = "MICROSOFT*XBOX*MEDIA"u8.ToArray();
@@ -22,7 +46,9 @@ public class XdvdfsParser
     public bool Parse(FsNode rootNode)
     {
         _reader.Reset();
-        _reader.SetTrack(_currentTrack!, true);
+        if (_currentTrack != null)
+            _reader.SetTrack(_currentTrack, true);
+        _reader.LbaOffset = _lbaOffset;
 
         var sectorData = new byte[2048];
         uint volumeOffsetSectors = 0;
@@ -80,13 +106,14 @@ public class XdvdfsParser
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
         rootNode.Lba = volumeOffsetSectors + rootDirSector;
-        rootNode.Size = 0;
+        rootNode.Size = rootDirExtentSize;
 
         var visited = new HashSet<ulong>();
-        return ParseDirectoryTree(rootNode.Lba, 0, rootNode, volumeOffsetSectors, rootDirExtentSize, 0, visited, true);
+        var llCompat = true;
+        return ParseDirectoryTree(rootNode.Lba, 0, rootNode, volumeOffsetSectors, rootDirExtentSize, 0, visited, ref llCompat);
     }
 
-    private bool ParseDirectoryTree(uint dirSector, uint dirOffset, FsNode parentNode, uint volumeOffsetSectors, uint dirExtentSize, int depth, HashSet<ulong> visited, bool inLlCompat)
+    private bool ParseDirectoryTree(uint dirSector, uint dirOffset, FsNode parentNode, uint volumeOffsetSectors, uint dirExtentSize, int depth, HashSet<ulong> visited, ref bool llCompat)
     {
         while (true)
         {
@@ -110,14 +137,23 @@ public class XdvdfsParser
                 continue;
             }
 
-            var leftSubTree = LeU16(sectorData, (int)offsetInSector);
-            var rightSubTree = LeU16(sectorData, (int)(offsetInSector + 2));
-            var startSector = LeU32(sectorData, (int)(offsetInSector + 4));
-            var fileSize = LeU32(sectorData, (int)(offsetInSector + 8));
-            var attributes = sectorData[offsetInSector + 12];
-            var nameLen = sectorData[offsetInSector + 13];
+            var allFf = true;
+            var allZero = true;
+            for (var i = 0; i < 14; i++)
+            {
+                var b = sectorData[offsetInSector + i];
+                if (b != 0xFF)
+                {
+                    allFf = false;
+                }
 
-            if (leftSubTree == 0xFFFF)
+                if (b != 0x00)
+                {
+                    allZero = false;
+                }
+            }
+
+            if (allFf || allZero)
             {
                 if (dirOffset == 0) return true;
 
@@ -128,6 +164,13 @@ public class XdvdfsParser
                 continue;
             }
 
+            var leftSubTree = LeU16(sectorData, (int)offsetInSector);
+            var rightSubTree = LeU16(sectorData, (int)(offsetInSector + 2));
+            var startSector = LeU32(sectorData, (int)(offsetInSector + 4));
+            var fileSize = LeU32(sectorData, (int)(offsetInSector + 8));
+            var attributes = sectorData[offsetInSector + 12];
+            var nameLen = sectorData[offsetInSector + 13];
+
             if (offsetInSector + 14 + nameLen > 2048)
             {
                 var nextOffset = dirOffset + (2048 - offsetInSector);
@@ -137,21 +180,22 @@ public class XdvdfsParser
                 continue;
             }
 
-            var localLlCompat = inLlCompat;
-            if (leftSubTree != 0)
+            if (leftSubTree != 0 && leftSubTree != 0xFFFF)
             {
-                localLlCompat = false;
-                ParseDirectoryTree(dirSector, (uint)(leftSubTree * 4), parentNode, volumeOffsetSectors, dirExtentSize, depth + 1, visited, localLlCompat);
+                llCompat = false;
+                ParseDirectoryTree(dirSector, (uint)(leftSubTree * 4), parentNode, volumeOffsetSectors, dirExtentSize, depth + 1, visited, ref llCompat);
             }
 
             if (nameLen > 0)
             {
-                var node = new FsNode { Name = Encoding.ASCII.GetString(sectorData, (int)(offsetInSector + 14), nameLen), Lba = volumeOffsetSectors + startSector, Size = fileSize, IsDirectory = (attributes & 0x10) != 0 };
+                var node = new FsNode { Name = XdvdfsEncoding.GetString(sectorData, (int)(offsetInSector + 14), nameLen), Lba = volumeOffsetSectors + startSector, Size = fileSize, IsDirectory = (attributes & 0x10) != 0 };
+                node.Extents.Add(new FsExtent { Lba = node.Lba, Size = node.Size });
 
                 if (node is { IsDirectory: true, Size: > 0 })
                 {
                     var subVisited = new HashSet<ulong>();
-                    ParseDirectoryTree(node.Lba, 0, node, volumeOffsetSectors, fileSize, depth + 1, subVisited, localLlCompat);
+                    var subLlCompat = llCompat;
+                    ParseDirectoryTree(node.Lba, 0, node, volumeOffsetSectors, fileSize, depth + 1, subVisited, ref subLlCompat);
                 }
 
                 parentNode.Children.Add(node);
@@ -159,7 +203,18 @@ public class XdvdfsParser
 
             if (rightSubTree != 0 && rightSubTree != 0xFFFF)
             {
-                ParseDirectoryTree(dirSector, (uint)(rightSubTree * 4), parentNode, volumeOffsetSectors, dirExtentSize, depth + 1, visited, localLlCompat);
+                var rightOffset = (uint)rightSubTree * 4;
+                if (llCompat)
+                {
+                    var currentSector = (dirOffset + 14u + nameLen) / 2048;
+                    if (rightOffset / 2048 > currentSector)
+                    {
+                        rightOffset = (currentSector + 1) * 2048;
+                    }
+                }
+
+                dirOffset = rightOffset;
+                continue;
             }
 
             return true;

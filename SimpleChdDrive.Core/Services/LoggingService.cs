@@ -32,7 +32,7 @@ public class LoggingService : ILoggingService
         }
         else
         {
-            _dispatcher.Invoke(() => DoAppend(message, isError));
+            _dispatcher.InvokeAsync(() => DoAppend(message, isError));
         }
     }
 

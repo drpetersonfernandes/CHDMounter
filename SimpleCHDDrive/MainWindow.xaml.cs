@@ -217,19 +217,32 @@ public partial class MainWindow
         }
     }
 
-    private void Unmount_Click(object sender, RoutedEventArgs e)
+    private async void Unmount_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            _mountService.Unmount();
-            StatusText.Text = "Unmounted";
-            DriveLetterText.Text = "";
-            MountButton.IsEnabled = true;
             UnmountButton.IsEnabled = false;
+            StatusText.Text = "Unmounting...";
+
+            try
+            {
+                await Task.Run(() => _mountService.Unmount());
+                StatusText.Text = "Unmounted";
+                DriveLetterText.Text = "";
+                MountButton.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Unmount failed: {ex.Message}");
+                StatusText.Text = "Unmount failed";
+                UnmountButton.IsEnabled = _mountService.IsMounted;
+            }
         }
         catch (Exception ex)
         {
             _loggingService.LogError($"Unmount failed: {ex.Message}");
+            StatusText.Text = "Unmount failed";
+            UnmountButton.IsEnabled = _mountService.IsMounted;
         }
     }
 

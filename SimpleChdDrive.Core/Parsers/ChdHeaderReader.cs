@@ -55,7 +55,7 @@ internal static class ChdHeaderReader
     private static uint ReadV5UnitBytes(FileStream fs)
     {
         Span<byte> buf = stackalloc byte[4];
-        fs.Seek(44, SeekOrigin.Begin);
+        fs.Seek(60, SeekOrigin.Begin);
         fs.ReadExactly(buf);
         return BinaryPrimitives.ReadUInt32BigEndian(buf);
     }
