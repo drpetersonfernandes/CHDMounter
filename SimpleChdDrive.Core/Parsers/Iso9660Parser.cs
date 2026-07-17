@@ -4,10 +4,10 @@ namespace SimpleChdDrive.Core.Parsers;
 
 public class Iso9660Parser
 {
-    private const int MaxDirectoryDepth = 64;
     private const int MaxCeChain = 64;
 
     private readonly SectorReader _reader;
+    private readonly HashSet<uint> _visitedDirs = [];
     private bool _isHighSierra;
     private bool _isJoliet;
     private bool _isXa;
@@ -35,6 +35,10 @@ public class Iso9660Parser
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
+        _isXa = false;
+        _suspActive = false;
+        _suspSkip = 0;
+        _visitedDirs.Clear();
 
         var trackStartLba = track?.StartLba ?? 0;
         var effectiveTrackStart = _lbaOffset < 0 ? 45000u : trackStartLba;
@@ -54,18 +58,18 @@ public class Iso9660Parser
 
                 if (isIso || isHs)
                 {
-                    if (type == 2 && isIso) {
+                    if (type == 2 && isIso && IsJolietSvd(sectorData)) {
                         _isHighSierra = false;
                         _isJoliet = true;
                         foundPvd = true;
-                        bestVdData = sectorData;
+                        bestVdData = (byte[])sectorData.Clone();
                         break; }
 
                     if (!foundPvd && (type == 1 || isHs)) {
                         _isHighSierra = isHs;
                         _isJoliet = false;
                         foundPvd = true;
-                        bestVdData = sectorData; }
+                        bestVdData = (byte[])sectorData.Clone(); }
                 }
             }
         }
@@ -81,13 +85,13 @@ public class Iso9660Parser
                     var isHs = CheckMagic(sectorData, 9, "CDROM");
                     if (isIso || isHs)
                     {
-                        if (type == 2 && isIso) {
+                        if (type == 2 && isIso && IsJolietSvd(sectorData)) {
                             effectiveTrackStart = 0;
                             _reader.SetTrack(null!);
                             _isHighSierra = false;
                             _isJoliet = true;
                             foundPvd = true;
-                            bestVdData = sectorData;
+                            bestVdData = (byte[])sectorData.Clone();
                             break; }
 
                         if (!foundPvd && (type == 1 || isHs)) {
@@ -96,7 +100,7 @@ public class Iso9660Parser
                             _isHighSierra = isHs;
                             _isJoliet = false;
                             foundPvd = true;
-                            bestVdData = sectorData; }
+                            bestVdData = (byte[])sectorData.Clone(); }
                     }
                 }
             }
@@ -109,12 +113,14 @@ public class Iso9660Parser
                 if (_reader.ReadSector(effectiveTrackStart + i, sectorData) && sectorData.Length >= 16)
                 {
                     var type = sectorData[0];
-                    if (type is 1 or 2 && (CheckMagic(sectorData, 1, "CD001") || CheckMagic(sectorData, 9, "CDROM")))
+                    var isIso = CheckMagic(sectorData, 1, "CD001");
+                    var isHs = CheckMagic(sectorData, 9, "CDROM");
+                    if ((type == 1 && (isIso || isHs)) || (type == 2 && isIso && IsJolietSvd(sectorData)) || isHs)
                     {
-                        _isHighSierra = CheckMagic(sectorData, 9, "CDROM");
-                        _isJoliet = type == 2;
+                        _isHighSierra = isHs && type != 2;
+                        _isJoliet = type == 2 && isIso;
                         foundPvd = true;
-                        bestVdData = sectorData;
+                        bestVdData = (byte[])sectorData.Clone();
                         break; }
                 }
             }
@@ -122,6 +128,9 @@ public class Iso9660Parser
 
         if (!foundPvd)
             return false;
+
+        // CD-XA marker in the PVD application-use area (PVD offset 883 + 141 = 1024)
+        _isXa = !_isHighSierra && !_isJoliet && CheckMagic(bestVdData!, 1024, "CD-XA001");
 
         var rootOff = _isHighSierra ? 180 : 156;
         var rootRelLba = LeU32(bestVdData!, rootOff + 2);
@@ -133,11 +142,17 @@ public class Iso9660Parser
         rootNode.Size = rootSize;
         rootNode.Extents.Add(new FsExtent { Lba = rootNode.Lba, Size = rootSize });
 
+        if (!_isJoliet && !_isHighSierra)
+            DetectSusp(rootNode.Lba);
+
         return ParseDirectory(rootNode, effectiveTrackStart);
     }
 
     public bool ParseDirectory(FsNode dirNode, uint trackStart)
     {
+        if (!_visitedDirs.Add(dirNode.Lba))
+            return true;
+
         var sectorsToRead = (uint)((dirNode.Size + 2047) / 2048);
         var sectorData = new byte[2048];
         string? illMultiExtentName = null;
@@ -157,6 +172,7 @@ public class Iso9660Parser
                 if (pos + recordLen > 2048 || recordLen < 34)
                     break;
 
+                var xattrLen = sectorData[pos + 1];
                 var relLba = LeU32(sectorData, (int)(pos + 2));
                 ulong extentSize = LeU32(sectorData, (int)(pos + 10));
 
@@ -170,22 +186,50 @@ public class Iso9660Parser
                 var nameOff = _isHighSierra ? 32 : 33;
 
                 if (nameOff + nameLen > recordLen || pos + nameOff + nameLen > 2048)
-                { pos += recordLen;
-                    if ((pos & 1) != 0)
-                    {
-                        pos++;
-                    }
-
-                    continue; }
+                    break;
 
                 var name = DecodeName(sectorData, (int)pos + nameOff, nameLen);
 
                 if (name != "." && name != "..")
                 {
-                    var absoluteLba = trackStart + relLba;
+                    // Extended attribute records occupy xattr_len blocks before the data (ECMA-119 9.1.2)
+                    var absoluteLba = trackStart + relLba + xattrLen;
                     var skipRecord = false;
 
-                    if (illMultiExtentName != null)
+                    var suStart = nameOff + nameLen + ((nameLen & 1) == 0 ? 1 : 0);
+                    var suLen = recordLen - suStart;
+
+                    byte xaFileNumber = 0;
+                    var xaInterleaved = false;
+                    if (_isXa && suLen >= 14)
+                        TryParseXa(sectorData, (int)pos + suStart, suLen, nameLen, out xaFileNumber, out xaInterleaved);
+
+                    if (_suspActive && suLen > _suspSkip + 4)
+                    {
+                        var susp = ParseSusp(sectorData, (int)pos + suStart, suLen, trackStart);
+                        if (susp.Relocated)
+                        {
+                            skipRecord = true;
+                        }
+                        else
+                        {
+                            if (!string.IsNullOrEmpty(susp.Name))
+                            {
+                                name = susp.Name;
+                            }
+
+                            if (susp.ChildLinkLba != 0 &&
+                                ReadSelfRecord(trackStart + susp.ChildLinkLba, out var clLba, out var clSize))
+                            {
+                                isDir = true;
+                                isMulti = false;
+                                absoluteLba = trackStart + clLba;
+                                extentSize = clSize;
+                            }
+                        }
+                    }
+
+                    if (!skipRecord && illMultiExtentName != null)
                     {
                         if (name == illMultiExtentName && !isDir)
                         {
@@ -224,7 +268,13 @@ public class Iso9660Parser
                         }
                         else
                         {
-                            var child = new FsNode { Name = name, Lba = absoluteLba, Size = extentSize, IsDirectory = isDir, IsMultiExtent = isMulti };
+                            var child = new FsNode
+                            {
+                                Name = name, Lba = absoluteLba, Size = extentSize, IsDirectory = isDir, IsMultiExtent = isMulti,
+                                FileNumber = xaFileNumber,
+                                IsInterleaved = xaInterleaved && _reader.UnitBytes >= 2352,
+                                ModifiedTime = ParseRecordTime(sectorData, (int)pos + 18)
+                            };
                             child.Extents.Add(new FsExtent { Lba = child.Lba, Size = child.Size });
                             if (child.IsDirectory) ParseDirectory(child, trackStart);
                             dirNode.Children.Add(child);
@@ -241,6 +291,186 @@ public class Iso9660Parser
         }
 
         return true;
+    }
+
+    private sealed class SuspInfo
+    {
+        public string? Name;
+        public bool Relocated;
+        public uint ChildLinkLba;
+    }
+
+    private void DetectSusp(uint rootLba)
+    {
+        var sec = new byte[2048];
+        if (!_reader.ReadSector(rootLba, sec)) return;
+
+        var recLen = sec[0];
+        if (recLen < 34) return;
+
+        var nameLen = sec[32];
+        if (nameLen != 1 || sec[33] != 0x00) return; // must be the "." self record
+
+        var su = 33 + nameLen + (0);
+        if (su + 7 > recLen) return;
+
+        // SUSP "SP" entry: 'S' 'P' len ver 0xBE 0xEF skip
+        if (sec[su] == 'S' && sec[su + 1] == 'P' && sec[su + 2] >= 7 && sec[su + 4] == 0xBE && sec[su + 5] == 0xEF)
+        {
+            _suspActive = true;
+            _suspSkip = sec[su + 6];
+        }
+    }
+
+    private SuspInfo ParseSusp(byte[] sec, int suOffset, int suLen, uint trackStart)
+    {
+        var info = new SuspInfo();
+        StringBuilder? nameBuilder = null;
+        var nameDone = false;
+
+        var buf = sec;
+        var off = suOffset + _suspSkip;
+        var len = suLen - _suspSkip;
+        uint ceBlock = 0, ceOffset = 0, ceLen = 0;
+        var haveCe = false;
+        var chain = 0;
+
+        while (true)
+        {
+            while (len >= 4)
+            {
+                var s0 = buf[off];
+                var s1 = buf[off + 1];
+                var entryLen = buf[off + 2];
+                if (entryLen < 4 || entryLen > len) break;
+
+                if (s0 == 'S' && s1 == 'T') {
+                    break; }
+
+                if (s0 == 'C' && s1 == 'E' && entryLen >= 28)
+                {
+                    ceBlock = LeU32(buf, off + 4);
+                    ceOffset = LeU32(buf, off + 12);
+                    ceLen = LeU32(buf, off + 20);
+                    haveCe = true;
+                }
+                else if (s0 == 'N' && s1 == 'M' && entryLen >= 5 && !nameDone)
+                {
+                    var nmFlags = buf[off + 4];
+                    // Skip CURRENT/PARENT entries unless a real name is present (VirtualBox quirk)
+                    if ((nmFlags & 0x06) == 0 || entryLen > 5)
+                    {
+                        nameBuilder ??= new StringBuilder();
+                        nameBuilder.Append(Encoding.UTF8.GetString(buf, off + 5, entryLen - 5));
+                        if ((nmFlags & 0x01) == 0)
+                        {
+                            nameDone = true;
+                        }
+                    }
+                }
+                else if (s0 == 'R' && s1 == 'E')
+                {
+                    info.Relocated = true;
+                }
+                else if (s0 == 'C' && s1 == 'L' && entryLen >= 12)
+                {
+                    info.ChildLinkLba = LeU32(buf, off + 4);
+                }
+
+                off += entryLen;
+                len -= entryLen;
+            }
+
+            if (!haveCe || chain++ >= MaxCeChain) break;
+            if (ceOffset >= 2048 || ceLen == 0) break;
+
+            var ceSec = new byte[2048];
+            if (!_reader.ReadSector(trackStart + ceBlock, ceSec)) break;
+
+            buf = ceSec;
+            off = (int)ceOffset;
+            len = (int)Math.Min(ceLen, 2048 - ceOffset);
+            haveCe = false;
+        }
+
+        info.Name = nameBuilder?.ToString();
+        return info;
+    }
+
+    private bool ReadSelfRecord(uint dirLba, out uint extentLba, out uint extentSize)
+    {
+        extentLba = 0;
+        extentSize = 0;
+
+        var sec = new byte[2048];
+        if (!_reader.ReadSector(dirLba, sec)) return false;
+        if (sec[0] < 34 || sec[32] != 1 || sec[33] != 0x00) return false;
+
+        extentLba = LeU32(sec, 2) + sec[1];
+        extentSize = LeU32(sec, 10);
+        return true;
+    }
+
+    private static void TryParseXa(byte[] data, int suOffset, int suLen, byte nameLen, out byte fileNumber, out bool interleaved)
+    {
+        fileNumber = 0;
+        interleaved = false;
+
+        // Some mastering tools pad the system-use area before the XA record (Win98 quirk)
+        Span<int> candidates = [0, nameLen + (nameLen & 1)];
+        foreach (var cand in candidates)
+        {
+            var off = suOffset + cand;
+            if (cand + 14 > suLen) continue;
+            if (data[off + 6] != 'X' || data[off + 7] != 'A') continue;
+
+            var reservedZero = true;
+            for (var r = 9; r < 14; r++)
+            {
+                if (data[off + r] != 0)
+                {
+                    reservedZero = false;
+                    break;
+                }
+            }
+
+            if (!reservedZero) continue;
+
+            var attributes = (ushort)((data[off + 4] << 8) | data[off + 5]);
+            fileNumber = data[off + 8];
+            interleaved = (attributes & 0x2000) != 0; // XA_ATTR_INTERLEAVED
+            return;
+        }
+    }
+
+    private DateTime? ParseRecordTime(byte[] d, int off)
+    {
+        var year = 1900 + d[off];
+        int month = d[off + 1], day = d[off + 2], hour = d[off + 3], minute = d[off + 4], second = d[off + 5];
+
+        if (month is < 1 or > 12 || day is < 1 or > 31) return null;
+        if (hour > 23 || minute > 59 || second > 59) return null;
+
+        var tzMinutes = _isHighSierra ? 0 : 15 * (sbyte)d[off + 6];
+        if (tzMinutes is < -14 * 60 or > 14 * 60)
+        {
+            tzMinutes = 0;
+        }
+
+        try
+        {
+            return new DateTimeOffset(year, month, day, hour, minute, second, TimeSpan.FromMinutes(tzMinutes)).UtcDateTime;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
+    private static bool IsJolietSvd(byte[] d)
+    {
+        // Joliet escape sequences @ SVD offset 88: %/@ %/C %/E
+        return d[88] == 0x25 && d[89] == 0x2F && d[90] is 0x40 or 0x43 or 0x45;
     }
 
     private string DecodeName(byte[] data, int offset, byte nameLen)

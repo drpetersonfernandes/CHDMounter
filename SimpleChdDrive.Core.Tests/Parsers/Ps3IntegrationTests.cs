@@ -61,6 +61,44 @@ public class Ps3IntegrationTests
 
     [Theory]
     [MemberData(nameof(ChdPaths))]
+    public void Iso9660BridgeParsesPs3Disc(string chdPath)
+    {
+        if (!File.Exists(chdPath))
+        {
+            _output.WriteLine($"SKIP: {chdPath} not found");
+            return;
+        }
+
+        var err = ChdFile.Open(chdPath, out var chd);
+        Assert.Equal(ChdError.Chderrnone, err);
+
+        try
+        {
+            var reader = new SectorReader(chd!, ChdHeaderReader.ReadUnitBytes(chdPath));
+            var root = new FsNode();
+            var ok = new Iso9660Parser(reader).Parse(root);
+            _output.WriteLine($"ISO9660 bridge parse: {(ok ? "OK" : "FAILED")}, top-level entries: {root.Children.Count}");
+            Assert.True(ok, "Iso9660Parser failed on the PS3 UDF-bridge ISO part");
+
+            foreach (var c in root.Children)
+                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
+
+            var sfb = root.Children.FirstOrDefault(static n => n.Name == "PS3_DISC.SFB");
+            Assert.NotNull(sfb);
+            Assert.NotNull(sfb.ModifiedTime);
+
+            var sec = new byte[2048];
+            Assert.True(reader.ReadSector(sfb.Lba, sec));
+            Assert.Equal(".SFB"u8.ToArray(), sec[..4]);
+        }
+        finally
+        {
+            chd!.Dispose();
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ChdPaths))]
     public void ChdContentsMatchOriginalIso(string chdPath)
     {
         if (!File.Exists(chdPath))

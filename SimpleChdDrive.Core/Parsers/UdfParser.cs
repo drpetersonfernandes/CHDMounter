@@ -286,9 +286,11 @@ public class UdfParser
         if (!GetAllocDescriptors(sector, tagId == 266, out var allocDesc, out var icbFlags, out var adOffset))
             return false;
 
-        var fileType = sector[27];        // ICB tag @ 16, file type @ +11
+        var fileType = sector[27]; // ICB tag @ 16, file type @ +11
         node.Size = LeU64(sector, 56);
         node.IsDirectory = fileType == 4;
+        // Modification time: FE @ 84, EFE @ 92 (12-byte UDF timestamp)
+        node.ModifiedTime = ParseUdfTimestamp(sector, tagId == 266 ? 92 : 84);
         node.Extents.Clear();
 
         var adType = icbFlags & 7;
@@ -482,6 +484,50 @@ public class UdfParser
             }
             default:
                 return "";
+        }
+    }
+
+    private static DateTime? ParseUdfTimestamp(byte[] d, int off)
+    {
+        if (off + 12 > d.Length) return null;
+
+        var allZero = true;
+        for (var i = 0; i < 12; i++)
+        {
+            if (d[off + i] != 0)
+            {
+                allZero = false;
+                break;
+            }
+        }
+
+        if (allZero) return null;
+
+        var typeAndTz = LeU16(d, off);
+        var tz = typeAndTz & 0x0FFF;
+        if ((tz & 0x800) != 0)
+        {
+            tz -= 0x1000; // 12-bit signed timezone offset in minutes
+        }
+
+        if (tz is < -14 * 60 or > 14 * 60)
+        {
+            tz = 0; // -2047 = unspecified, anything out of range treated as UTC
+        }
+
+        int year = LeU16(d, off + 2);
+        int month = d[off + 4], day = d[off + 5], hour = d[off + 6], minute = d[off + 7], second = d[off + 8];
+
+        if (month is < 1 or > 12 || day is < 1 or > 31) return null;
+        if (hour > 23 || minute > 59 || second > 59) return null;
+
+        try
+        {
+            return new DateTimeOffset(year, month, day, hour, minute, second, TimeSpan.FromMinutes(tz)).UtcDateTime;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
         }
     }
 

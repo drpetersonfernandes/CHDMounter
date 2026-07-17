@@ -12,6 +12,7 @@ public class FsNode
     public bool IsRawPassthrough { get; set; }
     public bool IsEmbedded { get; set; }
     public uint EmbeddedOffset { get; set; }
+    public DateTime? ModifiedTime { get; set; }
     public List<FsExtent> Extents { get; set; } = [];
     public List<FsNode> Children { get; set; } = [];
 }

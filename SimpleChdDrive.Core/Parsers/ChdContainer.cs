@@ -110,6 +110,11 @@ public class ChdContainer
             IsRawPassthrough = node.IsRawPassthrough, IsEmbedded = node.IsEmbedded, Offset = node.EmbeddedOffset
         };
 
+        if (node.ModifiedTime.HasValue)
+        {
+            entry.ModifiedTime = node.ModifiedTime.Value;
+        }
+
         foreach (var ext in node.Extents)
             entry.Extents.Add(new FileExtent { Lba = ext.Lba, Size = ext.Size });
 
