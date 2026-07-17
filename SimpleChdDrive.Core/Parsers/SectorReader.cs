@@ -1,11 +1,13 @@
 using System.Text;
-using SimpleChdDrive.Core.CHD;
+using CHDSharp;
+using CHDSharp.Models;
 
 namespace SimpleChdDrive.Core.Parsers;
 
 public class SectorReader
 {
     private readonly ChdFile _chd;
+    private readonly uint _unitBytes;
     private bool _trackLocked;
 
     private uint _cachedHunkNum = 0xFFFFFFFF;
@@ -27,13 +29,14 @@ public class SectorReader
     public int LbaOffset { get; set; }
 
     public uint HunkBytes => _chd.HunkBytes;
-    public uint UnitBytes => _chd.UnitBytes;
+    public uint UnitBytes => _unitBytes;
     public uint TotalBytes => (uint)_chd.TotalBytes;
 
-    public SectorReader(ChdFile chd)
+    public SectorReader(ChdFile chd, uint unitBytes)
     {
         _chd = chd;
-        Tracks = ParseTracksWithLba(chd);
+        _unitBytes = unitBytes;
+        Tracks = ParseTracksWithLba(chd, unitBytes);
     }
 
     public void SetTrack(TrackInfo track, bool locked = false)
@@ -89,7 +92,7 @@ public class SectorReader
         if (!PrepareHunk(lba, out var rawOffset))
             return false;
 
-        var unitBytes = (int)_chd.UnitBytes;
+        var unitBytes = (int)_unitBytes;
         if (rawOffset + unitBytes > _cachedHunk.Length)
             return false;
 
@@ -103,7 +106,7 @@ public class SectorReader
         if (!PrepareHunk(lba, out var rawOffset))
             return 0xFF;
 
-        var unitBytes = (int)_chd.UnitBytes;
+        var unitBytes = (int)_unitBytes;
         if (unitBytes < 2352)
             return 0xFF;
 
@@ -119,7 +122,7 @@ public class SectorReader
         rawOffsetInHunk = 0;
 
         var hunkBytes = _chd.HunkBytes;
-        var unitBytes = _chd.UnitBytes;
+        var unitBytes = _unitBytes;
         if (hunkBytes == 0 || unitBytes == 0)
             return false;
 
@@ -236,7 +239,7 @@ public class SectorReader
 
     private void DetectSectorOffset(uint rawOffsetInHunk, int trackIdx)
     {
-        var unitBytes = _chd.UnitBytes;
+        var unitBytes = _unitBytes;
         var searchRange = (int)Math.Min(128, unitBytes - 16);
         var foundSyncOffset = -1;
 
@@ -364,32 +367,34 @@ public class SectorReader
         return 16;
     }
 
-    public static List<TrackInfo> ParseTracksWithLba(ChdFile chd)
+    public static List<TrackInfo> ParseTracksWithLba(ChdFile chd, uint unitBytes)
     {
         var tracks = new List<TrackInfo>();
-        var metadata = chd.ReadMetadata();
+        var metadata = chd.Metadata;
 
         var hasTrackMetadata = false;
 
         foreach (var entry in metadata)
         {
             var tag = entry.Tag;
-            var t0 = (char)((tag >> 24) & 0xFF);
-            var t1 = (char)((tag >> 16) & 0xFF);
-            var t2 = (char)((tag >> 8) & 0xFF);
-            var t3 = (char)(tag & 0xFF);
+            if (tag.Length < 4) continue;
+
+            var t0 = tag[0];
+            var t1 = tag[1];
+            var t2 = tag[2];
+            var t3 = tag[3];
 
             var isTrackMeta = t0 == 'C' && t1 == 'H' &&
-                              ((t2 == 'T' && t3 is '2' or 'R') || (t2 == 'G' && t3 is 'D' or 'T'));
+                              ((t2 == 'T' && (t3 == '2' || t3 == 'R')) || (t2 == 'G' && (t3 == 'D' || t3 == 'T')));
 
-            if (!isTrackMeta || string.IsNullOrEmpty(entry.Value))
+            var metaText = entry.GetText();
+            if (!isTrackMeta || string.IsNullOrEmpty(metaText))
                 continue;
 
             hasTrackMetadata = true;
             var trackIndex = tracks.Count + 1;
-            var metaValue = entry.Value;
 
-            var parsed = TryParseTrackMetadata(metaValue, out var typeStr,
+            var parsed = TryParseTrackMetadata(metaText, out var typeStr,
                 out var frames, out var pregap, out var postgap);
 
             if (!parsed || frames == 0)
@@ -403,7 +408,7 @@ public class SectorReader
                 Postgap = postgap,
                 TrackType = typeStr,
                 IsDataTrack = typeStr.Contains("MODE") || typeStr.Contains("CDI"),
-                Metadata = metaValue
+                Metadata = metaText
             });
         }
 
@@ -414,12 +419,14 @@ public class SectorReader
         foreach (var entry in metadata)
         {
             var tag = entry.Tag;
-            var t0 = (char)((tag >> 24) & 0xFF);
-            var t1 = (char)((tag >> 16) & 0xFF);
-            var t2 = (char)((tag >> 8) & 0xFF);
-            var t3 = (char)(tag & 0xFF);
+            if (tag.Length < 4) continue;
 
-            if (t0 == 'C' && t1 == 'H' && t2 == 'G' && t3 is 'D' or 'T')
+            var t0 = tag[0];
+            var t1 = tag[1];
+            var t2 = tag[2];
+            var t3 = tag[3];
+
+            if (t0 == 'C' && t1 == 'H' && t2 == 'G' && (t3 == 'D' || t3 == 'T'))
             {
                 isGdrom = true;
                 break;
@@ -472,13 +479,13 @@ public class SectorReader
 
         foreach (var track in tracks)
         {
-            if (!track.IsDataTrack && track is { TrackType: "AUDIO", Frames: > 16 } && chd.UnitBytes > 0)
+            if (!track.IsDataTrack && track is { TrackType: "AUDIO", Frames: > 16 } && unitBytes > 0)
             {
-                var sectorsPerHunk = chd.HunkBytes / chd.UnitBytes;
+                var sectorsPerHunk = chd.HunkBytes / unitBytes;
                 if (sectorsPerHunk > 0)
                 {
                     var hunkNum = track.ChdOffset / sectorsPerHunk;
-                    var offsetInHunk = track.ChdOffset % sectorsPerHunk * chd.UnitBytes;
+                    var offsetInHunk = track.ChdOffset % sectorsPerHunk * unitBytes;
 
                     var firstHunk = new byte[chd.HunkBytes];
                     if (chd.ReadHunk(hunkNum, firstHunk) == ChdError.Chderrnone &&

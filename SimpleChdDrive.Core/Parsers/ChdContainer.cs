@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
-using SimpleChdDrive.Core.CHD;
+using CHDSharp;
+using CHDSharp.Models;
 
 namespace SimpleChdDrive.Core.Parsers;
 
@@ -47,8 +48,9 @@ public class ChdContainer
 
         _primaryChd = chd;
 
-        var reader = new SectorReader(chd);
-        UnitBytes = chd.UnitBytes;
+        var unitBytes = ChdHeaderReader.ReadUnitBytes(_chdPath);
+        var reader = new SectorReader(chd, unitBytes);
+        UnitBytes = unitBytes;
         HunkBytes = chd.HunkBytes;
         VolumeSize = chd.TotalBytes;
         VolumeName = Path.GetFileNameWithoutExtension(_chdPath);
@@ -283,13 +285,13 @@ public class ChdContainer
 
     private void BuildVirtualCueBin(bool cooked2048)
     {
-        _cachedTracks = SectorReader.ParseTracksWithLba(_primaryChd!);
+        _cachedTracks = SectorReader.ParseTracksWithLba(_primaryChd!, UnitBytes);
         if (_cachedTracks.Count == 0) return;
 
         _cueBinEnabled = true;
         _cueBinStemName = Path.GetFileNameWithoutExtension(_chdPath);
 
-        var rawSize = cooked2048 ? 2048u : Math.Min(_primaryChd!.UnitBytes, 2352u);
+        var rawSize = cooked2048 ? 2048u : Math.Min(UnitBytes, 2352u);
         _cueBinRawSectorSize = rawSize;
 
         uint cumulativeFrames = 0;
