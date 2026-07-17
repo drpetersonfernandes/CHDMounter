@@ -137,13 +137,8 @@ public class DreamcastIsoParser
                 var recordLen = sectorData[pos];
                 if (recordLen == 0) break;
 
-                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen;
-                    if ((pos & 1) != 0)
-                    {
-                        pos++;
-                    }
-
-                    continue; }
+                if (pos + recordLen > 2048 || recordLen < 34)
+                    break;
 
                 var extentLba = LeU32(sectorData, (int)pos + 2);
                 ulong extentSize = LeU32(sectorData, (int)pos + 10);

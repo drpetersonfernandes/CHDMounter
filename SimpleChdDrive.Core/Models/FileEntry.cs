@@ -12,6 +12,7 @@ public class FileEntry
     public byte FileNumber { get; set; }
     public bool IsInterleaved { get; set; }
     public bool IsRawPassthrough { get; set; }
+    public bool IsEmbedded { get; set; }
     public List<FileExtent> Extents { get; set; } = [];
     public List<FileEntry> Children { get; set; } = [];
 }

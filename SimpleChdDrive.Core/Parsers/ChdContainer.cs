@@ -107,7 +107,7 @@ public class ChdContainer
         {
             Name = node.Name, FullPath = currentPath, Lba = node.Lba, Size = node.Size,
             IsDirectory = node.IsDirectory, FileNumber = node.FileNumber, IsInterleaved = node.IsInterleaved,
-            IsRawPassthrough = node.IsRawPassthrough
+            IsRawPassthrough = node.IsRawPassthrough, IsEmbedded = node.IsEmbedded, Offset = node.EmbeddedOffset
         };
 
         foreach (var ext in node.Extents)
@@ -233,6 +233,19 @@ public class ChdContainer
         try
         {
             var totalRead = 0;
+            if (entry.IsEmbedded)
+            {
+                var sec = new byte[SectorSize];
+                if (!reader.ReadSector(entry.Lba, sec)) return 0;
+
+                var start = entry.Offset + offset;
+                if (start >= SectorSize) return 0;
+
+                var chunk = Math.Min(bytesToRead, (int)(SectorSize - start));
+                Array.Copy(sec, (int)start, buffer, bufOffset, chunk);
+                return chunk;
+            }
+
             if (!entry.IsInterleaved)
             {
                 while (totalRead < bytesToRead)

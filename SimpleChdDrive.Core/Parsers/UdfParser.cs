@@ -4,9 +4,30 @@ namespace SimpleChdDrive.Core.Parsers;
 
 public class UdfParser
 {
+    private const int MaxDirectoryBytes = 64 * 1024 * 1024;
+    private const int MaxDirectoryDepth = 64;
+
     private readonly SectorReader _reader;
-    private uint _partitionStart;
     private uint _blockSize = 2048;
+
+    private readonly Dictionary<ushort, uint> _physicalPartitions = [];
+    private PartitionMapRef[] _maps = [];
+    private readonly List<FsExtent> _metaExtents = [];
+
+    private enum MapKind
+    {
+        Physical,
+        Metadata,
+        Unsupported
+    }
+
+    private struct PartitionMapRef
+    {
+        public MapKind Kind;
+        public ushort PartitionNumber;
+        public uint MetadataFileLoc;
+        public uint MetadataMirrorLoc;
+    }
 
     public UdfParser(SectorReader reader)
     {
@@ -15,30 +36,49 @@ public class UdfParser
 
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
-        if (track != null)
+        if (track is { Frames: > 0 })
             _reader.SetTrack(track, true);
+
+        _physicalPartitions.Clear();
+        _metaExtents.Clear();
+        _maps = [];
+        _blockSize = 2048;
+
         var sector = new byte[2048];
 
-        if (!_reader.ReadSector(256, sector)) return false;
-        if (LeU16(sector, 0) != 2) return false; // AVDP tag
+        if (!ReadAvdp(sector, out var vdsLoc, out var vdsLen))
+            return false;
 
-        var vdsLoc = LeU32(sector, 20);
-        var vdsLen = LeU32(sector, 16);
+        var fsdLen = 0u;
+        var fsdLbn = 0u;
+        ushort fsdPart = 0;
+        var haveLvd = false;
+
         var vdsSectors = (vdsLen + _blockSize - 1) / _blockSize;
-
-        uint fsdLoc = 0;
-        _partitionStart = 0;
-
         for (uint i = 0; i < vdsSectors; i++)
         {
             if (!_reader.ReadSector(vdsLoc + i, sector)) break;
 
+            if (!ValidTag(sector, 0)) continue;
+
             var tagId = LeU16(sector, 0);
-            if (tagId == 6) { fsdLoc = LeU32(sector, 304);
-                _blockSize = LeU32(sector, 264); }
-            else if (tagId == 5)
+            if (tagId == 5)
             {
-                _partitionStart = LeU32(sector, 420);
+                // Partition Descriptor (ECMA-167 3/10.5): number @ 22, start @ 188
+                var partNum = LeU16(sector, 22);
+                _physicalPartitions[partNum] = LeU32(sector, 188);
+            }
+            else if (tagId == 6)
+            {
+                // Logical Volume Descriptor (ECMA-167 3/10.6)
+                _blockSize = LeU32(sector, 212);
+                if (_blockSize != 2048) return false;
+
+                fsdLen = LeU32(sector, 248);
+                fsdLbn = LeU32(sector, 252);
+                fsdPart = LeU16(sector, 256);
+                _maps = ParsePartitionMaps(sector, LeU32(sector, 268));
+                haveLvd = true;
             }
             else if (tagId == 8)
             {
@@ -46,172 +86,382 @@ public class UdfParser
             }
         }
 
-        if (fsdLoc == 0) return false;
+        if (!haveLvd || fsdLen == 0 || _physicalPartitions.Count == 0)
+            return false;
 
-        if (!_reader.ReadSector(_partitionStart + fsdLoc, sector)) return false;
-        if (LeU16(sector, 0) != 256) return false; // FSD
+        if (!LoadMetadataPartition())
+            return false;
+
+        if (!ResolveLba(fsdLbn, fsdPart, out var fsdLba)) return false;
+        if (!_reader.ReadSector(fsdLba, sector)) return false;
+        if (!ValidTag(sector, 0) || LeU16(sector, 0) != 256) return false; // FSD
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
 
-        var rootIcbLba = LeU32(sector, 376);
-        return ReadFileEntry(rootIcbLba, _partitionStart, rootNode);
+        // Root directory ICB long_ad @ 400 (ECMA-167 4/14.1)
+        var rootLbn = LeU32(sector, 404);
+        var rootPart = LeU16(sector, 408);
+        return ReadFileEntry(rootLbn, rootPart, rootNode, 0);
     }
 
-    private bool ReadFileEntry(uint logicalBlockNum, uint partitionStart, FsNode node)
+    private bool ReadAvdp(byte[] sector, out uint vdsLoc, out uint vdsLen)
     {
-        var sector = new byte[2048];
-        if (!_reader.ReadSector(partitionStart + logicalBlockNum, sector)) return false;
+        vdsLoc = 0;
+        vdsLen = 0;
 
-        var tagId = LeU16(sector, 0);
-        ulong infoLength;
-        byte[] allocDesc;
-        ushort icbFlags;
-        byte fileType;
+        var totalSectors = _reader.UnitBytes > 0 ? _reader.TotalBytes / _reader.UnitBytes : 0;
+        Span<uint> candidates = [256, totalSectors >= 257 ? totalSectors - 257 : 0, totalSectors > 0 ? totalSectors - 1 : 0];
 
-        switch (tagId)
+        foreach (var lba in candidates)
         {
-            // File Entry
-            case 261:
-            {
-                infoLength = LeU64(sector, 56);
-                var lEa = LeU32(sector, 168);
-                var lAd = LeU32(sector, 172);
-                var baseOff = 176 + (int)lEa;
-                if (baseOff > sector.Length) return false;
+            if (lba == 0) continue;
+            if (!_reader.ReadSector(lba, sector)) continue;
+            if (!ValidTag(sector, 0) || LeU16(sector, 0) != 2) continue;
 
-                allocDesc = new byte[lAd];
-                Array.Copy(sector, baseOff, allocDesc, 0, Math.Min(lAd, (uint)(sector.Length - baseOff)));
-                icbFlags = LeU16(sector, 52);
-                fileType = sector[17];
-                break;
-            }
-            // Extended File Entry
-            case 266:
-            {
-                infoLength = LeU64(sector, 56);
-                var lEa = LeU32(sector, 212);
-                var lAd = LeU32(sector, 216);
-                var baseOff = 220 + (int)lEa;
-                if (baseOff > sector.Length) return false;
-
-                allocDesc = new byte[lAd];
-                Array.Copy(sector, baseOff, allocDesc, 0, Math.Min(lAd, (uint)(sector.Length - baseOff)));
-                icbFlags = LeU16(sector, 52);
-                fileType = sector[17];
-                break;
-            }
-            default:
-                return false;
+            vdsLen = LeU32(sector, 16);
+            vdsLoc = LeU32(sector, 20);
+            if (vdsLoc != 0 && vdsLen != 0)
+                return true;
         }
 
-        node.Size = infoLength;
-        node.IsDirectory = fileType == 4;
-        node.Extents.Clear();
+        return false;
+    }
 
-        uint adType = (ushort)(icbFlags & 0x0007);
-        uint off = 0;
+    private static PartitionMapRef[] ParsePartitionMaps(byte[] lvd, uint numMaps)
+    {
+        var maps = new List<PartitionMapRef>();
+        var off = 440;
 
-        switch (adType)
+        for (uint m = 0; m < numMaps && off + 2 <= lvd.Length; m++)
         {
-            // Short ADs
-            case 0:
+            int mapType = lvd[off];
+            int mapLen = lvd[off + 1];
+            if (mapLen < 2 || off + mapLen > lvd.Length) break;
+
+            switch (mapType)
             {
-                while (off + 8 <= allocDesc.Length)
+                case 1 when mapLen >= 6:
+                    maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = LeU16(lvd, off + 4) });
+                    break;
+                case 2 when mapLen >= 64:
                 {
-                    var len = LeU32(allocDesc, (int)off);
-                    var loc = LeU32(allocDesc, (int)(off + 4));
-                    var type = len >> 30;
-                    len &= 0x3FFFFFFF;
-                    if (len > 0 && type == 0)
+                    var id = Encoding.ASCII.GetString(lvd, off + 5, 23).TrimEnd('\0', ' ');
+                    var partNum = LeU16(lvd, off + 38);
+
+                    switch (id)
                     {
-                        node.Extents.Add(new FsExtent { Lba = partitionStart + loc, Size = len });
-                        if (node.Lba == 0)
-                        {
-                            node.Lba = partitionStart + loc;
-                        }
+                        case "*UDF Metadata Partition":
+                            maps.Add(new PartitionMapRef
+                            {
+                                Kind = MapKind.Metadata,
+                                PartitionNumber = partNum,
+                                MetadataFileLoc = LeU32(lvd, off + 40),
+                                MetadataMirrorLoc = LeU32(lvd, off + 44)
+                            });
+                            break;
+                        case "*UDF Sparable Partition":
+                            maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = partNum });
+                            break;
+                        default:
+                            maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
+                            break;
                     }
 
-                    off += 8;
+                    break;
                 }
-
-                break;
+                default:
+                    maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
+                    break;
             }
-            // Long ADs
-            case 1:
-            {
-                while (off + 16 <= allocDesc.Length)
-                {
-                    var len = LeU32(allocDesc, (int)off);
-                    var loc = LeU32(allocDesc, (int)(off + 4));
-                    var type = len >> 30;
-                    len &= 0x3FFFFFFF;
-                    if (len > 0 && type == 0)
-                    {
-                        node.Extents.Add(new FsExtent { Lba = partitionStart + loc, Size = len });
-                        if (node.Lba == 0)
-                        {
-                            node.Lba = partitionStart + loc;
-                        }
-                    }
 
-                    off += 16;
-                }
-
-                break;
-            }
+            off += mapLen;
         }
 
-        if (node.IsDirectory)
-            return ParseDirectory(partitionStart, node);
+        return maps.ToArray();
+    }
+
+    private bool LoadMetadataPartition()
+    {
+        foreach (var map in _maps)
+        {
+            if (map.Kind != MapKind.Metadata) continue;
+
+            if (!_physicalPartitions.TryGetValue(map.PartitionNumber, out var physStart)) return false;
+
+            if (LoadMetadataFile(physStart + map.MetadataFileLoc, physStart))
+                return true;
+
+            return LoadMetadataFile(physStart + map.MetadataMirrorLoc, physStart);
+        }
 
         return true;
     }
 
-    private bool ParseDirectory(uint partitionStart, FsNode dirNode)
+    private bool LoadMetadataFile(uint feLba, uint physStart)
     {
-        foreach (var extent in dirNode.Extents)
+        var sector = new byte[2048];
+        if (!_reader.ReadSector(feLba, sector)) return false;
+        if (!ValidTag(sector, 0)) return false;
+
+        var tagId = LeU16(sector, 0);
+        if (tagId is not (261 or 266)) return false;
+
+        if (!GetAllocDescriptors(sector, tagId == 266, out var allocDesc, out var icbFlags, out _))
+            return false;
+
+        _metaExtents.Clear();
+        var adType = icbFlags & 7;
+        var stride = adType switch
         {
-            var sectors = (uint)((extent.Size + _blockSize - 1) / _blockSize);
-            for (uint s = 0; s < sectors; s++)
+            0 => 8,
+            1 => 16,
+            _ => 0
+        };
+        if (stride == 0) return false;
+
+        for (var off = 0; off + stride <= allocDesc.Length; off += stride)
+        {
+            var len = LeU32(allocDesc, off);
+            var lbn = LeU32(allocDesc, off + 4);
+            var extType = len >> 30;
+            len &= 0x3FFFFFFF;
+            if (len == 0 || extType != 0) continue;
+
+            _metaExtents.Add(new FsExtent { Lba = physStart + lbn, Size = len });
+        }
+
+        return _metaExtents.Count > 0;
+    }
+
+    private bool ResolveLba(uint lbn, ushort partRef, out uint lba)
+    {
+        lba = 0;
+        if (partRef >= _maps.Length) return false;
+
+        var map = _maps[partRef];
+        switch (map.Kind)
+        {
+            case MapKind.Physical:
+                if (!_physicalPartitions.TryGetValue(map.PartitionNumber, out var start)) return false;
+
+                lba = start + lbn;
+                return true;
+
+            case MapKind.Metadata:
             {
-                var sector = new byte[2048];
-                if (!_reader.ReadSector(extent.Lba + s, sector)) break;
-
-                uint pos = 0;
-                while (pos + 38 <= sector.Length)
+                var remaining = lbn;
+                foreach (var ext in _metaExtents)
                 {
-                    var tagId = LeU16(sector, (int)pos);
-                    if (tagId != 257) break; // FID
-
-                    var fileChar = sector[pos + 18];
-                    var nameLen = sector[pos + 19];
-                    var implUseLen = LeU16(sector, (int)(pos + 36));
-
-                    if (nameLen == 0) { pos += (uint)(38 + implUseLen + nameLen);
-                        continue; }
-
-                    var fidLen = 4u * ((38u + nameLen + implUseLen + 3u) / 4u);
-                    if (fidLen == 0 || pos + fidLen > sector.Length) break;
-
-                    var nameOffset = pos + 38 + implUseLen;
-                    if (nameOffset + nameLen > sector.Length) break;
-
-                    var name = ParseUdfName(sector, (int)nameOffset, nameLen);
-
-                    if ((fileChar & 0x02) == 0) // Not parent
+                    var blocks = (uint)((ext.Size + _blockSize - 1) / _blockSize);
+                    if (remaining < blocks)
                     {
-                        var icbLba = LeU32(sector, (int)(pos + 24));
-                        var child = new FsNode { Name = name };
-                        if (ReadFileEntry(icbLba, partitionStart, child))
-                            dirNode.Children.Add(child);
+                        lba = ext.Lba + remaining;
+                        return true;
                     }
 
-                    pos += fidLen;
+                    remaining -= blocks;
                 }
+
+                return false;
+            }
+
+            default:
+                return false;
+        }
+    }
+
+    private bool ReadFileEntry(uint lbn, ushort partRef, FsNode node, int depth)
+    {
+        if (depth > MaxDirectoryDepth) return false;
+        if (!ResolveLba(lbn, partRef, out var feLba)) return false;
+
+        var sector = new byte[2048];
+        if (!_reader.ReadSector(feLba, sector)) return false;
+        if (!ValidTag(sector, 0)) return false;
+
+        var tagId = LeU16(sector, 0);
+        if (tagId is not (261 or 266)) return false;
+
+        if (!GetAllocDescriptors(sector, tagId == 266, out var allocDesc, out var icbFlags, out var adOffset))
+            return false;
+
+        var fileType = sector[27];        // ICB tag @ 16, file type @ +11
+        node.Size = LeU64(sector, 56);
+        node.IsDirectory = fileType == 4;
+        node.Extents.Clear();
+
+        var adType = icbFlags & 7;
+        switch (adType)
+        {
+            // Short ADs: block numbers are relative to the partition the FE is recorded in
+            case 0:
+            {
+                for (var off = 0; off + 8 <= allocDesc.Length; off += 8)
+                {
+                    var len = LeU32(allocDesc, off);
+                    var loc = LeU32(allocDesc, off + 4);
+                    var extType = len >> 30;
+                    len &= 0x3FFFFFFF;
+                    if (len == 0 || extType != 0) continue;
+                    if (!ResolveLba(loc, partRef, out var extLba)) continue;
+
+                    node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
+                    if (node.Lba == 0)
+                    {
+                        node.Lba = extLba;
+                    }
+                }
+
+                break;
+            }
+            // Long ADs: carry an explicit partition reference number
+            case 1:
+            {
+                for (var off = 0; off + 16 <= allocDesc.Length; off += 16)
+                {
+                    var len = LeU32(allocDesc, off);
+                    var loc = LeU32(allocDesc, off + 4);
+                    var part = LeU16(allocDesc, off + 8);
+                    var extType = len >> 30;
+                    len &= 0x3FFFFFFF;
+                    if (len == 0 || extType != 0) continue;
+                    if (!ResolveLba(loc, part, out var extLba)) continue;
+
+                    node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
+                    if (node.Lba == 0)
+                    {
+                        node.Lba = extLba;
+                    }
+                }
+
+                break;
+            }
+            // Embedded/inline data: file content lives inside the File Entry itself
+            case 3:
+            {
+                if (node.Size > 2048 - adOffset) return false;
+
+                node.IsEmbedded = true;
+                node.Lba = feLba;
+                node.EmbeddedOffset = adOffset;
+                break;
+            }
+            default:
+                return !node.IsDirectory;
+        }
+
+        if (node.IsDirectory)
+            return ParseDirectory(node, depth);
+
+        return true;
+    }
+
+    private bool ParseDirectory(FsNode dirNode, int depth)
+    {
+        var data = ReadDirectoryData(dirNode);
+        if (data == null) return false;
+
+        var dataLen = data.Length;
+        var pos = 0;
+        while (pos + 38 <= dataLen)
+        {
+            if (!ValidTag(data, pos)) break;
+
+            var tagId = LeU16(data, pos);
+            if (tagId != 257) break; // FID
+
+            var fileChar = data[pos + 18];
+            var nameLen = data[pos + 19];
+            var implUseLen = LeU16(data, pos + 36);
+
+            var fidLen = 4 * ((38 + nameLen + implUseLen + 3) / 4);
+            if (pos + fidLen > dataLen) break;
+
+            var isParent = (fileChar & 0x08) != 0;
+            var isDeleted = (fileChar & 0x04) != 0;
+
+            if (!isParent && !isDeleted && nameLen > 0)
+            {
+                var nameOffset = pos + 38 + implUseLen;
+                var name = ParseUdfName(data, nameOffset, nameLen);
+
+                if (name.Length > 0)
+                {
+                    // FID ICB long_ad @ 20: block @ +4, partition @ +8
+                    var icbLbn = LeU32(data, pos + 24);
+                    var icbPart = LeU16(data, pos + 28);
+                    var child = new FsNode { Name = name };
+                    if (ReadFileEntry(icbLbn, icbPart, child, depth + 1))
+                        dirNode.Children.Add(child);
+                }
+            }
+
+            pos += fidLen;
+        }
+
+        return true;
+    }
+
+    private byte[]? ReadDirectoryData(FsNode dirNode)
+    {
+        var sector = new byte[2048];
+
+        if (dirNode.IsEmbedded)
+        {
+            if (dirNode.Size == 0 || dirNode.EmbeddedOffset + dirNode.Size > 2048) return null;
+            if (!_reader.ReadSector(dirNode.Lba, sector)) return null;
+
+            var embedded = new byte[dirNode.Size];
+            Array.Copy(sector, (int)dirNode.EmbeddedOffset, embedded, 0, (int)dirNode.Size);
+            return embedded;
+        }
+
+        ulong totalSize = 0;
+        foreach (var extent in dirNode.Extents)
+        {
+            totalSize += extent.Size;
+        }
+
+        if (totalSize is 0 or > MaxDirectoryBytes) return null;
+
+        var data = new byte[totalSize];
+        var written = 0;
+
+        foreach (var extent in dirNode.Extents)
+        {
+            var remaining = extent.Size;
+            var sectors = (uint)((extent.Size + _blockSize - 1) / _blockSize);
+            for (uint s = 0; s < sectors && remaining > 0; s++)
+            {
+                if (!_reader.ReadSector(extent.Lba + s, sector)) return null;
+
+                var chunk = (int)Math.Min(remaining, 2048);
+                Array.Copy(sector, 0, data, written, chunk);
+                written += chunk;
+                remaining -= (ulong)chunk;
             }
         }
 
+        return data;
+    }
+
+    private static bool GetAllocDescriptors(byte[] sector, bool isEfe, out byte[] allocDesc, out ushort icbFlags, out uint adOffset)
+    {
+        // FE (ECMA-167 4/14.9): L_EA @ 168, L_AD @ 172, ADs @ 176 + L_EA
+        // EFE (ECMA-167 4/14.17): L_EA @ 208, L_AD @ 212, ADs @ 216 + L_EA
+        allocDesc = [];
+        adOffset = 0;
+        icbFlags = LeU16(sector, 34);
+
+        var lEa = LeU32(sector, isEfe ? 208 : 168);
+        var lAd = LeU32(sector, isEfe ? 212 : 172);
+        var baseOff = (isEfe ? 216 : 176) + (long)lEa;
+        if (baseOff > sector.Length) return false;
+
+        adOffset = (uint)baseOff;
+        allocDesc = new byte[lAd];
+        Array.Copy(sector, (int)baseOff, allocDesc, 0, Math.Min(lAd, (uint)(sector.Length - baseOff)));
         return true;
     }
 
@@ -226,20 +476,29 @@ public class UdfParser
                 return Encoding.Latin1.GetString(data, offset + 1, length - 1).TrimEnd('\0');
             case 16:
             {
-                var sb = new StringBuilder();
-                for (var i = offset + 1; i + 1 < offset + length; i += 2)
-                {
-                    var u16 = (ushort)((data[i] << 8) | data[i + 1]);
-                    if (u16 == 0) break;
-
-                    sb.Append(char.ConvertFromUtf32(u16));
-                }
-
-                return sb.ToString();
+                var name = Encoding.BigEndianUnicode.GetString(data, offset + 1, (length - 1) & ~1);
+                var nul = name.IndexOf('\0');
+                return nul >= 0 ? name[..nul] : name;
             }
             default:
                 return "";
         }
+    }
+
+    private static bool ValidTag(byte[] d, int o)
+    {
+        if (o + 16 > d.Length) return false;
+
+        byte sum = 0;
+        for (var i = 0; i < 16; i++)
+        {
+            if (i != 4)
+            {
+                sum = (byte)(sum + d[o + i]);
+            }
+        }
+
+        return sum == d[o + 4];
     }
 
     private static ushort LeU16(byte[] d, int o)

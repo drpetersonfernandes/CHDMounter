@@ -4,9 +4,15 @@ namespace SimpleChdDrive.Core.Parsers;
 
 public class Iso9660Parser
 {
+    private const int MaxDirectoryDepth = 64;
+    private const int MaxCeChain = 64;
+
     private readonly SectorReader _reader;
     private bool _isHighSierra;
     private bool _isJoliet;
+    private bool _isXa;
+    private bool _suspActive;
+    private byte _suspSkip;
     private int _lbaOffset;
 
     public Iso9660Parser(SectorReader reader)
@@ -22,7 +28,7 @@ public class Iso9660Parser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        if (track != null)
+        if (track is { Frames: > 0 })
             _reader.SetTrack(track, true);
         else
             _reader.SetTrack(null!);
@@ -134,6 +140,7 @@ public class Iso9660Parser
     {
         var sectorsToRead = (uint)((dirNode.Size + 2047) / 2048);
         var sectorData = new byte[2048];
+        string? illMultiExtentName = null;
 
         for (uint i = 0; i < sectorsToRead; i++)
         {
@@ -147,13 +154,8 @@ public class Iso9660Parser
                 var recordLen = sectorData[pos];
                 if (recordLen == 0) break;
 
-                if (pos + recordLen > 2048 || recordLen < 34) { pos += recordLen;
-                    if ((pos & 1) != 0)
-                    {
-                        pos++;
-                    }
-
-                    continue; }
+                if (pos + recordLen > 2048 || recordLen < 34)
+                    break;
 
                 var relLba = LeU32(sectorData, (int)(pos + 2));
                 ulong extentSize = LeU32(sectorData, (int)(pos + 10));
@@ -181,20 +183,52 @@ public class Iso9660Parser
                 if (name != "." && name != "..")
                 {
                     var absoluteLba = trackStart + relLba;
+                    var skipRecord = false;
 
-                    if (dirNode.Children.Count > 0 && dirNode.Children[^1].IsMultiExtent && !dirNode.Children[^1].IsDirectory
-                        && dirNode.Children[^1].Name == name)
+                    if (illMultiExtentName != null)
                     {
-                        dirNode.Children[^1].Size += extentSize;
-                        dirNode.Children[^1].Extents.Add(new FsExtent { Lba = absoluteLba, Size = extentSize });
-                        dirNode.Children[^1].IsMultiExtent = isMulti;
+                        if (name == illMultiExtentName && !isDir)
+                        {
+                            if (!isMulti)
+                            {
+                                illMultiExtentName = null;
+                            }
+
+                            skipRecord = true;
+                        }
+                        else
+                        {
+                            illMultiExtentName = null;
+                        }
                     }
-                    else
+
+                    if (!skipRecord)
                     {
-                        var child = new FsNode { Name = name, Lba = absoluteLba, Size = extentSize, IsDirectory = isDir, IsMultiExtent = isMulti };
-                        child.Extents.Add(new FsExtent { Lba = child.Lba, Size = child.Size });
-                        if (child.IsDirectory) ParseDirectory(child, trackStart);
-                        dirNode.Children.Add(child);
+                        var last = dirNode.Children.Count > 0 ? dirNode.Children[^1] : null;
+                        if (last is { IsMultiExtent: true, IsDirectory: false } && last.Name == name && !isDir)
+                        {
+                            if (last.Extents.Count > 0 && last.Extents[^1].Size % 2048 != 0)
+                            {
+                                last.IsMultiExtent = false;
+                                if (isMulti)
+                                {
+                                    illMultiExtentName = name;
+                                }
+                            }
+                            else
+                            {
+                                last.Size += extentSize;
+                                last.Extents.Add(new FsExtent { Lba = absoluteLba, Size = extentSize });
+                                last.IsMultiExtent = isMulti;
+                            }
+                        }
+                        else
+                        {
+                            var child = new FsNode { Name = name, Lba = absoluteLba, Size = extentSize, IsDirectory = isDir, IsMultiExtent = isMulti };
+                            child.Extents.Add(new FsExtent { Lba = child.Lba, Size = child.Size });
+                            if (child.IsDirectory) ParseDirectory(child, trackStart);
+                            dirNode.Children.Add(child);
+                        }
                     }
                 }
 
@@ -246,28 +280,15 @@ public class Iso9660Parser
                 return "..";
         }
 
-        var sb = new StringBuilder();
-        for (var i = 0; i + 1 < len; i += 2)
+        var name = Encoding.BigEndianUnicode.GetString(data, offset, len & ~1);
+        var nul = name.IndexOf('\0');
+        if (nul >= 0)
         {
-            var u16 = (ushort)((data[offset + i] << 8) | data[offset + i + 1]);
-            if (u16 == 0) break;
-
-            sb.Append(Utf16ToChar(u16));
+            name = name[..nul];
         }
 
-        var name = sb.ToString();
         var semi = name.IndexOf(';');
         return semi >= 0 ? name[..semi] : name;
-    }
-
-    private static string Utf16ToChar(ushort u16)
-    {
-        return u16 switch
-        {
-            < 0x80 => ((char)u16).ToString(),
-            < 0x800 => $"{(char)(0xC0 | (u16 >> 6))}{(char)(0x80 | (u16 & 0x3F))}",
-            _ => $"{(char)(0xE0 | (u16 >> 12))}{(char)(0x80 | ((u16 >> 6) & 0x3F))}{(char)(0x80 | (u16 & 0x3F))}"
-        };
     }
 
     private static bool CheckMagic(byte[] data, int offset, string magic)
