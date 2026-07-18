@@ -1,7 +1,11 @@
 namespace SimpleChdDrive.Core.Parsers.Systems;
 
+using System.Text;
+
 public class DreamcastParser : IConsoleParser
 {
+    private const string IpBinSignature = "SEGA SEGAKATANA ";
+
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
 
@@ -22,30 +26,55 @@ public class DreamcastParser : IConsoleParser
 
     public bool Parse(FsNode rootNode)
     {
-        return ParseTrack(rootNode, FindDataTrack());
-    }
-
-    public bool ParseTrack(FsNode rootNode, TrackInfo track)
-    {
-        var parser = new Iso9660Parser(_reader);
-
-        var offsets = new[] { -45000, -45150, -150, 0, 45000, 45150 };
-        foreach (var offset in offsets)
+        var dataTracks = new List<TrackInfo>();
+        for (var i = _reader.Tracks.Count - 1; i >= 0; i--)
         {
-            parser.SetLbaOffset(offset);
-            if (parser.Parse(rootNode, track))
+            if (_reader.Tracks[i].IsDataTrack)
+                dataTracks.Add(_reader.Tracks[i]);
+        }
+
+        if (dataTracks.Count == 0)
+            return false;
+
+        foreach (var track in dataTracks.OrderByDescending(HasIpBin))
+        {
+            if (ParseTrack(rootNode, track))
                 return true;
         }
 
         return false;
     }
 
-    private TrackInfo FindDataTrack()
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
-        for (var i = _reader.Tracks.Count - 1; i >= 0; i--)
-            if (_reader.Tracks[i].IsDataTrack) return _reader.Tracks[i];
+        var temp = new FsNode();
+        var parser = new Iso9660Parser(_reader);
 
-        return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+        if (!parser.Parse(temp, track) || temp.Children.Count == 0)
+            return false;
+
+        rootNode.Name = temp.Name;
+        rootNode.IsDirectory = true;
+        rootNode.Lba = temp.Lba;
+        rootNode.Size = temp.Size;
+        rootNode.Extents.Clear();
+        rootNode.Extents.AddRange(temp.Extents);
+        rootNode.Children.Clear();
+        rootNode.Children.AddRange(temp.Children);
+        return true;
+    }
+
+    private bool HasIpBin(TrackInfo track)
+    {
+        _reader.Reset();
+        _reader.SetTrack(track, true);
+
+        var sec = new byte[2048];
+        var ok = _reader.ReadSector(track.StartLba, sec) &&
+                 Encoding.ASCII.GetString(sec, 0, IpBinSignature.Length) == IpBinSignature;
+
+        _reader.Reset();
+        return ok;
     }
 }
 

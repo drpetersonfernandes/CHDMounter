@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
+using SimpleChdDrive.Core.Parsers.Systems;
 using Xunit.Abstractions;
 
 namespace SimpleChdDrive.Core.Tests.Parsers;
@@ -211,32 +212,14 @@ public class XboxIntegrationTests
                 _output.WriteLine($"  idx={t.Index} LBA={t.StartLba} frames={t.Frames} type={t.TrackType} data={t.IsDataTrack}");
 
             var root = new FsNode();
-            var parser = new Iso9660Parser(reader);
+            var parser = new DreamcastParser(reader);
 
-            var offsets = new[] { -45000, -45150, -150, 0, 45000, 45150 };
-            var ok = false;
-            var usedOffset = 0;
-            foreach (var offset in offsets)
-            {
-                parser.SetLbaOffset(offset);
-                ok = parser.Parse(root, track);
-                if (ok)
-                {
-                    usedOffset = offset;
-                    break;
-                }
-            }
+            var ok = parser.Parse(root);
 
-            if (!ok)
-            {
-                ok = parser.Parse(root, track);
-                usedOffset = 0;
-            }
-
-            _output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}  LbaOffset={usedOffset}");
+            _output.WriteLine($"DreamcastParser: {(ok ? "OK" : "FAILED")}");
             _output.WriteLine($"Root LBA={root.Lba} Size={root.Size}");
 
-            Assert.True(ok, "Iso9660Parser could not parse the disc");
+            Assert.True(ok, "DreamcastParser could not parse the disc");
 
             int files = 0, dirs = 0;
             ulong maxSize = 0;

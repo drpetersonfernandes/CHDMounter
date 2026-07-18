@@ -17,23 +17,6 @@ public class PspParser : Iso9660Wrapper
     }
 }
 
-public class PcEngineCdParser : Iso9660Wrapper
-{
-    public PcEngineCdParser(SectorReader reader) : base(reader)
-    {
-    }
-
-    public override ConsoleType GetConsoleType()
-    {
-        return ConsoleType.PcEngineCd;
-    }
-
-    public override string GetConsoleName()
-    {
-        return "PC Engine CD";
-    }
-}
-
 public class PcFxParser : Iso9660Wrapper
 {
     public PcFxParser(SectorReader reader) : base(reader)

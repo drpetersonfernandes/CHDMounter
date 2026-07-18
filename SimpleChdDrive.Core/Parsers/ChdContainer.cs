@@ -83,6 +83,10 @@ public class ChdContainer
             return false;
 
         BuildFromFsNode(parsedRoot);
+
+        if (consoleType == ConsoleType.PcEngineCd)
+            BuildVirtualCueBin(false);
+
         return true;
     }
 
@@ -213,8 +217,7 @@ public class ChdContainer
 
         if (_cueBinEnabled)
         {
-            var lowerName = entry.Name.ToLowerInvariant();
-            if (lowerName == _cueBinStemName + ".cue")
+            if (string.Equals(entry.Name, _cueBinStemName + ".cue", StringComparison.OrdinalIgnoreCase))
             {
                 if (offset >= (ulong)_cueBinText.Length) return 0;
 
@@ -223,7 +226,7 @@ public class ChdContainer
                 return cueRead;
             }
 
-            if (lowerName == _cueBinStemName + ".bin")
+            if (string.Equals(entry.Name, _cueBinStemName + ".bin", StringComparison.OrdinalIgnoreCase))
                 return ReadVirtualBin(offset, buffer, bufOffset, bytesToRead);
         }
 
@@ -234,6 +237,8 @@ public class ChdContainer
 
         var reader = AcquireReader();
         if (reader == null) return 0;
+
+        reader.SetTrack(null!);
 
         try
         {

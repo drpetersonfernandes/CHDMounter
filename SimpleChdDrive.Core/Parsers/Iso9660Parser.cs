@@ -15,8 +15,6 @@ public class Iso9660Parser
     private bool _suspActive;
     private byte _suspSkip;
     private int _lbaOffset;
-    private uint _gdromLbaBase;
-    private uint _gdromTrackStart;
 
     public Iso9660Parser(SectorReader reader)
     {
@@ -31,17 +29,13 @@ public class Iso9660Parser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        var gdromMode = _lbaOffset < 0;
 
-        if (!gdromMode)
-        {
-            if (track is { Frames: > 0 })
-                _reader.SetTrack(track, true);
-            else
-                _reader.SetTrack(null!);
-        }
+        if (track is { Frames: > 0 })
+            _reader.SetTrack(track, true);
+        else
+            _reader.SetTrack(null!);
 
-        _reader.LbaOffset = gdromMode ? 0 : _lbaOffset;
+        _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
         _isXa = false;
@@ -49,22 +43,7 @@ public class Iso9660Parser
         _suspSkip = 0;
         _visitedDirs.Clear();
 
-        var trackStartLba = track?.StartLba ?? 0;
-        _gdromLbaBase = 0;
-        _gdromTrackStart = 0;
-        if (gdromMode)
-        {
-            for (var i = _reader.Tracks.Count - 1; i >= 0; i--)
-            {
-                if (_reader.Tracks[i].IsDataTrack)
-                {
-                    _gdromTrackStart = _reader.Tracks[i].StartLba;
-                    _gdromLbaBase = _gdromTrackStart - 150;
-                    break;
-                }
-            }
-        }
-        var effectiveTrackStart = gdromMode && _gdromTrackStart > 0 ? _gdromTrackStart : trackStartLba;
+        var effectiveTrackStart = track?.StartLba ?? 0;
 
         uint[] vdOffsets = [16, 17, 166, 167]; // 16+150, 17+150
         var foundPvd = false;
@@ -159,17 +138,77 @@ public class Iso9660Parser
         var rootRelLba = LeU32(bestVdData!, rootOff + 2);
         var rootSize = LeU32(bestVdData!, rootOff + 10);
 
+        var baseLba = ResolveDirectoryBase(effectiveTrackStart, rootRelLba, track);
+
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
-        rootNode.Lba = gdromMode ? rootRelLba + 150 : effectiveTrackStart + rootRelLba;
+        rootNode.Lba = unchecked(baseLba + rootRelLba);
         rootNode.Size = rootSize;
         rootNode.Extents.Add(new FsExtent { Lba = rootNode.Lba, Size = rootSize });
 
         if (!_isJoliet && !_isHighSierra)
             DetectSusp(rootNode.Lba);
 
-        var dirTrackStart = gdromMode ? 150u : effectiveTrackStart;
-        return ParseDirectory(rootNode, dirTrackStart);
+        return ParseDirectory(rootNode, baseLba);
+    }
+
+    private uint ResolveDirectoryBase(uint trackStart, uint rootRelLba, TrackInfo? track)
+    {
+        uint[] candidates = [trackStart, 150, 0];
+
+        foreach (var candidate in candidates)
+        {
+            if (IsRootDirectorySector(candidate + rootRelLba, rootRelLba, true))
+                return candidate;
+        }
+
+        // Multisession discs (CD-Extra style): extents are absolute LBAs including an
+        // inter-session gap that is not stored in the CHD, so the bias is disc-specific.
+        // Locate the root directory inside the track via its "." self-record.
+        if (track != null)
+        {
+            var scanLimit = Math.Min(track.Frames, 512u);
+            for (uint k = 0; k < scanLimit; k++)
+            {
+                var lba = trackStart + k;
+                if (IsRootDirectorySector(lba, rootRelLba, true))
+                    return unchecked(lba - rootRelLba);
+            }
+        }
+
+        foreach (var candidate in candidates)
+        {
+            if (IsRootDirectorySector(candidate + rootRelLba, rootRelLba, false))
+                return candidate;
+        }
+
+        return trackStart;
+    }
+
+    private bool IsRootDirectorySector(uint lba, uint expectedExtent, bool strict)
+    {
+        var sec = new byte[2048];
+        if (!_reader.ReadSector(lba, sec))
+            return false;
+
+        var recLen = sec[0];
+        if (recLen < 34)
+            return false;
+
+        var nameLenOff = _isHighSierra ? 31 : 32;
+        var nameOff = _isHighSierra ? 32 : 33;
+        if (sec[nameLenOff] != 1 || sec[nameOff] != 0x00)
+            return false;
+
+        var flagsOff = _isHighSierra ? 24 : 25;
+        if ((sec[flagsOff] & 0x02) == 0)
+            return false;
+
+        if (!strict)
+            return true;
+
+        var selfExtent = LeU32(sec, 2) + sec[1];
+        return selfExtent == expectedExtent;
     }
 
     public bool ParseDirectory(FsNode dirNode, uint trackStart)
