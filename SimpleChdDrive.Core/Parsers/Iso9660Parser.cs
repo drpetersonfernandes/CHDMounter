@@ -15,6 +15,8 @@ public class Iso9660Parser
     private bool _suspActive;
     private byte _suspSkip;
     private int _lbaOffset;
+    private uint _gdromLbaBase;
+    private uint _gdromTrackStart;
 
     public Iso9660Parser(SectorReader reader)
     {
@@ -29,11 +31,17 @@ public class Iso9660Parser
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
-        if (track is { Frames: > 0 })
-            _reader.SetTrack(track, true);
-        else
-            _reader.SetTrack(null!);
-        _reader.LbaOffset = _lbaOffset;
+        var gdromMode = _lbaOffset < 0;
+
+        if (!gdromMode)
+        {
+            if (track is { Frames: > 0 })
+                _reader.SetTrack(track, true);
+            else
+                _reader.SetTrack(null!);
+        }
+
+        _reader.LbaOffset = gdromMode ? 0 : _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
         _isXa = false;
@@ -42,7 +50,21 @@ public class Iso9660Parser
         _visitedDirs.Clear();
 
         var trackStartLba = track?.StartLba ?? 0;
-        var effectiveTrackStart = _lbaOffset < 0 ? 45000u : trackStartLba;
+        _gdromLbaBase = 0;
+        _gdromTrackStart = 0;
+        if (gdromMode)
+        {
+            for (var i = _reader.Tracks.Count - 1; i >= 0; i--)
+            {
+                if (_reader.Tracks[i].IsDataTrack)
+                {
+                    _gdromTrackStart = _reader.Tracks[i].StartLba;
+                    _gdromLbaBase = _gdromTrackStart - 150;
+                    break;
+                }
+            }
+        }
+        var effectiveTrackStart = gdromMode && _gdromTrackStart > 0 ? _gdromTrackStart : trackStartLba;
 
         uint[] vdOffsets = [16, 17, 166, 167]; // 16+150, 17+150
         var foundPvd = false;
@@ -139,14 +161,15 @@ public class Iso9660Parser
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
-        rootNode.Lba = effectiveTrackStart + rootRelLba + (uint)(_lbaOffset < 0 ? _lbaOffset : 0);
+        rootNode.Lba = gdromMode ? rootRelLba + 150 : effectiveTrackStart + rootRelLba;
         rootNode.Size = rootSize;
         rootNode.Extents.Add(new FsExtent { Lba = rootNode.Lba, Size = rootSize });
 
         if (!_isJoliet && !_isHighSierra)
             DetectSusp(rootNode.Lba);
 
-        return ParseDirectory(rootNode, effectiveTrackStart);
+        var dirTrackStart = gdromMode ? 150u : effectiveTrackStart;
+        return ParseDirectory(rootNode, dirTrackStart);
     }
 
     public bool ParseDirectory(FsNode dirNode, uint trackStart)

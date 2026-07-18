@@ -42,8 +42,8 @@ public class DreamcastParser : IConsoleParser
 
     private TrackInfo FindDataTrack()
     {
-        foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+        for (var i = _reader.Tracks.Count - 1; i >= 0; i--)
+            if (_reader.Tracks[i].IsDataTrack) return _reader.Tracks[i];
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
