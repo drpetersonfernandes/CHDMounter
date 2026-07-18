@@ -1,5 +1,5 @@
-using System.Runtime.InteropServices;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using DokanNet;
 using DokanNet.Logging;
 

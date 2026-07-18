@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
 using Xunit.Abstractions;
@@ -329,7 +330,7 @@ public class XboxIntegrationTests
             _output.WriteLine($"IP.BIN at LBA={ipBinLba}: {(ipBinOk ? "OK" : "FAIL")}");
             if (ipBinOk)
             {
-                var id = System.Text.Encoding.ASCII.GetString(buf, 0, 16).TrimEnd('\0');
+                var id = Encoding.ASCII.GetString(buf, 0, 16).TrimEnd('\0');
                 _output.WriteLine($"  [0-15]: '{id}'");
             }
 
@@ -340,7 +341,7 @@ public class XboxIntegrationTests
             if (pvdOk)
             {
                 var type = buf[0];
-                var magic = System.Text.Encoding.ASCII.GetString(buf, 1, 5);
+                var magic = Encoding.ASCII.GetString(buf, 1, 5);
                 var rlba = BitConverter.ToUInt32(buf, 158);
                 _output.WriteLine($"  type={type} magic='{magic}' rootLBA={rlba}");
             }
@@ -366,14 +367,14 @@ public class XboxIntegrationTests
             {
                 var ok = reader.ReadSector(lba, buf);
                 var b0 = buf[0];
-                var magic = ok ? System.Text.Encoding.ASCII.GetString(buf, 1, 5) : "";
+                var magic = ok ? Encoding.ASCII.GetString(buf, 1, 5) : "";
                 _output.WriteLine($"  {label}: LBA={lba} ok={ok} byte0={b0:X2} magic='{magic}'");
                 if (ok && b0 >= 34 && (b0 & 1) == 0)
                 {
                     const int nameLenPos = 32;
                     {
                         var nameLen = buf[nameLenPos];
-                        var name = System.Text.Encoding.ASCII.GetString(buf, 33, Math.Min(nameLen, b0 - 33)).Trim('\0');
+                        var name = Encoding.ASCII.GetString(buf, 33, Math.Min(nameLen, b0 - 33)).Trim('\0');
                         _output.WriteLine($"    Looks like a dir record! nameLen={nameLen} name='{name}'");
                     }
                 }

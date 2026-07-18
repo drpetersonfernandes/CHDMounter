@@ -1,7 +1,10 @@
 ﻿using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
+using Microsoft.Win32;
 
 namespace SimpleChdDrive;
 
@@ -144,7 +147,7 @@ public partial class MainWindow
                                 && !_mountService.IsMounted;
     }
 
-    private void ConsoleType_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void ConsoleType_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ConsoleTypeComboBox.SelectedItem is ConsoleInfo ci)
         {
@@ -154,7 +157,7 @@ public partial class MainWindow
         ValidateAndEnableMount();
     }
 
-    private void ChdFilePath_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    private void ChdFilePath_TextChanged(object sender, TextChangedEventArgs e)
     {
         _chdPath = ChdFilePathTextBox.Text.Trim().Trim('"');
         ValidateAndEnableMount();
@@ -162,7 +165,7 @@ public partial class MainWindow
 
     private void BrowseChd_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog
+        var dialog = new OpenFileDialog
         {
             Filter = "CHD files (*.chd)|*.chd|All files (*.*)|*.*",
             Title = "Select CHD File"
@@ -274,7 +277,7 @@ public partial class MainWindow
         new AboutWindow { Owner = this }.ShowDialog();
     }
 
-    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    private void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
         try { _mountService.Unmount(); }
         catch

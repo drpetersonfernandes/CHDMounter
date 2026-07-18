@@ -1,5 +1,6 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 using DokanNet;
 using DokanFileAccess = DokanNet.FileAccess;
 
@@ -153,9 +154,9 @@ public class ChdFs : IDokanOperations, IDisposable
     {
         try
         {
-            return System.Text.RegularExpressions.Regex.IsMatch(name,
-                "^" + System.Text.RegularExpressions.Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            return Regex.IsMatch(name,
+                "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$",
+                RegexOptions.IgnoreCase);
         }
         catch { return false; }
     }

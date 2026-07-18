@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace SimpleChdDrive.Core.Services;
 
 public static class ServiceProvider
@@ -34,7 +36,7 @@ public static class ServiceProvider
                 try { disposable.Dispose(); }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ServiceProvider: Failed to dispose {kvp.Key.Name}: {ex.Message}");
+                    Debug.WriteLine($"ServiceProvider: Failed to dispose {kvp.Key.Name}: {ex.Message}");
                 }
             }
         }

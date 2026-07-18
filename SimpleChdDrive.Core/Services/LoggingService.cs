@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Threading;
 
 namespace SimpleChdDrive.Core.Services;
@@ -6,7 +7,7 @@ namespace SimpleChdDrive.Core.Services;
 public class LoggingService : ILoggingService
 {
     private const int MaxEntries = 5000;
-    private readonly Dispatcher _dispatcher = System.Windows.Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+    private readonly Dispatcher _dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
     private string _lastMessage = "";
     private DateTime _lastMessageTime;
 

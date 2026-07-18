@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -99,7 +100,7 @@ public partial class App
         catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Error during exit cleanup", true); }
 
         try { AppLogger.CloseAndFlush(); }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to flush loggers: {ex.Message}"); }
+        catch (Exception ex) { Debug.WriteLine($"Failed to flush loggers: {ex.Message}"); }
 
         base.OnExit(e);
     }

@@ -1,4 +1,5 @@
 using Fsp;
+using Microsoft.Win32;
 
 #pragma warning disable CA1707
 namespace SimpleChdDrive_WinFsp.Services;
@@ -23,8 +24,8 @@ public class MountService : IMountService, IDisposable
     {
         try
         {
-            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp")
-                            ?? Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp");
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp")
+                            ?? Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp");
             if (key == null)
             { _loggingService.LogError("WinFsp not found.");
                 return false; }

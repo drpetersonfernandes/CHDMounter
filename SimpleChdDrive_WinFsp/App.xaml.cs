@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
+using Microsoft.Win32;
 
 namespace SimpleChdDrive_WinFsp;
 
@@ -85,8 +87,8 @@ public partial class App
 
             string? binDir = null;
 
-            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp")
-                            ?? Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp");
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp")
+                            ?? Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp");
             var sxsDir = key?.GetValue("SxsDir") as string;
             if (!string.IsNullOrEmpty(sxsDir))
             {
@@ -148,7 +150,7 @@ public partial class App
         catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Error during exit cleanup", true); }
 
         try { AppLogger.CloseAndFlush(); }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to flush loggers: {ex.Message}"); }
+        catch (Exception ex) { Debug.WriteLine($"Failed to flush loggers: {ex.Message}"); }
 
         base.OnExit(e);
     }
