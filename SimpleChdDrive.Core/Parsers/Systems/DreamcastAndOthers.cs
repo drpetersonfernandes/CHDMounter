@@ -27,7 +27,7 @@ public class DreamcastParser : IConsoleParser
 
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
-        var parser = new DreamcastIsoParser(_reader);
+        var parser = new Iso9660Parser(_reader);
 
         var offsets = new[] { -45000, -45150, -150, 0, 45000, 45150 };
         foreach (var offset in offsets)
@@ -37,8 +37,7 @@ public class DreamcastParser : IConsoleParser
                 return true;
         }
 
-        var isoParser = new Iso9660Parser(_reader);
-        return isoParser.Parse(rootNode, track);
+        return false;
     }
 
     private TrackInfo FindDataTrack()

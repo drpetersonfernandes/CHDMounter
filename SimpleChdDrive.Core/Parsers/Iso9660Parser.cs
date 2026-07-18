@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace SimpleChdDrive.Core.Parsers;
@@ -204,9 +205,10 @@ public class Iso9660Parser
                     if (_isXa && suLen >= 14)
                         TryParseXa(sectorData, (int)pos + suStart, suLen, nameLen, out xaFileNumber, out xaInterleaved);
 
+                    SuspInfo? susp = null;
                     if (_suspActive && suLen > _suspSkip + 4)
                     {
-                        var susp = ParseSusp(sectorData, (int)pos + suStart, suLen, trackStart);
+                        susp = ParseSusp(sectorData, (int)pos + suStart, suLen, trackStart);
                         if (susp.Relocated)
                         {
                             skipRecord = true;
@@ -275,6 +277,52 @@ public class Iso9660Parser
                                 IsInterleaved = xaInterleaved && _reader.UnitBytes >= 2352,
                                 ModifiedTime = ParseRecordTime(sectorData, (int)pos + 18)
                             };
+                            if (susp is { SymlinkTarget: not null })
+                            {
+                                child.NodeType = FsNodeType.Symlink;
+                                child.SymlinkTarget = susp.SymlinkTarget;
+                            }
+                            else if (isDir)
+                            {
+                                child.NodeType = FsNodeType.Directory;
+                            }
+                            if (susp != null)
+                            {
+                                if (susp.UnixMode.HasValue)
+                                {
+                                    child.UnixMode = susp.UnixMode;
+                                }
+
+                                if (susp.Uid.HasValue)
+                                {
+                                    child.Uid = susp.Uid;
+                                }
+
+                                if (susp.Gid.HasValue)
+                                {
+                                    child.Gid = susp.Gid;
+                                }
+
+                                if (susp.Inode.HasValue)
+                                {
+                                    child.Inode = susp.Inode;
+                                }
+
+                                if (susp.LinkCount.HasValue)
+                                {
+                                    child.LinkCount = susp.LinkCount;
+                                }
+
+                                if (susp.CreatedTime.HasValue)
+                                {
+                                    child.CreatedTime = susp.CreatedTime;
+                                }
+
+                                if (susp.AccessedTime.HasValue)
+                                {
+                                    child.AccessedTime = susp.AccessedTime;
+                                }
+                            }
                             child.Extents.Add(new FsExtent { Lba = child.Lba, Size = child.Size });
                             if (child.IsDirectory) ParseDirectory(child, trackStart);
                             dirNode.Children.Add(child);
@@ -298,6 +346,15 @@ public class Iso9660Parser
         public string? Name;
         public bool Relocated;
         public uint ChildLinkLba;
+        public uint? UnixMode;
+        public uint? Uid;
+        public uint? Gid;
+        public uint? Inode;
+        public uint? LinkCount;
+        public string? SymlinkTarget;
+        public DateTime? CreatedTime;
+        public DateTime? AccessedTime;
+        public DateTime? AttributeTime;
     }
 
     private void DetectSusp(uint rootLba)
@@ -347,6 +404,7 @@ public class Iso9660Parser
                 if (s0 == 'S' && s1 == 'T') {
                     break; }
 
+                // CE: Continuation Entry (deferred)
                 if (s0 == 'C' && s1 == 'E' && entryLen >= 28)
                 {
                     ceBlock = LeU32(buf, off + 4);
@@ -354,24 +412,116 @@ public class Iso9660Parser
                     ceLen = LeU32(buf, off + 20);
                     haveCe = true;
                 }
+                // NM: Alternate Name
                 else if (s0 == 'N' && s1 == 'M' && entryLen >= 5 && !nameDone)
                 {
                     var nmFlags = buf[off + 4];
-                    // Skip CURRENT/PARENT entries unless a real name is present (VirtualBox quirk)
+                    var continued = (nmFlags & 0x01) != 0;
+
                     if ((nmFlags & 0x06) == 0 || entryLen > 5)
                     {
                         nameBuilder ??= new StringBuilder();
-                        nameBuilder.Append(Encoding.UTF8.GetString(buf, off + 5, entryLen - 5));
-                        if ((nmFlags & 0x01) == 0)
+                        var nameBytes = entryLen - 5;
+                        var nameStr = Encoding.UTF8.GetString(buf, off + 5, nameBytes);
+                        var nul = nameStr.IndexOf('\0');
+                        if (nul >= 0)
+                        {
+                            nameStr = nameStr[..nul];
+                        }
+
+                        nameBuilder.Append(nameStr);
+
+                        if (!continued)
                         {
                             nameDone = true;
                         }
                     }
                 }
+                // PX: POSIX File Attributes
+                else if (s0 == 'P' && s1 == 'X' && entryLen >= 36)
+                {
+                    info.UnixMode = BeU32(buf, off + 4);
+                    info.LinkCount = BeU32(buf, off + 12);
+                    info.Uid = BeU32(buf, off + 20);
+                    info.Gid = BeU32(buf, off + 28);
+                    if (entryLen >= 44)
+                    {
+                        info.Inode = BeU32(buf, off + 36);
+                    }
+                }
+                // TF: Time Stamps
+                else if (s0 == 'T' && s1 == 'F' && entryLen >= 5)
+                {
+                    var tfFlags = buf[off + 4];
+                    var isLongForm = (tfFlags & 0x80) != 0;
+                    var stampSize = isLongForm ? 17 : 7;
+                    var stampOff = off + 5;
+                    var idx = 0;
+
+                    if ((tfFlags & 0x01) != 0 && stampOff + (idx + 1) * stampSize <= off + entryLen)
+                    {
+                        info.CreatedTime = isLongForm
+                            ? ParseLongTimestamp(buf, stampOff + idx * stampSize)
+                            : ParseRecordTime(buf, stampOff + idx * stampSize);
+                    }
+
+                    idx += (tfFlags & 0x01) != 0 ? 1 : 0;
+
+                    if ((tfFlags & 0x02) != 0 && stampOff + (idx + 1) * stampSize <= off + entryLen)
+                    {
+                        info.AccessedTime = isLongForm
+                            ? ParseLongTimestamp(buf, stampOff + idx * stampSize)
+                            : ParseRecordTime(buf, stampOff + idx * stampSize);
+                    }
+
+                    idx += (tfFlags & 0x02) != 0 ? 1 : 0;
+
+                    if ((tfFlags & 0x04) != 0 && stampOff + (idx + 1) * stampSize <= off + entryLen)
+                    {
+                        /* ModifiedTime set from ISO record; TF value skipped */
+                    }
+                    idx += (tfFlags & 0x04) != 0 ? 1 : 0;
+
+                    if ((tfFlags & 0x08) != 0 && stampOff + (idx + 1) * stampSize <= off + entryLen)
+                    {
+                        info.AttributeTime = isLongForm
+                            ? ParseLongTimestamp(buf, stampOff + idx * stampSize)
+                            : ParseRecordTime(buf, stampOff + idx * stampSize);
+                    }
+                }
+                // SL: Symbolic Link
+                else if (s0 == 'S' && s1 == 'L' && entryLen >= 5)
+                {
+                    var slFlags = buf[off + 4];
+                    if ((slFlags & 0x02) != 0)
+                    {
+                        var slBuilder = new StringBuilder();
+                        var slPos = off + 5;
+                        while (slPos + 2 <= off + entryLen)
+                        {
+                            var compFlags = buf[slPos];
+                            var compLen = buf[slPos + 1];
+                            if (compLen < 2 || slPos + 2 + compLen > off + entryLen) break;
+
+                            var component = Encoding.UTF8.GetString(buf, slPos + 2, compLen);
+                            if ((compFlags & 0x04) != 0)
+                                slBuilder.Append('/');
+                            slBuilder.Append(component);
+                            if ((compFlags & 0x01) == 0)
+                                slBuilder.Append('/');
+
+                            slPos += 2 + compLen;
+                        }
+
+                        info.SymlinkTarget = slBuilder.ToString();
+                    }
+                }
+                // RE: Relocated Entry
                 else if (s0 == 'R' && s1 == 'E')
                 {
                     info.Relocated = true;
                 }
+                // CL: Child Link
                 else if (s0 == 'C' && s1 == 'L' && entryLen >= 12)
                 {
                     info.ChildLinkLba = LeU32(buf, off + 4);
@@ -445,6 +595,18 @@ public class Iso9660Parser
 
     private DateTime? ParseRecordTime(byte[] d, int off)
     {
+        var allZero = true;
+        for (var i = 0; i < 7; i++)
+        {
+            if (d[off + i] != 0)
+            {
+                allZero = false;
+                break;
+            }
+        }
+
+        if (allZero) return null;
+
         var year = 1900 + d[off];
         int month = d[off + 1], day = d[off + 2], hour = d[off + 3], minute = d[off + 4], second = d[off + 5];
 
@@ -529,5 +691,51 @@ public class Iso9660Parser
     private static uint LeU32(byte[] data, int offset)
     {
         return (uint)(data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    }
+
+    private static uint BeU32(byte[] data, int offset)
+    {
+        return (uint)((data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3]);
+    }
+
+    private static DateTime? ParseLongTimestamp(byte[] d, int off)
+    {
+        var allZero = true;
+        for (var i = 0; i < 16; i++)
+        {
+            if (d[off + i] != 0 && d[off + i] != '0')
+            {
+                allZero = false;
+                break;
+            }
+        }
+
+        if (allZero) return null;
+
+        var str = Encoding.ASCII.GetString(d, off, 16);
+        try
+        {
+            var year = int.Parse(str[..4], CultureInfo.InvariantCulture);
+            var month = int.Parse(str[4..6], CultureInfo.InvariantCulture);
+            var day = int.Parse(str[6..8], CultureInfo.InvariantCulture);
+            var hour = int.Parse(str[8..10], CultureInfo.InvariantCulture);
+            var minute = int.Parse(str[10..12], CultureInfo.InvariantCulture);
+            var second = int.Parse(str[12..14], CultureInfo.InvariantCulture);
+
+            if (month is < 1 or > 12 || day is < 1 or > 31) return null;
+            if (hour > 23 || minute > 59 || second > 59) return null;
+
+            var tzMinutes = 15 * (sbyte)d[off + 16];
+            if (tzMinutes is < -14 * 60 or > 14 * 60)
+            {
+                tzMinutes = 0;
+            }
+
+            return new DateTimeOffset(year, month, day, hour, minute, second, TimeSpan.FromMinutes(tzMinutes)).UtcDateTime;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

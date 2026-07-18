@@ -14,10 +14,13 @@ public class UdfParser
     private PartitionMapRef[] _maps = [];
     private readonly List<FsExtent> _metaExtents = [];
 
+    private static readonly ushort[] CrcTable = BuildCrcTable();
+
     private enum MapKind
     {
         Physical,
         Metadata,
+        Virtual,
         Unsupported
     }
 
@@ -94,10 +97,14 @@ public class UdfParser
 
         if (!ResolveLba(fsdLbn, fsdPart, out var fsdLba)) return false;
         if (!_reader.ReadSector(fsdLba, sector)) return false;
-        if (!ValidTag(sector, 0) || LeU16(sector, 0) != 256) return false; // FSD
+        if (!ValidTag(sector, 0)) return false;
+
+        var fsdTagId = LeU16(sector, 0);
+        if (fsdTagId != 256) return false;
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
+        rootNode.NodeType = FsNodeType.Directory;
 
         // Root directory ICB long_ad @ 400 (ECMA-167 4/14.1)
         var rootLbn = LeU32(sector, 404);
@@ -159,6 +166,9 @@ public class UdfParser
                                 MetadataFileLoc = LeU32(lvd, off + 40),
                                 MetadataMirrorLoc = LeU32(lvd, off + 44)
                             });
+                            break;
+                        case "*UDF Virtual Partition":
+                            maps.Add(new PartitionMapRef { Kind = MapKind.Virtual, PartitionNumber = partNum });
                             break;
                         case "*UDF Sparable Partition":
                             maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = partNum });
@@ -243,6 +253,7 @@ public class UdfParser
         switch (map.Kind)
         {
             case MapKind.Physical:
+            case MapKind.Virtual:
                 if (!_physicalPartitions.TryGetValue(map.PartitionNumber, out var start)) return false;
 
                 lba = start + lbn;
@@ -278,6 +289,19 @@ public class UdfParser
 
         var sector = new byte[2048];
         if (!_reader.ReadSector(feLba, sector)) return false;
+
+        var allZero = true;
+        for (var i = 0; i < 16; i++)
+        {
+            if (sector[i] != 0)
+            {
+                allZero = false;
+                break;
+            }
+        }
+
+        if (allZero) return false;
+
         if (!ValidTag(sector, 0)) return false;
 
         var tagId = LeU16(sector, 0);
@@ -286,10 +310,15 @@ public class UdfParser
         if (!GetAllocDescriptors(sector, tagId == 266, out var allocDesc, out var icbFlags, out var adOffset))
             return false;
 
-        var fileType = sector[27]; // ICB tag @ 16, file type @ +11
+        var fileType = sector[27];
         node.Size = LeU64(sector, 56);
         node.IsDirectory = fileType == 4;
-        // Modification time: FE @ 84, EFE @ 92 (12-byte UDF timestamp)
+        node.NodeType = fileType switch
+        {
+            4 => FsNodeType.Directory,
+            12 => FsNodeType.Symlink,
+            _ => FsNodeType.File
+        };
         node.ModifiedTime = ParseUdfTimestamp(sector, tagId == 266 ? 92 : 84);
         node.Extents.Clear();
 
@@ -507,23 +536,26 @@ public class UdfParser
         var tz = typeAndTz & 0x0FFF;
         if ((tz & 0x800) != 0)
         {
-            tz -= 0x1000; // 12-bit signed timezone offset in minutes
+            tz -= 0x1000;
         }
 
         if (tz is < -14 * 60 or > 14 * 60)
         {
-            tz = 0; // -2047 = unspecified, anything out of range treated as UTC
+            tz = 0;
         }
 
         int year = LeU16(d, off + 2);
         int month = d[off + 4], day = d[off + 5], hour = d[off + 6], minute = d[off + 7], second = d[off + 8];
+        int centiseconds = d[off + 9];
+        int hundredMicros = d[off + 10];
 
         if (month is < 1 or > 12 || day is < 1 or > 31) return null;
         if (hour > 23 || minute > 59 || second > 59) return null;
 
         try
         {
-            return new DateTimeOffset(year, month, day, hour, minute, second, TimeSpan.FromMinutes(tz)).UtcDateTime;
+            var dt = new DateTimeOffset(year, month, day, hour, minute, second, TimeSpan.FromMinutes(tz));
+            return dt.UtcDateTime.AddMilliseconds(10.0 * centiseconds + hundredMicros / 10.0);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -545,6 +577,49 @@ public class UdfParser
         }
 
         return sum == d[o + 4];
+    }
+
+    private static bool ValidateTagCrc(byte[] d, int o, uint descriptorLength)
+    {
+        if (o + 24 > d.Length) return false;
+
+        var crcLen = LeU16(d, o + 20);
+        var crcLoc = LeU32(d, o + 22);
+        if (crcLen == 0) return true;
+
+        var expectedCrc = LeU16(d, o + 16);
+        if (descriptorLength < crcLoc + crcLen) return false;
+
+        ushort crc = 0;
+        var end = (int)(crcLoc + crcLen);
+        for (var i = (int)crcLoc; i < end && i < d.Length; i++)
+        {
+            crc = CrcCcitt(crc, d[i]);
+        }
+
+        return crc == expectedCrc;
+    }
+
+    private static ushort CrcCcitt(ushort crc, byte b)
+    {
+        return (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ b) & 0xFF]);
+    }
+
+    private static ushort[] BuildCrcTable()
+    {
+        var table = new ushort[256];
+        for (var i = 0; i < 256; i++)
+        {
+            var crc = (ushort)(i << 8);
+            for (var j = 0; j < 8; j++)
+            {
+                crc = (crc & 0x8000) != 0 ? (ushort)((crc << 1) ^ 0x1021) : (ushort)(crc << 1);
+            }
+
+            table[i] = crc;
+        }
+
+        return table;
     }
 
     private static ushort LeU16(byte[] d, int o)

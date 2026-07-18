@@ -1,5 +1,12 @@
 namespace SimpleChdDrive.Core.Models;
 
+public enum FsNodeType
+{
+    File = 0,
+    Directory = 4,
+    Symlink = 12
+}
+
 public class FsNode
 {
     public string Name { get; set; } = string.Empty;
@@ -13,6 +20,15 @@ public class FsNode
     public bool IsEmbedded { get; set; }
     public uint EmbeddedOffset { get; set; }
     public DateTime? ModifiedTime { get; set; }
+    public DateTime? CreatedTime { get; set; }
+    public DateTime? AccessedTime { get; set; }
+    public uint? UnixMode { get; set; }
+    public uint? Uid { get; set; }
+    public uint? Gid { get; set; }
+    public uint? Inode { get; set; }
+    public uint? LinkCount { get; set; }
+    public FsNodeType NodeType { get; set; } = FsNodeType.File;
+    public string? SymlinkTarget { get; set; }
     public List<FsExtent> Extents { get; set; } = [];
     public List<FsNode> Children { get; set; } = [];
 }
