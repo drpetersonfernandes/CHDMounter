@@ -8,6 +8,12 @@ public class ThreeDoParser
 
     private static readonly byte[] OperaMagic = [0x01, 0x5A, 0x5A, 0x5A, 0x5A, 0x5A, 0x01];
 
+    private const int DirectoryEntrySize = 0x44;
+    private const uint FileFlagsMask = 0xFF;
+    private const uint FileTypeDirectory = 7;
+    private const uint FlagLastEntry = 0x80000000;
+    private const uint FlagLastEntryInBlock = 0x40000000;
+
     public ThreeDoParser(SectorReader reader)
     {
         _reader = reader;
@@ -30,88 +36,99 @@ public class ThreeDoParser
             for (uint i = 0; i < 100; i++)
             {
                 if (_reader.ReadSector(trackStart + i, sectorData) && CheckMagic(sectorData, 0, OperaMagic))
-                { trackStart += i;
+                {
+                    trackStart += i;
                     foundVh = true;
-                    break; }
+                    break;
+                }
             }
         }
 
         if (!foundVh) return false;
 
-        var blockSize = Be24(sectorData, 0x4D);
+        var blockSize = Be32(sectorData, 0x4C);
         if (blockSize == 0)
-        {
             blockSize = 2048;
-        }
 
-        var rootDirBlock = Be24(sectorData, 0x11);
+        var blockSizeRatio = blockSize / 2048;
+        if (blockSizeRatio == 0) blockSizeRatio = 1;
+
+        var firstRootBlock = (int)Be32(sectorData, 0x64);
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
-        rootNode.Lba = trackStart + rootDirBlock * (blockSize / 2048);
+        rootNode.Lba = (uint)(trackStart + (long)firstRootBlock * blockSizeRatio);
         rootNode.Size = 0;
 
-        return ParseDirectory(rootDirBlock, blockSize, rootNode, trackStart);
+        return ParseDirectory(firstRootBlock, blockSizeRatio, rootNode, trackStart);
     }
 
-    private bool ParseDirectory(uint dirBlock, uint blockSize, FsNode parentNode, uint trackStart)
+    private bool ParseDirectory(int firstBlock, uint blockSizeRatio, FsNode parentNode, uint trackStart)
     {
         var sectorData = new byte[2048];
-        var currentBlock = dirBlock;
-        var visited = new HashSet<uint>();
+        int nextBlock = firstBlock;
+        var visited = new HashSet<int>();
 
         while (true)
         {
-            if (!visited.Add(currentBlock)) break;
+            if (!visited.Add(nextBlock)) break;
 
-            var currentLba = trackStart + currentBlock * (blockSize / 2048);
+            var currentLba = (uint)(trackStart + (long)nextBlock * blockSizeRatio);
             if (!_reader.ReadSector(currentLba, sectorData)) return false;
 
-            var firstEntryOffset = Be16(sectorData, 0x12);
-            if (firstEntryOffset is 0 or >= 2048)
-            {
+            var headerNextBlock = (int)Be32(sectorData, 0x00);
+            var firstEntryOffset = Be32(sectorData, 0x10);
+
+            if (firstEntryOffset == 0 || firstEntryOffset >= 2048)
                 firstEntryOffset = 0x14;
-            }
 
-            var nextBlockOffset = Be16(sectorData, 0x02);
+            uint lastEntryFlags = 0;
+            var hasEntries = false;
 
-            var pos = firstEntryOffset;
-            while (pos + 72 <= 2048)
+            var pos = (int)firstEntryOffset;
+            while (pos + DirectoryEntrySize <= 2048)
             {
-                var flags = Be32(sectorData, (int)pos);
-                var isLast = (flags & 0x80000000) != 0;
+                var flags = Be32(sectorData, pos);
 
                 if (flags == 0 && sectorData[pos + 0x20] == 0) break;
 
-                var isDir = (flags & 0x07) == 0x07;
+                var fileType = flags & FileFlagsMask;
+                var isDir = fileType == FileTypeDirectory;
 
-                var name = Encoding.ASCII.GetString(sectorData, (int)pos + 0x20, 32).TrimEnd('\0');
+                var name = Encoding.ASCII.GetString(sectorData, pos + 0x20, 32).TrimEnd('\0');
+                var byteCount = Be32(sectorData, pos + 0x10);
+                var lastCopy = Be32(sectorData, pos + 0x40);
+                var extent = Be32(sectorData, pos + 0x44);
 
-                var byteCount = Be32(sectorData, (int)pos + 0x10);
-                uint avCnt = sectorData[pos + 0x43];
-
-                var extent = Be32(sectorData, (int)pos + 0x44);
+                lastEntryFlags = flags;
+                hasEntries = true;
 
                 var child = new FsNode
                 {
                     Name = name,
-                    Lba = trackStart + extent * (blockSize / 2048),
+                    Lba = (uint)(trackStart + (long)extent * blockSizeRatio),
                     Size = byteCount,
                     IsDirectory = isDir
                 };
 
-                if (child.IsDirectory && extent != 0 && extent != currentBlock)
-                    ParseDirectory(extent, blockSize, child, trackStart);
+                if (isDir && extent != 0 && extent != nextBlock)
+                    ParseDirectory((int)extent, blockSizeRatio, child, trackStart);
 
                 parentNode.Children.Add(child);
 
-                pos += 0x48 + avCnt * 4;
-                if (isLast) break;
+                if ((flags & FlagLastEntry) != 0 || (flags & FlagLastEntryInBlock) != 0)
+                    break;
+
+                pos += DirectoryEntrySize + (int)(lastCopy + 1) * 4;
             }
 
-            if (nextBlockOffset == 0xFFFF) break;
+            if (hasEntries && (lastEntryFlags & FlagLastEntry) != 0)
+                break;
 
-            currentBlock = dirBlock + nextBlockOffset;
+            if (headerNextBlock == -1)
+                break;
+
+            nextBlock = firstBlock + headerNextBlock;
         }
 
         return true;
@@ -122,16 +139,6 @@ public class ThreeDoParser
         for (var i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; }
 
         return true;
-    }
-
-    private static uint Be24(byte[] d, int o)
-    {
-        return (uint)((d[o] << 16) | (d[o + 1] << 8) | d[o + 2]);
-    }
-
-    private static uint Be16(byte[] d, int o)
-    {
-        return (uint)((d[o] << 8) | d[o + 1]);
     }
 
     private static uint Be32(byte[] d, int o)
