@@ -458,7 +458,7 @@ public class UdfParser
 
         var lEa = LeU32(sector, isEfe ? 208 : 168);
         var lAd = LeU32(sector, isEfe ? 212 : 172);
-        var baseOff = (isEfe ? 216 : 176) + (long)lEa;
+        var baseOff = (isEfe ? 216 : 176) + lEa;
         if (baseOff > sector.Length) return false;
 
         adOffset = (uint)baseOff;

@@ -48,7 +48,7 @@ public class ChdContainer
 
         _primaryChd = chd;
 
-        var unitBytes = ChdHeaderReader.ReadUnitBytes(_chdPath);
+        var unitBytes = chd.UnitBytes;
         var reader = new SectorReader(chd, unitBytes);
         UnitBytes = unitBytes;
         HunkBytes = chd.HunkBytes;

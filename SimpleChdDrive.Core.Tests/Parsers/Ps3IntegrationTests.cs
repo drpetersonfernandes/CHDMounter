@@ -36,7 +36,7 @@ public class Ps3IntegrationTests
 
         try
         {
-            var unitBytes = ChdHeaderReader.ReadUnitBytes(chdPath);
+            var unitBytes = chd.UnitBytes;
             var reader = new SectorReader(chd, unitBytes);
             var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
 
@@ -71,10 +71,11 @@ public class Ps3IntegrationTests
 
         var err = ChdFile.Open(chdPath, out var chd);
         Assert.Equal(ChdError.Chderrnone, err);
+        Assert.NotNull(chd);
 
         try
         {
-            var reader = new SectorReader(chd!, ChdHeaderReader.ReadUnitBytes(chdPath));
+            var reader = new SectorReader(chd, chd.UnitBytes);
             var root = new FsNode();
             var ok = new Iso9660Parser(reader).Parse(root);
             _output.WriteLine($"ISO9660 bridge parse: {(ok ? "OK" : "FAILED")}, top-level entries: {root.Children.Count}");
@@ -93,7 +94,7 @@ public class Ps3IntegrationTests
         }
         finally
         {
-            chd!.Dispose();
+            chd.Dispose();
         }
     }
 
