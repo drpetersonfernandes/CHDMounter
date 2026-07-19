@@ -220,7 +220,7 @@ public class PlayStation3Parser : IConsoleParser
     /// <summary>
 /// Returns the ConsoleType that this parser handles.
 /// </summary>
-/// <returns>ConsoleType.Ps1</returns>
+/// <returns>ConsoleType.Ps3</returns>
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.Ps3;
@@ -229,7 +229,7 @@ public class PlayStation3Parser : IConsoleParser
     /// <summary>
 /// Returns the human-readable console name.
 /// </summary>
-/// <returns>"PS1"</returns>
+/// <returns>"PS3"</returns>
     public string GetConsoleName()
     {
         return "PS3";

@@ -7,7 +7,7 @@ using VideoGameFileSystemParser.Parsers;
 
 namespace SimpleChdDrive.Services;
 
-public class MountService : IMountService, IDisposable
+internal class MountService : IMountService, IDisposable
 {
     private readonly ILoggingService _loggingService;
     private DokanInstance? _dokanInstance;
@@ -58,7 +58,7 @@ public class MountService : IMountService, IDisposable
 
         _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
 
-        MountPoint = mountPoint ?? PickDriveLetter();
+        MountPoint = mountPoint ?? DriveHelper.PickDriveLetter();
         _loggingService.Log($"Mounting at {MountPoint}...");
 
         _currentFs = new ChdFs(_container, _loggingService);
@@ -96,16 +96,6 @@ public class MountService : IMountService, IDisposable
         MountPoint = "";
     }
 
-    private static string PickDriveLetter()
-    {
-        var drives = DriveInfo.GetDrives().Select(static d => d.Name[0]).ToHashSet();
-        for (var c = 'M'; c <= 'Q'; c++)
-            if (!drives.Contains(c))
-                return $"{c}:";
-
-        return "Z:";
-    }
-
     public void Dispose()
     {
         Unmount();
@@ -113,7 +103,7 @@ public class MountService : IMountService, IDisposable
     }
 }
 
-public class DokanPrefixedLogger : ILogger
+internal class DokanPrefixedLogger : ILogger
 {
     private readonly ILoggingService _loggingService;
     public bool DebugEnabled => false;

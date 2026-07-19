@@ -79,17 +79,17 @@ public class ServiceProviderTests
         Assert.Null(ServiceProvider.TryGet<ITestService>());
     }
 
-    public interface ITestService;
+    private interface ITestService;
 
-    public interface INeverRegisteredService;
+    private interface INeverRegisteredService;
 
-    public interface IDisposableService : IDisposable;
+    private interface IDisposableService : IDisposable;
 
-    public interface IThrowingDisposable : IDisposable;
+    private interface IThrowingDisposable : IDisposable;
 
-    public class TestService : ITestService;
+    private class TestService : ITestService;
 
-    public class DisposableTestService : IDisposableService
+    private class DisposableTestService : IDisposableService
     {
         public bool IsDisposed { get; private set; }
 
@@ -100,7 +100,7 @@ public class ServiceProviderTests
         }
     }
 
-    public class ThrowingDisposableService : IThrowingDisposable
+    private class ThrowingDisposableService : IThrowingDisposable
     {
         public void Dispose()
         {

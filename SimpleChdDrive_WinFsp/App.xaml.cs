@@ -23,8 +23,8 @@ public partial class App
         {
             StartupArgs = e.Args;
 
+            DiagnosticLogger.Initialize("SimpleChdDrive_WinFsp");
             DiagnosticLogger.CleanupOldLogs();
-            DiagnosticLogger.Initialize();
             DiagnosticLogger.LogSection("APPLICATION STARTUP");
             DiagnosticLogger.Log($"  Version: {Assembly.GetExecutingAssembly().GetName().Version}");
             DiagnosticLogger.Log($"  Arguments: [{string.Join(", ", StartupArgs)}]");
@@ -61,6 +61,7 @@ public partial class App
             ErrorLoggerStatic.InitializeGlobalExceptionHandlers();
 
             StatsClient.SendStats();
+            UpdateChecker.CheckForUpdates();
         }
         catch (Exception ex)
         {
@@ -132,6 +133,9 @@ public partial class App
 
         var mountService = new MountService(loggingService);
         ServiceProvider.Register<IMountService>(mountService);
+
+        var screenshotService = new ScreenshotService(loggingService);
+        ServiceProvider.Register<IScreenshotService>(screenshotService);
     }
 
     protected override void OnExit(ExitEventArgs e)

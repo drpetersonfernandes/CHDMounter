@@ -8,9 +8,11 @@
         Height="500" Width="800"
         MinHeight="400" MinWidth="640"
         WindowStartupLocation="CenterScreen"
+        KeyDown="MainWindow_KeyDown"
         Style="{StaticResource ModernWindowStyle}">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -25,11 +27,33 @@
                 <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application" />
             </MenuItem>
             <MenuItem Header="Help" ToolTip="Help and information">
+                <MenuItem Header="Open AppData Folder" Click="OpenAppDataFolder_Click" ToolTip="Open the application data folder in Explorer" />
+                <Separator />
                 <MenuItem Header="About" Click="About_Click" ToolTip="About SimpleChdDrive" />
             </MenuItem>
         </Menu>
 
-        <Grid Grid.Row="1" Margin="10,8">
+        <Border x:Name="UpdateBanner" Grid.Row="1" Background="{StaticResource AccentSecondaryBrush}"
+                Visibility="Collapsed" Padding="10,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" x:Name="UpdateBannerText" Foreground="White" FontSize="12"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1" x:Name="UpdateBannerButton" Content="Download" Width="80" Height="24"
+                        Margin="10,0,0,0" Click="UpdateBannerButton_Click"
+                        Foreground="White" Background="Transparent" BorderBrush="White" BorderThickness="1"
+                        FontSize="11" Cursor="Hand" />
+                <Button Grid.Column="2" Content="X" Width="24" Height="24" Margin="4,0,0,0"
+                        Background="Transparent" Foreground="White" BorderThickness="0"
+                        FontWeight="Bold" Click="UpdateDismiss_Click" Cursor="Hand" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="10,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -56,7 +80,7 @@
             </ComboBox>
         </Grid>
 
-        <Grid Grid.Row="2" Margin="10,0,10,8">
+        <Grid Grid.Row="3" Margin="10,0,10,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -70,11 +94,11 @@
                     Click="Unmount_Click" ToolTip="Unmount the virtual drive" />
         </Grid>
 
-        <TextBox Grid.Row="3" x:Name="LogTextBox"
+        <TextBox Grid.Row="4" x:Name="LogTextBox"
                  Style="{StaticResource LogTextBoxStyle}"
                  Margin="10,0,10,8" ToolTip="Activity log output" />
 
-        <StatusBar Grid.Row="4" x:Name="StatusBarControl" ToolTip="Application status">
+        <StatusBar Grid.Row="5" x:Name="StatusBarControl" ToolTip="Application status">
             <StatusBarItem>
                 <TextBlock x:Name="StatusText" Text="Ready" />
             </StatusBarItem>

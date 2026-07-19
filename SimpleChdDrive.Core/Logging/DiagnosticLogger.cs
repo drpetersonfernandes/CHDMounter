@@ -6,10 +6,20 @@ namespace SimpleChdDrive.Core.Logging;
 public static class DiagnosticLogger
 {
     public static string? LogFilePath { get; private set; }
+    public static string AppDataLogFolder { get; private set; } = string.Empty;
 
-    public static void Initialize()
+    public static string GetAppDataFolder(string appName)
     {
-        LogFilePath = Path.Combine(Path.GetTempPath(), $"SimpleChdDrive_Debug_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            appName);
+    }
+
+    public static void Initialize(string appName = "SimpleChdDrive")
+    {
+        AppDataLogFolder = Path.Combine(GetAppDataFolder(appName), "logs");
+        Directory.CreateDirectory(AppDataLogFolder);
+        LogFilePath = Path.Combine(AppDataLogFolder, $"debug_{DateTime.Now:yyyyMMdd_HHmmss}.log");
         AppLogger.Initialize(LogFilePath);
     }
 
@@ -17,8 +27,11 @@ public static class DiagnosticLogger
     {
         try
         {
-            var tempPath = Path.GetTempPath();
-            var oldLogs = Directory.GetFiles(tempPath, "SimpleChdDrive_Debug_*.log");
+            var logDir = AppDataLogFolder;
+            if (string.IsNullOrEmpty(logDir) || !Directory.Exists(logDir))
+                return;
+
+            var oldLogs = Directory.GetFiles(logDir, "debug_*.log");
             foreach (var log in oldLogs)
             {
                 try
@@ -37,6 +50,11 @@ public static class DiagnosticLogger
         {
             // ignored
         }
+    }
+
+    public static string GetAppDataFolderForCurrentApp()
+    {
+        return AppDataLogFolder;
     }
 
     public static void LogSection(string section)

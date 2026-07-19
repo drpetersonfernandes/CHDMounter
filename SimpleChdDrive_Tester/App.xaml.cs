@@ -13,7 +13,9 @@ public partial class App
     {
         base.OnStartup(e);
 
-        var logDir = Path.Combine(AppContext.BaseDirectory, "logs");
+        var logDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SimpleChdDrive_Tester", "logs");
         Directory.CreateDirectory(logDir);
         LogFilePath = Path.Combine(logDir, $"tester_{DateTime.Now:yyyyMMdd_HHmmss}.log");
 
@@ -32,6 +34,7 @@ public partial class App
         Logger.Information("Log file: {LogFilePath}", LogFilePath);
 
         StatsClient.SendStats();
+        UpdateChecker.CheckForUpdates();
 
         DispatcherUnhandledException += (_, args) =>
         {

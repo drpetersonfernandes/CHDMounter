@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 
 namespace SimpleChdDrive.Core.Tests.Parsers;
 
-public static class SequentialTestRunner
+internal static class SequentialTestRunner
 {
     public const int DefaultMaxFilesPerCollection = 10;
     public const int DefaultMaxDegreeOfParallelism = 3;

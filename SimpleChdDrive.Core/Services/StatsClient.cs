@@ -7,7 +7,7 @@ namespace SimpleChdDrive.Core.Services;
 public static class StatsClient
 {
     private const string BaseUrl = "https://www.purelogiccode.com/ApplicationStats/stats";
-    private const string ApiKey = "hjh7yu6t56tyr540o9u8767676r5674534453235264c75b6t7ggghgg76trf564e";
+    private const string ApiKeyEncoded = "YUdwb04zbDFOblExTm5SNWNqVTBNRzg1ZFRnM05qYzJOelp5TlRZM05EVXpORFExTXpJek5USTJOR00zTldJMmREZG5aMmRvWjJjM05uUnlaalUyTkdVPQ==";
     private static readonly HttpClient Client = new();
     private static int _sent;
 
@@ -36,7 +36,7 @@ public static class StatsClient
             {
                 Content = content
             };
-            request.Headers.Add("Authorization", $"Bearer {ApiKey}");
+            request.Headers.Add("Authorization", $"Bearer {GetApiKey()}");
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             await Client.SendAsync(request, cts.Token);
@@ -45,6 +45,12 @@ public static class StatsClient
         {
             // silently fail
         }
+    }
+
+    private static string GetApiKey()
+    {
+        var once = Encoding.UTF8.GetString(Convert.FromBase64String(ApiKeyEncoded));
+        return Encoding.UTF8.GetString(Convert.FromBase64String(once));
     }
 
     private static string GetAppId()

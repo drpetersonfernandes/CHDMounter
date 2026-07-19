@@ -8,9 +8,14 @@ namespace SimpleChdDrive.Core.Services;
 public class LoggingService : ILoggingService
 {
     private const int MaxEntries = 5000;
-    private readonly Dispatcher _dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+    private readonly Dispatcher? _dispatcher;
     private string _lastMessage = "";
     private DateTime _lastMessageTime;
+
+    public LoggingService(Dispatcher? dispatcher = null)
+    {
+        _dispatcher = dispatcher ?? Application.Current?.Dispatcher;
+    }
 
     public ObservableCollection<LogEntry> LogEntries { get; } = [];
 
@@ -28,7 +33,7 @@ public class LoggingService : ILoggingService
 
     private void AppendEntry(string message, bool isError)
     {
-        if (_dispatcher.CheckAccess())
+        if (_dispatcher == null || _dispatcher.CheckAccess())
         {
             DoAppend(message, isError);
         }

@@ -5,7 +5,7 @@ using Tester.Models;
 
 namespace Tester.Services;
 
-public sealed class PdfExportService
+internal sealed class PdfExportService
 {
     static PdfExportService()
     {

@@ -10,7 +10,7 @@ using FileInfo = Fsp.Interop.FileInfo;
 namespace SimpleChdDrive_WinFsp;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-public sealed class ChdFs : FileSystemBase, IDisposable
+internal sealed class ChdFs : FileSystemBase, IDisposable
 {
     private readonly ChdContainer _container;
     private readonly ILoggingService _loggingService;
@@ -60,7 +60,7 @@ public sealed class ChdFs : FileSystemBase, IDisposable
         {
             if (FileName is "\\" or "/")
             {
-                entry = new FileEntry { Name = "\\", IsDirectory = true };
+                entry = new FileEntry { Name = "\\", FullPath = "\\", IsDirectory = true };
             }
             else
                 return STATUS_OBJECT_NAME_NOT_FOUND;

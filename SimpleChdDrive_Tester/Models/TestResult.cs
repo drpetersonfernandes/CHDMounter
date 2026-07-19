@@ -1,6 +1,6 @@
 namespace Tester.Models;
 
-public sealed record TestResult(
+internal sealed record TestResult(
     string FileName,
     string FilePath,
     bool Success,

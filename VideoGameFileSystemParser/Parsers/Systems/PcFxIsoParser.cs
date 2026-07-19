@@ -54,7 +54,7 @@ public class PcFxIsoParser
         if (track is { Frames: > 0 })
             _reader.SetTrack(track, true);
         else
-            _reader.SetTrack(null!);
+            _reader.SetTrack(null);
 
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;

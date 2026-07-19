@@ -8,7 +8,7 @@ using DokanFileAccess = DokanNet.FileAccess;
 
 namespace SimpleChdDrive;
 
-public class ChdFs : IDokanOperations, IDisposable
+internal class ChdFs : IDokanOperations, IDisposable
 {
     private readonly ChdContainer _container;
     private readonly ILoggingService _loggingService;

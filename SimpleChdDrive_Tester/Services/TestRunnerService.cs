@@ -6,7 +6,7 @@ using Tester.Models;
 
 namespace Tester.Services;
 
-public sealed class TestRunnerService
+internal sealed class TestRunnerService
 {
     private readonly ILogger _logger;
 
@@ -57,7 +57,7 @@ public sealed class TestRunnerService
 
             try
             {
-                var container = new ChdContainer(chdPath);
+                using var container = new ChdContainer(chdPath);
 
                 var success = await Task.Run(() => container.MountAndParse(consoleInfo.Type), ct);
                 sw.Stop();

@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Serilog;
+using SimpleChdDrive.Core.Views;
 using VideoGameFileSystemParser.Models;
 using VideoGameFileSystemParser.Parsers;
 using Tester.Models;
@@ -16,6 +17,7 @@ namespace Tester;
 public partial class MainWindow
 {
     private readonly ILogger _logger;
+    private readonly IScreenshotService _screenshotService;
     private TestRunnerService? _testRunner;
     private TestSummary? _lastSummary;
     private CancellationTokenSource? _cts;
@@ -27,6 +29,7 @@ public partial class MainWindow
         InitializeComponent();
 
         _logger = App.Logger ?? new LoggerConfiguration().WriteTo.Debug(formatProvider: CultureInfo.InvariantCulture).CreateLogger();
+        _screenshotService = new ScreenshotService(new LoggingService(Dispatcher));
 
         _elapsedTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher)
         {
@@ -44,6 +47,42 @@ public partial class MainWindow
         AppendLog("[Tester] Select a folder containing .chd files, choose a console type, and click Run Tests.", Colors.Gray);
         AppendLog("", Colors.Gray);
         _logger.Information("MainWindow loaded");
+
+        CheckForUpdates();
+    }
+
+    private void CheckForUpdates()
+    {
+        var timer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        {
+            Interval = TimeSpan.FromSeconds(2)
+        };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            var result = UpdateChecker.Result;
+            if (result is { HasUpdate: true })
+            {
+                UpdateBanner.Visibility = Visibility.Visible;
+                UpdateBannerText.Text = $"A new version ({result.LatestVersion}) is available!";
+                UpdateBannerButton.Tag = result.DownloadUrl;
+            }
+        };
+        timer.Start();
+    }
+
+    private void UpdateBannerButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string url })
+        {
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+            catch { /* ignored */ }
+        }
+    }
+
+    private void UpdateDismiss_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateBanner.Visibility = Visibility.Collapsed;
     }
 
     private void PopulateConsoleTypes()
@@ -237,5 +276,35 @@ public partial class MainWindow
     private void ClearLog()
     {
         LogTextBox.Document.Blocks.Clear();
+    }
+
+    private void Exit_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private void About_Click(object sender, RoutedEventArgs e)
+    {
+        new AboutWindow { Owner = this }.ShowDialog();
+    }
+
+    private void OpenAppDataFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var folder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SimpleChdDrive_Tester", "logs");
+        if (Directory.Exists(folder))
+            Process.Start("explorer.exe", folder);
+        else
+            AppendLog("[Error] AppData folder not found.", Colors.Red);
+    }
+
+    private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.F8)
+        {
+            _screenshotService.TakeScreenshot();
+            e.Handled = true;
+        }
     }
 }

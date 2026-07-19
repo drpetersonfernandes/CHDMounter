@@ -1,6 +1,6 @@
 namespace Tester.Models;
 
-public sealed class TestSummary
+internal sealed class TestSummary
 {
     public string ConsoleName { get; set; } = "";
     public string ChdFolder { get; set; } = "";

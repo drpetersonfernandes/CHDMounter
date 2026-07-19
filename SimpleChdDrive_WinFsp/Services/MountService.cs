@@ -7,12 +7,12 @@ using VideoGameFileSystemParser.Parsers;
 namespace SimpleChdDrive_WinFsp.Services;
 #pragma warning restore CA1707
 
-public class MountService : IMountService, IDisposable
+internal class MountService : IMountService, IDisposable
 {
     private readonly ILoggingService _loggingService;
-    private FileSystemHost _host = null!;
-    private ChdFs _currentFs = null!;
-    private ChdContainer _container = null!;
+    private FileSystemHost? _host;
+    private ChdFs? _currentFs;
+    private ChdContainer? _container;
 
     public bool IsMounted { get; private set; }
     public string MountPoint { get; private set; } = "";
@@ -51,13 +51,13 @@ public class MountService : IMountService, IDisposable
         {
             _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
             _container.Dispose();
-            _container = null!;
+            _container = null;
             return;
         }
 
         _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
 
-        MountPoint = mountPoint ?? PickDriveLetter();
+        MountPoint = mountPoint ?? DriveHelper.PickDriveLetter();
         _loggingService.Log($"Mounting at {MountPoint} (WinFsp)...");
 
         _currentFs = new ChdFs(_container, _loggingService);
@@ -80,23 +80,12 @@ public class MountService : IMountService, IDisposable
         }
 
         _host?.Dispose();
-        _host = null!;
+        _host = null;
         _currentFs?.Dispose();
-        _currentFs = null!;
-        _container?.Dispose();
-        _container = null!;
+        _currentFs = null;
+        _container = null;
         IsMounted = false;
         MountPoint = "";
-    }
-
-    private static string PickDriveLetter()
-    {
-        var drives = DriveInfo.GetDrives().Select(static d => d.Name[0]).ToHashSet();
-        for (var c = 'M'; c <= 'Q'; c++)
-            if (!drives.Contains(c))
-                return $"{c}:";
-
-        return "Z:";
     }
 
     public void Dispose()

@@ -9,7 +9,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// Opens and manages a CHD disc image, providing file system access via console-specific parsers
 /// or virtual CUE/BIN export for raw image access.
 /// </summary>
-public class ChdContainer
+public class ChdContainer : IDisposable
 {
     private const uint SectorSize = 2048;
     private const uint InvalidHandle = uint.MaxValue;
@@ -18,7 +18,7 @@ public class ChdContainer
     private readonly List<uint> _parentHandles = [];
     private readonly Dictionary<string, uint> _entryMap = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<SectorReader> _readerPool = [];
-    private readonly ConcurrentBag<SectorReader> _availableReaders = [];
+    private readonly List<SectorReader> _availableReaders = [];
     private readonly object _poolLock = new();
     private bool _poolShutdown;
     private readonly string _chdPath;
@@ -101,7 +101,10 @@ public class ChdContainer
         VolumeName = Path.GetFileNameWithoutExtension(_chdPath);
 
         _readerPool.Add(reader);
-        _availableReaders.Add(reader);
+        lock (_poolLock)
+        {
+            _availableReaders.Add(reader);
+        }
 
         return true;
     }
@@ -333,7 +336,7 @@ public class ChdContainer
         var reader = AcquireReader();
         if (reader == null) return 0;
 
-        reader.SetTrack(null!);
+        reader.SetTrack(null);
 
         try
         {
@@ -409,7 +412,9 @@ public class ChdContainer
 
     private void BuildVirtualCueExport(CueExportMode mode)
     {
-        _cachedTracks = SectorReader.ParseTracksWithLba(_primaryChd!, UnitBytes);
+        if (_primaryChd == null) return;
+
+        _cachedTracks = SectorReader.ParseTracksWithLba(_primaryChd, UnitBytes);
         if (_cachedTracks.Count == 0) return;
 
         _cueExportEnabled = true;
@@ -592,6 +597,7 @@ public class ChdContainer
     {
         trackIndex = 0;
         if (_wavHeaders == null) return false;
+        if (string.IsNullOrEmpty(_cueStemName)) return false;
 
         var prefix = _cueStemName + "_Track";
         const string suffix = ".wav";
@@ -677,7 +683,9 @@ public class ChdContainer
 
                 if (reader.ReadRawSector(logicalLba, out var rawSector) && rawSector != null)
                 {
-                    var dataOffset = _cueSectorSize == 2048 ? reader.SectorHeaderOffset : reader.SyncOffset;
+                    var dataOffset = _cueSectorSize == 2048
+                        ? reader.SectorHeaderOffset
+                        : reader.SyncOffset;
                     var available = (int)(_cueSectorSize - byteInFrame);
                     var toCopy = Math.Min(available, bytesToRead - totalRead);
 
@@ -772,7 +780,13 @@ public class ChdContainer
         lock (_poolLock)
         {
             if (_poolShutdown) return null!;
-            if (_availableReaders.TryTake(out var reader)) return reader;
+
+            if (_availableReaders.Count > 0)
+            {
+                var reader = _availableReaders[^1];
+                _availableReaders.RemoveAt(_availableReaders.Count - 1);
+                return reader;
+            }
         }
 
         return _readerPool.Count > 0 ? _readerPool[0] : null!;
@@ -794,5 +808,7 @@ public class ChdContainer
         _availableReaders.Clear();
         _cachedTracks = null;
         _primaryChd?.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 }

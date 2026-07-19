@@ -45,7 +45,7 @@ public class CDiFsParser
     private bool TryParseFromLba(FsNode rootNode, uint searchLba, uint baseLba, byte[] sectorData)
     {
         _reader.Reset();
-        _reader.SetTrack(null!);
+        _reader.SetTrack(null);
 
         var bestVdData = SearchForVolumeDescriptor(searchLba, sectorData);
         if (bestVdData == null) return false;
@@ -195,17 +195,7 @@ public class CDiFsParser
             {
                 var recordLen = sector[pos];
                 if (recordLen == 0)
-                {
-                    var nextSector = (pos / 2048 + 1) * 2048;
-                    if (nextSector <= 2048 - CdiRecordHeaderSize && nextSector > pos)
-                    {
-                        pos = nextSector;
-                    }
-                    else
-                        break;
-
-                    continue;
-                }
+                    break;
 
                 if (recordLen < CdiRecordHeaderSize || pos + recordLen > 2048)
                     break;

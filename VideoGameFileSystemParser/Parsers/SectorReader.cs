@@ -20,6 +20,7 @@ public class SectorReader
     private bool _isOffsetDetected;
     private uint _offsetDetectedHunk = 0xFFFFFFFF;
     private TrackInfo? _offsetDetectedTrack;
+    private int _lastTrackIdx = -1;
     private readonly Dictionary<int, (uint Offset, bool Scrambled)> _trackOffsetCache = [];
 
     private static readonly byte[] SyncPattern = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00];
@@ -233,7 +234,7 @@ public class SectorReader
 /// </summary>
 /// <param name="track">The track to set as current.</param>
 /// <param name="locked">If true, restricts reads to this track.</param>
-    public void SetTrack(TrackInfo track, bool locked = false)
+    public void SetTrack(TrackInfo? track, bool locked = false)
     {
         CurrentTrack = track;
         _trackLocked = locked;
@@ -242,7 +243,7 @@ public class SectorReader
     /// <summary>
 /// The currently active track for sector read operations.
 /// </summary>
-    public TrackInfo CurrentTrack { get; private set; } = null!;
+    public TrackInfo? CurrentTrack { get; private set; }
 
     /// <summary>
 /// The list of tracks parsed from the CHD metadata.
@@ -263,6 +264,7 @@ public class SectorReader
         SyncOffset = 0;
             _offsetDetectedHunk = 0xFFFFFFFF;
             _offsetDetectedTrack = null;
+            _lastTrackIdx = -1;
             LbaOffset = 0;
         _trackLocked = false;
         _trackOffsetCache.Clear();
@@ -288,11 +290,11 @@ public class SectorReader
 
         if (UnitBytes >= 2352 && _wasScrambled)
         {
-            var dataStartInSector = SectorHeaderOffset - SyncOffset;
+            var dataStartInSector = (int)SectorHeaderOffset - (int)SyncOffset;
             for (var i = 0; i < SectorSize; i++)
             {
                 var scrambleIdx = dataStartInSector + i;
-                if (scrambleIdx < SectorScramble.Length)
+                if (scrambleIdx >= 0 && scrambleIdx < SectorScramble.Length)
                 {
                     outBuffer[outOffset + i] ^= SectorScramble[scrambleIdx];
                 }
@@ -413,7 +415,7 @@ public class SectorReader
             if (!found)
             {
                 chdFrame = adjustedLba;
-                CurrentTrack = null!;
+                CurrentTrack = null;
             }
         }
 
@@ -454,7 +456,7 @@ public class SectorReader
         rawOffsetInHunk = sectorInHunk * UnitBytes;
 
         var trackIdx = CurrentTrack?.Index ?? -1;
-        if (!_isOffsetDetected || hunkNum != _offsetDetectedHunk || CurrentTrack != _offsetDetectedTrack)
+        if (!_isOffsetDetected || hunkNum != _offsetDetectedHunk || CurrentTrack != _offsetDetectedTrack || trackIdx != _lastTrackIdx)
         {
             if (UnitBytes >= 2352)
             {
@@ -469,6 +471,11 @@ public class SectorReader
             _isOffsetDetected = true;
             _offsetDetectedHunk = hunkNum;
             _offsetDetectedTrack = CurrentTrack;
+            _lastTrackIdx = trackIdx;
+        }
+        else if (trackIdx >= 0 && _trackOffsetCache.TryGetValue(trackIdx, out var cached))
+        {
+            _wasScrambled = cached.Scrambled;
         }
 
         return true;
@@ -618,7 +625,7 @@ public class SectorReader
 /// </summary>
 /// <param name="track">The track to evaluate.</param>
 /// <returns>16 for MODE1, 24 for MODE2/CDI, 0 for audio.</returns>
-    public static uint GetSectorDataOffset(TrackInfo track)
+    public static uint GetSectorDataOffset(TrackInfo? track)
     {
         if (track is null) return 16;
         if (!track.IsDataTrack) return 0;

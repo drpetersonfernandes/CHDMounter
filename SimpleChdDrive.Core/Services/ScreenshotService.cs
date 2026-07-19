@@ -1,0 +1,110 @@
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using SimpleChdDrive.Core.Interfaces;
+
+namespace SimpleChdDrive.Core.Services;
+
+public class ScreenshotService : IScreenshotService
+{
+    private readonly ILoggingService _loggingService;
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out Rect lpRect);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    public ScreenshotService(ILoggingService loggingService)
+    {
+        _loggingService = loggingService;
+    }
+
+    public void TakeScreenshot()
+    {
+        try
+        {
+            var hwnd = GetForegroundWindow();
+            if (hwnd == IntPtr.Zero)
+            {
+                _loggingService.LogError("Screenshot: no foreground window found.");
+                return;
+            }
+
+            if (!GetWindowRect(hwnd, out var rect))
+            {
+                _loggingService.LogError("Screenshot: failed to get window rect.");
+                return;
+            }
+
+            var width = rect.Right - rect.Left;
+            var height = rect.Bottom - rect.Top;
+
+            if (width <= 0 || height <= 0)
+            {
+                _loggingService.LogError("Screenshot: invalid window dimensions.");
+                return;
+            }
+
+            using var bitmap = new Bitmap(width, height);
+            using var graphics = Graphics.FromImage(bitmap);
+            graphics.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(width, height));
+
+            var fileName = $"screenshot_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.png";
+            var savedPath = TrySaveImage(bitmap, fileName);
+
+            if (savedPath != null)
+                _loggingService.Log($"Screenshot saved: {savedPath}");
+            else
+                _loggingService.LogError("Screenshot: failed to save image.");
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogError($"Screenshot error: {ex.Message}");
+        }
+    }
+
+    private static string? TrySaveImage(Image image, string fileName)
+    {
+        try
+        {
+            var appDataDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "SimpleChdDrive",
+                "Screenshot");
+            Directory.CreateDirectory(appDataDir);
+            var path = Path.Combine(appDataDir, fileName);
+            image.Save(path, ImageFormat.Png);
+            return path;
+        }
+        catch
+        {
+            // ignored
+        }
+
+        try
+        {
+            var appFolder = AppContext.BaseDirectory;
+            var screenshotDir = Path.Combine(appFolder, "Screenshot");
+            Directory.CreateDirectory(screenshotDir);
+            var path = Path.Combine(screenshotDir, fileName);
+            image.Save(path, ImageFormat.Png);
+            return path;
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return null;
+    }
+}

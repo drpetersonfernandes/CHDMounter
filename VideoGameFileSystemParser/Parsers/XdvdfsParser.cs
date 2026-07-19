@@ -113,7 +113,8 @@ public class XdvdfsParser
                     {
                         rootDirSector = LeU32(sectorData, 20);
                         rootDirExtentSize = LeU32(sectorData, 24);
-                        volumeOffsetSectors = offset >= 32 ? offset - 32 : 0;
+                        var baseCandidate = offset >= 32 ? offset - 32 : 0;
+                        volumeOffsetSectors = baseCandidate;
                         found = true;
                         break;
                     }

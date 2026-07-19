@@ -50,7 +50,7 @@ public class Iso9660Parser
         if (track is { Frames: > 0 })
             _reader.SetTrack(track, true);
         else
-            _reader.SetTrack(null!);
+            _reader.SetTrack(null);
 
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
@@ -106,7 +106,7 @@ public class Iso9660Parser
                     {
                         if (type == 2 && isIso && IsJolietSvd(sectorData)) {
                             effectiveTrackStart = 0;
-                            _reader.SetTrack(null!);
+                            _reader.SetTrack(null);
                             _isHighSierra = false;
                             _isJoliet = true;
                             foundPvd = true;
@@ -115,7 +115,7 @@ public class Iso9660Parser
 
                         if (!foundPvd && (type == 1 || isHs)) {
                             effectiveTrackStart = 0;
-                            _reader.SetTrack(null!);
+                            _reader.SetTrack(null);
                             _isHighSierra = isHs;
                             _isJoliet = false;
                             foundPvd = true;

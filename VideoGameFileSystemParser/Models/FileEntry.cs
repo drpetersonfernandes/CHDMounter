@@ -24,7 +24,7 @@ public class FileEntry
     /// <summary>
     /// The byte offset within the sector for embedded data.
     /// </summary>
-    public ulong Offset { get; set; }
+    public uint Offset { get; set; }
     /// <summary>
     /// Whether this entry is a directory.
     /// </summary>
@@ -32,7 +32,7 @@ public class FileEntry
     /// <summary>
     /// The last modified date and time.
     /// </summary>
-    public DateTime ModifiedTime { get; set; } = DateTime.Now;
+    public DateTime ModifiedTime { get; set; } = DateTime.MinValue;
     /// <summary>
     /// The file number used for interleaved (XA) data access.
     /// </summary>
@@ -50,7 +50,6 @@ public class FileEntry
     /// </summary>
     public bool IsEmbedded { get; set; }
     public List<FileExtent> Extents { get; set; } = [];
-    public List<FileEntry> Children { get; set; } = [];
 }
 
 /// <summary>

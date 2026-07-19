@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Windows;
@@ -14,6 +15,7 @@ public partial class MainWindow
 {
     private readonly ILoggingService _loggingService;
     private readonly IMountService _mountService;
+    private readonly IScreenshotService _screenshotService;
 
     private string? _chdPath;
     private ConsoleType _selectedConsoleType = ConsoleType.Unknown;
@@ -24,6 +26,7 @@ public partial class MainWindow
 
         _loggingService = ServiceProvider.Get<ILoggingService>();
         _mountService = ServiceProvider.Get<IMountService>();
+        _screenshotService = ServiceProvider.Get<IScreenshotService>();
 
         PopulateConsoleTypes();
         WireUpLogging();
@@ -53,7 +56,7 @@ public partial class MainWindow
     {
         var consoles = ParserFactory.GetAllSupportedConsoles();
         ConsoleTypeComboBox.ItemsSource = consoles;
-        ConsoleTypeComboBox.SelectedIndex = 0;
+        ConsoleTypeComboBox.SelectedIndex = -1;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -61,6 +64,43 @@ public partial class MainWindow
         var args = App.StartupArgs;
         if (args.Length > 0)
             HandleCommandLineArgs(args);
+
+        CheckForUpdates();
+    }
+
+    private void CheckForUpdates()
+    {
+        var timer = new System.Windows.Threading.DispatcherTimer(
+            System.Windows.Threading.DispatcherPriority.Background, Dispatcher)
+        {
+            Interval = TimeSpan.FromSeconds(2)
+        };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            var result = UpdateChecker.Result;
+            if (result is { HasUpdate: true })
+            {
+                UpdateBanner.Visibility = Visibility.Visible;
+                UpdateBannerText.Text = $"A new version ({result.LatestVersion}) is available!";
+                UpdateBannerButton.Tag = result.DownloadUrl;
+            }
+        };
+        timer.Start();
+    }
+
+    private void UpdateBannerButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string url })
+        {
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+            catch { /* ignored */ }
+        }
+    }
+
+    private void UpdateDismiss_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateBanner.Visibility = Visibility.Collapsed;
     }
 
     private void HandleCommandLineArgs(string[] args)
@@ -264,6 +304,15 @@ public partial class MainWindow
         Close();
     }
 
+    private void OpenAppDataFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var folder = DiagnosticLogger.GetAppDataFolderForCurrentApp();
+        if (Directory.Exists(folder))
+            Process.Start("explorer.exe", folder);
+        else
+            _loggingService.LogError($"AppData folder not found: {folder}");
+    }
+
     private void About_Click(object sender, RoutedEventArgs e)
     {
         new AboutWindow { Owner = this }.ShowDialog();
@@ -275,6 +324,15 @@ public partial class MainWindow
         catch
         {
             // ignored
+        }
+    }
+
+    private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.F8)
+        {
+            _screenshotService.TakeScreenshot();
+            e.Handled = true;
         }
     }
 }

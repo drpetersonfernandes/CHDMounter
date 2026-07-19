@@ -1,6 +1,6 @@
 namespace SimpleChdDrive.Core.Tests.Parsers;
 
-public static class ChdPathCatalog
+internal static class ChdPathCatalog
 {
     public static class AmigaCd32
     {

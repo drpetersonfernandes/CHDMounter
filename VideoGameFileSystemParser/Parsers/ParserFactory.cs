@@ -12,7 +12,7 @@ public static class ParserFactory
     /// Creates a parser instance for the specified console type.
     /// </summary>
     /// <returns>An IConsoleParser implementation, or null if unsupported.</returns>
-    public static IConsoleParser CreateParser(ConsoleType type, SectorReader reader)
+    public static IConsoleParser? CreateParser(ConsoleType type, SectorReader reader)
     {
         return type switch
         {
@@ -35,7 +35,7 @@ public static class ParserFactory
             ConsoleType.ThreeDo => new ThreeDoConsoleParser(reader),
             ConsoleType.Xbox => new XboxParser(reader),
             ConsoleType.Xbox360 => new Xbox360Parser(reader),
-            _ => null!
+            _ => null
         };
     }
 
@@ -47,7 +47,6 @@ public static class ParserFactory
     {
         return
         [
-            new ConsoleInfo(ConsoleType.Unknown, "Unknown"),
             new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CD"),
             new ConsoleInfo(ConsoleType.AmigaCd32, "Amiga CD32"),
             new ConsoleInfo(ConsoleType.CDi, "CD-i"),

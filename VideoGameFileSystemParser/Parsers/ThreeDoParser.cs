@@ -38,7 +38,7 @@ public class ThreeDoParser
         if (track != null)
             _reader.SetTrack(track, true);
         else
-            _reader.SetTrack(null!);
+            _reader.SetTrack(null);
 
         var sectorData = new byte[2048];
         var trackStart = track?.StartLba ?? 0;

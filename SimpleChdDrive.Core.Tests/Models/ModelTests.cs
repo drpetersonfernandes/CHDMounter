@@ -84,8 +84,6 @@ public class FileEntryTests
         Assert.False(entry.IsRawPassthrough);
         Assert.NotNull(entry.Extents);
         Assert.Empty(entry.Extents);
-        Assert.NotNull(entry.Children);
-        Assert.Empty(entry.Children);
     }
 
     [Fact]
@@ -119,17 +117,7 @@ public class FileEntryTests
     public void FileEntryModifiedTimeHasValue()
     {
         var entry = new FileEntry();
-        Assert.True(entry.ModifiedTime <= DateTime.Now);
-        Assert.True(entry.ModifiedTime > DateTime.Now.AddSeconds(-5));
-    }
-
-    [Fact]
-    public void FileEntryChildrenCanBeNested()
-    {
-        var root = new FileEntry { Name = "root", IsDirectory = true };
-        var child = new FileEntry { Name = "child" };
-        root.Children.Add(child);
-        Assert.Single(root.Children);
+        Assert.Equal(DateTime.MinValue, entry.ModifiedTime);
     }
 
     [Fact]
