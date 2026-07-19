@@ -7,13 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <DebugType>embedded</DebugType>
-        <DebugSymbols>true</DebugSymbols>
         <IsPackable>false</IsPackable>
-        <AssemblyVersion>1.0.0</AssemblyVersion>
-        <FileVersion>1.0.0</FileVersion>
-        <NeutralLanguage>en</NeutralLanguage>
-        <Company>PureLogicCode.com</Company>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
@@ -21,6 +15,12 @@
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
         <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
         <RootNamespace>SimpleChdDrive_WinFsp</RootNamespace>
+        <DebugType>embedded</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+        <NeutralLanguage>en</NeutralLanguage>
+        <Company>PureLogicCode.com</Company>
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,6 +29,7 @@
 
     <ItemGroup>
         <PackageReference Include="winfsp.net" Version="2.2.26194" />
+        <PackageReference Include="WPF-UI" Version="4.3.0" />
     </ItemGroup>
 
 </Project>

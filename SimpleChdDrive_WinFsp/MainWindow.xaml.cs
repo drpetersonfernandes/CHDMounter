@@ -51,7 +51,6 @@ public partial class MainWindow
     {
         var consoles = ParserFactory.GetAllSupportedConsoles();
         ConsoleTypeComboBox.ItemsSource = consoles;
-        ConsoleTypeComboBox.DisplayMemberPath = "Name";
         ConsoleTypeComboBox.SelectedIndex = 0;
     }
 
@@ -60,19 +59,6 @@ public partial class MainWindow
         var args = App.StartupArgs;
         if (args.Length > 0)
             HandleCommandLineArgs(args);
-        else
-            ShowConsoleSelectionDialog();
-    }
-
-    private void ShowConsoleSelectionDialog()
-    {
-        var dialog = new ConsoleSelectionWindow { Owner = this };
-        if (dialog.ShowDialog() == true && dialog.SelectedConsoleType != ConsoleType.Unknown)
-        {
-            _selectedConsoleType = dialog.SelectedConsoleType;
-            SelectConsoleTypeInCombo(_selectedConsoleType);
-            ValidateAndEnableMount();
-        }
     }
 
     private void HandleCommandLineArgs(string[] args)

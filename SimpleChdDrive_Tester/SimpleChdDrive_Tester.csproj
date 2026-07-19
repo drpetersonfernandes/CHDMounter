@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
@@ -7,12 +7,11 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
-        <PublishSingleFile>true</PublishSingleFile>
-        <SelfContained>true</SelfContained>
-        <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
-        <ApplicationIcon>Icon\chd.ico</ApplicationIcon>
-        <RootNamespace>SimpleChdDrive</RootNamespace>
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+        <NeutralLanguage>en</NeutralLanguage>
+        <Company>PureLogicCode.com</Company>
+        <RootNamespace>Tester</RootNamespace>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
         <AssemblyVersion>1.0.0</AssemblyVersion>
@@ -26,8 +25,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DokanNet" Version="2.3.0.3" />
+        <PackageReference Include="Serilog" Version="4.4.0" />
+        <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="WPF-UI" Version="4.3.0" />
+        <PackageReference Include="QuestPDF" Version="2026.7.1" />
     </ItemGroup>
 
 </Project>

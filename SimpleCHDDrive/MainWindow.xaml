@@ -44,8 +44,14 @@
             <Button Grid.Column="2" Content="Browse..." Click="BrowseChd_Click" Width="100" Margin="6,0" />
 
             <Label Grid.Column="3" Content="Console:" VerticalAlignment="Center" Margin="12,0,6,0" />
-            <ComboBox Grid.Column="4" x:Name="ConsoleTypeComboBox" Width="200"
-                      VerticalAlignment="Center" SelectionChanged="ConsoleType_SelectionChanged" />
+            <ComboBox Grid.Column="4" x:Name="ConsoleTypeComboBox" Width="220"
+                      VerticalAlignment="Center" SelectionChanged="ConsoleType_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
         </Grid>
 
         <Grid Grid.Row="2" Margin="10,0,10,8">
@@ -56,7 +62,6 @@
             </Grid.ColumnDefinitions>
 
             <Button Grid.Column="0" x:Name="MountButton" Content="Mount" Width="100"
-                    Style="{StaticResource PrimaryButtonStyle}"
                     Click="Mount_Click" IsEnabled="False" />
             <Button Grid.Column="1" x:Name="UnmountButton" Content="Unmount" Width="100"
                     Margin="8,0" IsEnabled="False"

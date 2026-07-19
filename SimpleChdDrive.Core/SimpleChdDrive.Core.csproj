@@ -7,20 +7,22 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
+        <NeutralLanguage>en</NeutralLanguage>
+        <RootNamespace>SimpleChdDrive.Core</RootNamespace>
+        <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+        <DebugType>embedded</DebugType>
+        <DebugSymbols>true</DebugSymbols>
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <NeutralLanguage>en</NeutralLanguage>
         <Company>PureLogicCode.com</Company>
-        <DebugType>embedded</DebugType>
-        <DebugSymbols>true</DebugSymbols>
-        <RootNamespace>SimpleChdDrive.Core</RootNamespace>
-        <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="SimpleChdDrive" />
         <InternalsVisibleTo Include="SimpleChdDrive_WinFsp" />
         <InternalsVisibleTo Include="SimpleChdDrive.Core.Tests" />
+        <InternalsVisibleTo Include="Tester" />
     </ItemGroup>
 
     <ItemGroup>

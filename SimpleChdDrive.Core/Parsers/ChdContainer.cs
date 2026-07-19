@@ -39,6 +39,8 @@ public class ChdContainer
     private Dictionary<int, byte[]>? _wavHeaders;
     private Dictionary<int, ulong>? _wavDataSizes;
 
+    public IReadOnlyList<FileEntry> Entries => _entries;
+
     public string VolumeName { get; private set; } = "";
     public ulong VolumeSize { get; private set; }
     public uint UnitBytes { get; private set; }

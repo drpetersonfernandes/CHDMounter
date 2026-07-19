@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Xunit.Abstractions;
 
@@ -6,6 +7,7 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 public static class SequentialTestRunner
 {
     public const int DefaultMaxFilesPerCollection = 10;
+    public const int DefaultMaxDegreeOfParallelism = 3;
 
     public static List<string> CollectPaths(params string[] directories)
     {
@@ -29,14 +31,10 @@ public static class SequentialTestRunner
         {
             if (!Directory.Exists(dir)) continue;
 
-            paths.AddRange(Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories));
-        }
-
-        paths.Sort(string.CompareOrdinal);
-
-        if (maxFiles > 0 && paths.Count > maxFiles)
-        {
-            paths = paths.Take(maxFiles).ToList();
+            var dirPaths = Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories)
+                .OrderBy(p => p, StringComparer.Ordinal)
+                .Take(maxFiles);
+            paths.AddRange(dirPaths);
         }
 
         return paths;
@@ -45,43 +43,75 @@ public static class SequentialTestRunner
     public static void Run(ITestOutputHelper output, string testName, List<string> chdPaths,
         Func<string, ITestOutputHelper, bool> testFunc)
     {
-        var failures = new List<(string path, string error)>();
-        var sw = Stopwatch.StartNew();
+        var failures = new ConcurrentBag<(string path, string error)>();
+        var outputLock = new object();
+        var syncOutput = new SynchronizedTestOutputHelper(output, outputLock);
         int passed = 0, skipped = 0;
+        var sw = Stopwatch.StartNew();
 
-        foreach (var chdPath in chdPaths)
+        Parallel.ForEach(chdPaths, new ParallelOptions { MaxDegreeOfParallelism = DefaultMaxDegreeOfParallelism }, chdPath =>
         {
             if (!File.Exists(chdPath))
             {
-                output.WriteLine($"SKIP: {chdPath} not found");
-                skipped++;
-                continue;
+                syncOutput.WriteLine($"SKIP: {chdPath} not found");
+                Interlocked.Increment(ref skipped);
+                return;
             }
 
             var fileName = Path.GetFileName(chdPath);
             try
             {
-                output.WriteLine($"--- {fileName} ---");
-                if (testFunc(chdPath, output))
+                syncOutput.WriteLine($"--- {fileName} ---");
+                if (testFunc(chdPath, syncOutput))
                 {
-                    passed++;
+                    Interlocked.Increment(ref passed);
                 }
                 else
+                {
                     failures.Add((chdPath, $"{testName} returned false for {fileName}"));
+                }
             }
             catch (Exception ex)
             {
                 failures.Add((chdPath, $"{ex.GetType().Name}: {ex.Message}"));
-                output.WriteLine($"  FAIL: {ex.GetType().Name}: {ex.Message}");
+                syncOutput.WriteLine($"  FAIL: {ex.GetType().Name}: {ex.Message}");
             }
-        }
+        });
 
         sw.Stop();
         output.WriteLine(
             $"{testName}: {passed} passed, {skipped} skipped, {failures.Count} failed in {sw.Elapsed.TotalSeconds:F1}s");
 
-        Assert.True(failures.Count == 0,
+        Assert.True(failures.IsEmpty,
             $"{failures.Count} failures in {testName}:\n" +
             string.Join('\n', failures.Select(static f => $"  {Path.GetFileName(f.path)} - {f.error}")));
+    }
+
+    private sealed class SynchronizedTestOutputHelper : ITestOutputHelper
+    {
+        private readonly ITestOutputHelper _inner;
+        private readonly object _lock;
+
+        public SynchronizedTestOutputHelper(ITestOutputHelper inner, object @lock)
+        {
+            _inner = inner;
+            _lock = @lock;
+        }
+
+        public void WriteLine(string message)
+        {
+            lock (_lock)
+            {
+                _inner.WriteLine(message);
+            }
+        }
+
+        public void WriteLine(string format, params object[] args)
+        {
+            lock (_lock)
+            {
+                _inner.WriteLine(format, args);
+            }
+        }
     }
 }
