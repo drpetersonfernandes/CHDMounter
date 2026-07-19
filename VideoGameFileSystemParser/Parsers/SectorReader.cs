@@ -4,6 +4,9 @@ using CHDSharp.Models;
 
 namespace VideoGameFileSystemParser.Parsers;
 
+/// <summary>
+/// Provides low-level sector read access to a CHD file, handling hunk caching, sector offset detection, byte-swapping for audio tracks, and descrambling.
+/// </summary>
 public class SectorReader
 {
     private readonly ChdFile _chd;
@@ -175,22 +178,49 @@ public class SectorReader
 
     private const int SectorSize = 2048;
 
+    /// <summary>
+/// Returns a read-only span of the sector scramble table used for descrambling.
+/// </summary>
+/// <returns>A span of the sector scramble bytes.</returns>
     public static ReadOnlySpan<byte> GetSectorScramble()
     {
         return SectorScramble;
     }
 
+    /// <summary>
+/// The byte offset within a raw sector where the 2048-byte data payload begins.
+/// </summary>
     public uint SectorHeaderOffset { get; private set; }
 
+    /// <summary>
+/// The byte offset within a sector where the CD sync pattern was found.
+/// </summary>
     public uint SyncOffset { get; private set; }
 
+    /// <summary>
+/// An LBA offset applied to all sector reads.
+/// </summary>
     public int LbaOffset { get; set; }
 
+    /// <summary>
+/// The number of bytes per compressed hunk in the CHD.
+/// </summary>
     public uint HunkBytes => _chd.HunkBytes;
+    /// <summary>
+/// The number of bytes per sector unit (e.g., 2048 or 2352).
+/// </summary>
     public uint UnitBytes { get; }
 
+    /// <summary>
+/// The total number of bytes in the disc image.
+/// </summary>
     public uint TotalBytes => (uint)_chd.TotalBytes;
 
+    /// <summary>
+/// Initializes a new instance of the SectorReader class.
+/// </summary>
+/// <param name="unitBytes">The sector size in bytes.</param>
+/// <param name="chd">The opened ChdFile to read from.</param>
     public SectorReader(ChdFile chd, uint unitBytes)
     {
         _chd = chd;
@@ -198,16 +228,30 @@ public class SectorReader
         Tracks = ParseTracksWithLba(chd, unitBytes);
     }
 
+    /// <summary>
+/// Sets the active track for subsequent sector reads.
+/// </summary>
+/// <param name="track">The track to set as current.</param>
+/// <param name="locked">If true, restricts reads to this track.</param>
     public void SetTrack(TrackInfo track, bool locked = false)
     {
         CurrentTrack = track;
         _trackLocked = locked;
     }
 
+    /// <summary>
+/// The currently active track for sector read operations.
+/// </summary>
     public TrackInfo CurrentTrack { get; private set; } = null!;
 
+    /// <summary>
+/// The list of tracks parsed from the CHD metadata.
+/// </summary>
     public List<TrackInfo> Tracks { get; }
 
+    /// <summary>
+/// Resets the reader internal state: hunk cache, offset detection, and track lock.
+/// </summary>
     public void Reset()
     {
         _cachedHunkNum = 0xFFFFFFFF;
@@ -224,6 +268,13 @@ public class SectorReader
         _trackOffsetCache.Clear();
     }
 
+    /// <summary>
+/// Reads a single 2048-byte data sector at the specified LBA into the given buffer.
+/// </summary>
+/// <param name="outBuffer">The destination buffer.</param>
+/// <param name="lba">The logical block address.</param>
+/// <param name="outOffset">The buffer write offset.</param>
+/// <returns>true if the sector was read successfully.</returns>
     public bool ReadSector(uint lba, byte[] outBuffer, int outOffset = 0)
     {
         if (!PrepareHunk(lba, out var rawOffset))
@@ -251,6 +302,11 @@ public class SectorReader
         return true;
     }
 
+    /// <summary>
+/// Reads a single 2048-byte data sector and returns it as a new byte array.
+/// </summary>
+/// <param name="lba">The logical block address.</param>
+/// <returns>The sector data, or null on failure.</returns>
     public byte[]? ReadSector(uint lba)
     {
         var buffer = new byte[SectorSize];
@@ -260,6 +316,12 @@ public class SectorReader
         return null;
     }
 
+    /// <summary>
+/// Reads a full raw sector (UnitBytes length) at the specified LBA.
+/// </summary>
+/// <param name="rawSector">The raw sector data output on success.</param>
+/// <param name="lba">The logical block address.</param>
+/// <returns>true if the raw sector was read.</returns>
     public bool ReadRawSector(uint lba, out byte[] rawSector)
     {
         rawSector = null!;
@@ -275,6 +337,11 @@ public class SectorReader
         return true;
     }
 
+    /// <summary>
+/// Reads the subheader file number from an interleaved CD-XA sector.
+/// </summary>
+/// <param name="lba">The logical block address.</param>
+/// <returns>The file number, or 0xFF if unavailable.</returns>
     public byte GetSubheaderFileNumber(uint lba)
     {
         if (!PrepareHunk(lba, out var rawOffset))
@@ -546,6 +613,11 @@ public class SectorReader
         return true;
     }
 
+    /// <summary>
+/// Returns the appropriate sector data offset for a track.
+/// </summary>
+/// <param name="track">The track to evaluate.</param>
+/// <returns>16 for MODE1, 24 for MODE2/CDI, 0 for audio.</returns>
     public static uint GetSectorDataOffset(TrackInfo track)
     {
         if (track is null) return 16;
@@ -556,6 +628,12 @@ public class SectorReader
         return 16;
     }
 
+    /// <summary>
+/// Parses track metadata from the CHD and computes LBA start positions.
+/// </summary>
+/// <param name="unitBytes">The sector size.</param>
+/// <param name="chd">The opened ChdFile.</param>
+/// <returns>A list of TrackInfo with computed LBA positions.</returns>
     public static List<TrackInfo> ParseTracksWithLba(ChdFile chd, uint unitBytes)
     {
         var tracks = new List<TrackInfo>();

@@ -32,4 +32,30 @@ public class ConsoleTypeTests
     }
 }
 
+public class FsNodeTypeTests
+{
+    [Fact]
+    public void FsNodeTypeHasExpectedValues()
+    {
+        var values = Enum.GetValues<FsNodeType>();
+        Assert.Contains(FsNodeType.File, values);
+        Assert.Contains(FsNodeType.Directory, values);
+        Assert.Contains(FsNodeType.Symlink, values);
+    }
+
+    [Fact]
+    public void FsNodeTypeFileIsZero()
+    {
+        Assert.Equal(0, (int)FsNodeType.File);
+    }
+
+    [Fact]
+    public void FsNodeTypeNumericValuesAreAsExpected()
+    {
+        Assert.Equal(0, (int)FsNodeType.File);
+        Assert.Equal(4, (int)FsNodeType.Directory);
+        Assert.Equal(12, (int)FsNodeType.Symlink);
+    }
+}
+
 

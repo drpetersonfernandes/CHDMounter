@@ -2,6 +2,9 @@ using VideoGameFileSystemParser.Interfaces;
 
 namespace VideoGameFileSystemParser.Parsers.Systems;
 
+/// <summary>
+/// Parses Sony PSP disc images using ISO 9660 on the first data track.
+/// </summary>
 public class PspParser : Iso9660Wrapper
 {
     public PspParser(SectorReader reader) : base(reader)
@@ -19,6 +22,9 @@ public class PspParser : Iso9660Wrapper
     }
 }
 
+/// <summary>
+/// Parses NEC PC-FX disc images using the dedicated PcFxIsoParser.
+/// </summary>
 public class PcFxParser : IConsoleParser
 {
     private readonly SectorReader _reader;
@@ -42,6 +48,11 @@ public class PcFxParser : IConsoleParser
         return "PC-FX";
     }
 
+    /// <summary>
+/// Parses the first data track found in the reader using ISO 9660.
+/// </summary>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         foreach (var t in _reader.Tracks)
@@ -53,12 +64,21 @@ public class PcFxParser : IConsoleParser
         return _isoParser.Parse(rootNode, null);
     }
 
+    /// <summary>
+/// Parses the specified track using ISO 9660.
+/// </summary>
+/// <param name="track">The track to parse.</param>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         return _isoParser.Parse(rootNode, track);
     }
 }
 
+/// <summary>
+/// Parses Sega Genesis CD / Mega CD disc images using ISO 9660.
+/// </summary>
 public class SegaGenesisCdParser : Iso9660Wrapper
 {
     public SegaGenesisCdParser(SectorReader reader) : base(reader)
@@ -76,6 +96,9 @@ public class SegaGenesisCdParser : Iso9660Wrapper
     }
 }
 
+/// <summary>
+/// Parses Sega Saturn disc images using ISO 9660.
+/// </summary>
 public class SegaSaturnParser : Iso9660Wrapper
 {
     public SegaSaturnParser(SectorReader reader) : base(reader)
@@ -93,6 +116,9 @@ public class SegaSaturnParser : Iso9660Wrapper
     }
 }
 
+/// <summary>
+/// Parses SNK NeoGeo CD disc images using ISO 9660.
+/// </summary>
 public class NeoGeoCdParser : Iso9660Wrapper
 {
     public NeoGeoCdParser(SectorReader reader) : base(reader)
@@ -110,6 +136,9 @@ public class NeoGeoCdParser : Iso9660Wrapper
     }
 }
 
+/// <summary>
+/// Parses Commodore Amiga CD32 disc images using ISO 9660.
+/// </summary>
 public class AmigaCd32Parser : Iso9660Wrapper
 {
     public AmigaCd32Parser(SectorReader reader) : base(reader)
@@ -127,6 +156,9 @@ public class AmigaCd32Parser : Iso9660Wrapper
     }
 }
 
+/// <summary>
+/// Parses Commodore Amiga CD disc images using ISO 9660.
+/// </summary>
 public class AmigaCdParser : Iso9660Wrapper
 {
     public AmigaCdParser(SectorReader reader) : base(reader)
@@ -146,17 +178,37 @@ public class AmigaCdParser : Iso9660Wrapper
 
 public abstract class Iso9660Wrapper : IConsoleParser
 {
+    /// <summary>
+/// The sector reader used by this parser.
+/// </summary>
     protected SectorReader Reader { get; }
     public bool ForceMode { get; set; }
 
+    /// <summary>
+/// Initializes a new instance of the Iso9660Wrapper class.
+/// </summary>
+/// <param name="reader">The SectorReader to read sectors from.</param>
     protected Iso9660Wrapper(SectorReader reader)
     {
         Reader = reader;
     }
 
+    /// <summary>
+/// Returns the ConsoleType that this parser handles.
+/// </summary>
+/// <returns>The console type.</returns>
     public abstract ConsoleType GetConsoleType();
+    /// <summary>
+/// Returns the human-readable console name.
+/// </summary>
+/// <returns>The display name.</returns>
     public abstract string GetConsoleName();
 
+    /// <summary>
+/// Parses the first data track found in the reader using ISO 9660.
+/// </summary>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         var track = FindDataTrack();
@@ -166,12 +218,22 @@ public abstract class Iso9660Wrapper : IConsoleParser
         return ParseTrack(rootNode, track);
     }
 
+    /// <summary>
+/// Parses the specified track using ISO 9660.
+/// </summary>
+/// <param name="track">The track to parse.</param>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new Iso9660Parser(Reader);
         return parser.Parse(rootNode, track);
     }
 
+    /// <summary>
+/// Finds the first data track in the reader.
+/// </summary>
+/// <returns>The first data TrackInfo, or null.</returns>
     protected TrackInfo? FindDataTrack()
     {
         foreach (var t in Reader.Tracks)

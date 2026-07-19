@@ -3,6 +3,9 @@ using System.Text;
 
 namespace VideoGameFileSystemParser.Parsers;
 
+/// <summary>
+/// Parses ISO 9660 (High Sierra, Joliet, CD-XA) file systems. Supports SUSP/Rock Ridge for POSIX attributes and symlinks.
+/// </summary>
 public class Iso9660Parser
 {
     private const int MaxCeChain = 64;
@@ -16,16 +19,30 @@ public class Iso9660Parser
     private byte _suspSkip;
     private int _lbaOffset;
 
+    /// <summary>
+/// Initializes a new instance of the Iso9660Parser class.
+/// </summary>
+/// <param name="reader">The SectorReader to read sectors from.</param>
     public Iso9660Parser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <summary>
+/// Sets the LBA offset applied to all sector reads.
+/// </summary>
+/// <param name="offset">The LBA offset value.</param>
     public void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
     }
 
+    /// <summary>
+/// Parses the ISO 9660 file system, locating the PVD and building the directory tree.
+/// </summary>
+/// <param name="track">Optional track to restrict parsing to.</param>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
@@ -212,6 +229,12 @@ public class Iso9660Parser
         return selfExtent == expectedExtent;
     }
 
+    /// <summary>
+/// Parses a directory sector chain recursively.
+/// </summary>
+/// <param name="dirNode">The directory node to populate.</param>
+/// <param name="trackStart">The LBA of the containing track.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool ParseDirectory(FsNode dirNode, uint trackStart)
     {
         if (!_visitedDirs.Add(dirNode.Lba))

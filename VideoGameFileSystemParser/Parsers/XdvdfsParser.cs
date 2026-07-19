@@ -2,6 +2,9 @@ using System.Text;
 
 namespace VideoGameFileSystemParser.Parsers;
 
+/// <summary>
+/// Parses the XDVDFS file system used on original Xbox and Xbox 360 discs.
+/// </summary>
 public class XdvdfsParser
 {
     private readonly SectorReader _reader;
@@ -23,11 +26,19 @@ public class XdvdfsParser
         }
     }
 
+    /// <summary>
+/// Initializes a new instance of the XdvdfsParser class.
+/// </summary>
+/// <param name="reader">The SectorReader to read sectors from.</param>
     public XdvdfsParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <summary>
+/// Sets the track for parsing and locks the reader to that track.
+/// </summary>
+/// <param name="track">The track to parse.</param>
     public void SetTrack(TrackInfo track)
     {
         if (track is not { Frames: > 0 }) return;
@@ -36,6 +47,10 @@ public class XdvdfsParser
         _reader.SetTrack(track, true);
     }
 
+    /// <summary>
+/// Sets the LBA offset applied to all sector reads.
+/// </summary>
+/// <param name="offset">The LBA offset value.</param>
     public void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
@@ -43,6 +58,11 @@ public class XdvdfsParser
 
     private static readonly byte[] XdvdfsMagic = "MICROSOFT*XBOX*MEDIA"u8.ToArray();
 
+    /// <summary>
+/// Parses the XDVDFS file system and builds the directory tree.
+/// </summary>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         _reader.Reset();

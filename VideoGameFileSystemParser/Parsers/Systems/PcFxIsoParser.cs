@@ -7,6 +7,9 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// This is a DEDICATED parser for PC-FX images, mirroring the C++ PcFxIsoParser.
 /// Changes to this parser will NOT affect other consoles.
 /// </summary>
+/// <summary>
+/// Dedicated NEC PC-FX ISO 9660 parser, handling byte-offset VD signatures within raw sectors.
+/// </summary>
 public class PcFxIsoParser
 {
     private readonly SectorReader _reader;
@@ -14,11 +17,19 @@ public class PcFxIsoParser
     private bool _isJoliet;
     private int _lbaOffset;
 
+    /// <summary>
+/// Initializes a new instance of the PcFxIsoParser class.
+/// </summary>
+/// <param name="reader">The SectorReader to read sectors from.</param>
     public PcFxIsoParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <summary>
+/// Sets the LBA offset applied to all sector reads.
+/// </summary>
+/// <param name="offset">The LBA offset value.</param>
     public void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
@@ -30,6 +41,12 @@ public class PcFxIsoParser
     /// Handles byte-offset VD signatures within sectors (safety net for
     /// raw-sector images where the header wasn't fully stripped).
     /// </summary>
+    /// <summary>
+/// Parses the ISO 9660 file system for PC-FX discs.
+/// </summary>
+/// <param name="track">Optional track.</param>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();

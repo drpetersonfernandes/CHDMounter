@@ -3,6 +3,9 @@ using VideoGameFileSystemParser.Interfaces;
 
 namespace VideoGameFileSystemParser.Parsers.Systems;
 
+/// <summary>
+/// Parses Sega Dreamcast GD-ROM disc images. Prefers tracks containing the IP.BIN boot sector signature.
+/// </summary>
 public class DreamcastParser : IConsoleParser
 {
     private const string IpBinSignature = "SEGA SEGAKATANA ";
@@ -79,6 +82,9 @@ public class DreamcastParser : IConsoleParser
     }
 }
 
+/// <summary>
+/// Parses Philips CD-i disc images using CDiFsParser, falling back to ISO 9660.
+/// </summary>
 public class CDiParser : IConsoleParser
 {
     private readonly SectorReader _reader;
@@ -126,6 +132,9 @@ public class CDiParser : IConsoleParser
     }
 }
 
+/// <summary>
+/// Parses 3DO Interactive Multiplayer disc images using the Opera file system parser.
+/// </summary>
 public class ThreeDoConsoleParser : IConsoleParser
 {
     private readonly SectorReader _reader;
@@ -166,6 +175,9 @@ public class ThreeDoConsoleParser : IConsoleParser
     }
 }
 
+/// <summary>
+/// Provides raw sector passthrough access, exposing the image as "image.iso".
+/// </summary>
 public class GenericIsoRawParser : IConsoleParser
 {
     private readonly SectorReader _reader;
@@ -208,6 +220,9 @@ public class GenericIsoRawParser : IConsoleParser
     }
 }
 
+/// <summary>
+/// Generic ISO 9660 parser for standard data discs without console-specific handling.
+/// </summary>
 public class GenericIso9660Parser : IConsoleParser
 {
     private readonly SectorReader _reader;

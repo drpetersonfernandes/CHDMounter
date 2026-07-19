@@ -5,6 +5,10 @@ using CHDSharp.Models;
 
 namespace VideoGameFileSystemParser.Parsers;
 
+/// <summary>
+/// Opens and manages a CHD disc image, providing file system access via console-specific parsers
+/// or virtual CUE/BIN export for raw image access.
+/// </summary>
 public class ChdContainer
 {
     private const uint SectorSize = 2048;
@@ -39,19 +43,46 @@ public class ChdContainer
     private Dictionary<int, byte[]>? _wavHeaders;
     private Dictionary<int, ulong>? _wavDataSizes;
 
+    /// <summary>
+    /// Gets the read-only list of all file and directory entries in the container.
+    /// </summary>
     public IReadOnlyList<FileEntry> Entries => _entries;
 
+    /// <summary>
+    /// Gets the volume name (derived from the CHD file name).
+    /// </summary>
     public string VolumeName { get; private set; } = "";
+    /// <summary>
+    /// Gets the total size of the disc image in bytes.
+    /// </summary>
     public ulong VolumeSize { get; private set; }
+    /// <summary>
+    /// Gets the number of bytes per sector unit (e.g., 2048 or 2352).
+    /// </summary>
     public uint UnitBytes { get; private set; }
+    /// <summary>
+    /// Gets the number of bytes per compressed hunk.
+    /// </summary>
     public uint HunkBytes { get; private set; }
+    /// <summary>
+    /// Gets or sets the console type used for parsing this image.
+    /// </summary>
     public ConsoleType ConsoleType { get; set; } = ConsoleType.Unknown;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ChdContainer"/> class.
+    /// </summary>
+    /// <param name="chdPath">The file system path to the CHD disc image.</param>
     public ChdContainer(string chdPath)
     {
         _chdPath = chdPath;
     }
 
+    /// <summary>
+    /// Opens the CHD file and initializes the reader pool for the specified console type.
+    /// </summary>
+    /// <param name="consoleType">The console type to configure the reader for.</param>
+    /// <returns><c>true</c> if the CHD was opened successfully; otherwise <c>false</c>.</returns>
     public bool Open(ConsoleType consoleType)
     {
         ConsoleType = consoleType;
@@ -75,6 +106,11 @@ public class ChdContainer
         return true;
     }
 
+    /// <summary>
+    /// Opens the CHD, creates the appropriate parser, parses the file system, and builds the entry tree.
+    /// </summary>
+    /// <param name="consoleType">The console type to parse the image as.</param>
+    /// <returns><c>true</c> if parsing succeeded; otherwise <c>false</c>.</returns>
     public bool MountAndParse(ConsoleType consoleType)
     {
         if (!Open(consoleType))
@@ -118,6 +154,10 @@ public class ChdContainer
         return true;
     }
 
+    /// <summary>
+    /// Builds the internal file entry table from a parsed <see cref="FsNode"/> tree.
+    /// </summary>
+    /// <param name="rootNode">The root node of the parsed file system tree.</param>
     public void BuildFromFsNode(FsNode rootNode)
     {
         _entries.Clear();
@@ -201,6 +241,11 @@ public class ChdContainer
         return path;
     }
 
+    /// <summary>
+    /// Finds a file or directory entry by its full path.
+    /// </summary>
+    /// <param name="path">The full path to search for (e.g., "\GAME\DATA.BIN").</param>
+    /// <returns>The matching <see cref="FileEntry"/>, or <c>null</c> if not found.</returns>
     public FileEntry FindFile(string path)
     {
         var key = MakeEntryKey(path);
@@ -225,6 +270,11 @@ public class ChdContainer
         return result;
     }
 
+    /// <summary>
+    /// Enumerates the child entries of a directory specified by path.
+    /// </summary>
+    /// <param name="path">The full path of the directory.</param>
+    /// <returns>An enumeration of <see cref="FileEntry"/> items in the directory.</returns>
     public IEnumerable<FileEntry> ListDirectory(string path)
     {
         var key = MakeEntryKey(path);
@@ -235,6 +285,15 @@ public class ChdContainer
                 yield return _entries[(int)i];
     }
 
+    /// <summary>
+    /// Reads data from a file entry at the specified offset into the provided buffer.
+    /// </summary>
+    /// <param name="entry">The file entry to read from.</param>
+    /// <param name="offset">The byte offset within the file to start reading from.</param>
+    /// <param name="buffer">The destination buffer.</param>
+    /// <param name="bufOffset">The offset within the destination buffer to begin writing.</param>
+    /// <param name="count">The maximum number of bytes to read.</param>
+    /// <returns>The number of bytes actually read.</returns>
     public int ReadFile(FileEntry entry, ulong offset, byte[] buffer, int bufOffset, int count)
     {
         if (entry.IsDirectory || offset >= entry.Size)
@@ -724,6 +783,9 @@ public class ChdContainer
         lock (_poolLock) { _availableReaders.Add(reader); }
     }
 
+    /// <summary>
+    /// Disposes the container, releasing all readers and the underlying CHD file.
+    /// </summary>
     public void Dispose()
     {
         lock (_poolLock) { _poolShutdown = true; }

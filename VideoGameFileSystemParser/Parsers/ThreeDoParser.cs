@@ -2,6 +2,9 @@ using System.Text;
 
 namespace VideoGameFileSystemParser.Parsers;
 
+/// <summary>
+/// Parses the Opera file system used on 3DO Interactive Multiplayer discs.
+/// </summary>
 public class ThreeDoParser
 {
     private readonly SectorReader _reader;
@@ -14,11 +17,21 @@ public class ThreeDoParser
     private const uint FlagLastEntry = 0x80000000;
     private const uint FlagLastEntryInBlock = 0x40000000;
 
+    /// <summary>
+/// Initializes a new instance of the ThreeDoParser class.
+/// </summary>
+/// <param name="reader">The SectorReader to read sectors from.</param>
     public ThreeDoParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <summary>
+/// Parses the Opera file system and builds the directory tree.
+/// </summary>
+/// <param name="track">Optional track.</param>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();

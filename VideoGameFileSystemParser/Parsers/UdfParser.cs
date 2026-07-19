@@ -2,6 +2,9 @@ using System.Text;
 
 namespace VideoGameFileSystemParser.Parsers;
 
+/// <summary>
+/// Parses UDF (Universal Disk Format) file systems. Supports metadata partitions, allocation descriptors, embedded data, and symlinks.
+/// </summary>
 public class UdfParser
 {
     private const int MaxDirectoryBytes = 64 * 1024 * 1024;
@@ -32,11 +35,21 @@ public class UdfParser
         public uint MetadataMirrorLoc;
     }
 
+    /// <summary>
+/// Initializes a new instance of the UdfParser class.
+/// </summary>
+/// <param name="reader">The SectorReader to read sectors from.</param>
     public UdfParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <summary>
+/// Parses the UDF file system, locating the AVDP and building the directory tree.
+/// </summary>
+/// <param name="track">Optional track.</param>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         if (track is { Frames: > 0 })

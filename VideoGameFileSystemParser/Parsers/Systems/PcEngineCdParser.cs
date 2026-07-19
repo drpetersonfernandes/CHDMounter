@@ -3,6 +3,9 @@ using VideoGameFileSystemParser.Interfaces;
 
 namespace VideoGameFileSystemParser.Parsers.Systems;
 
+/// <summary>
+/// Parses NEC PC Engine CD/TurboGrafx-CD disc images. Locates the boot signature, attempts ISO 9660, falls back to raw track exposure.
+/// </summary>
 public class PcEngineCdParser : IConsoleParser
 {
     private const string Signature = "PC Engine CD-ROM SYSTEM";
@@ -10,23 +13,43 @@ public class PcEngineCdParser : IConsoleParser
     private const uint ZeroScanLimit = 600;
 
     private readonly SectorReader _reader;
+    /// <summary>
+/// Gets or sets whether to force parsing even when the boot signature is not found.
+/// </summary>
     public bool ForceMode { get; set; }
 
+    /// <summary>
+/// Initializes a new instance of the PcEngineCdParser class.
+/// </summary>
+/// <param name="reader">The SectorReader to read sectors from.</param>
     public PcEngineCdParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <summary>
+/// Returns the ConsoleType that this parser handles.
+/// </summary>
+/// <returns>ConsoleType.PcEngineCd</returns>
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.PcEngineCd;
     }
 
+    /// <summary>
+/// Returns the human-readable console name.
+/// </summary>
+/// <returns>"PC Engine CD"</returns>
     public string GetConsoleName()
     {
         return "PC Engine CD";
     }
 
+    /// <summary>
+/// Parses all data tracks. Attempts ISO 9660 first, falls back to raw track files.
+/// </summary>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         var dataTracks = _reader.Tracks.Where(static t => t.IsDataTrack).ToList();
@@ -77,6 +100,12 @@ public class PcEngineCdParser : IConsoleParser
         return rootNode.Children.Count > 0;
     }
 
+    /// <summary>
+/// Parses a specific track using ISO 9660, falling back to raw track file.
+/// </summary>
+/// <param name="track">The track to parse.</param>
+/// <param name="rootNode">The root FsNode to populate.</param>
+/// <returns>true if parsing succeeded.</returns>
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var dataStart = FindDataAreaStart(track, out var hasSignature);
