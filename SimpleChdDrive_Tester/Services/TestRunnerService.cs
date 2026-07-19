@@ -28,7 +28,7 @@ internal sealed class TestRunnerService
             StartTime = DateTime.Now
         };
 
-        var chdFiles = Directory.GetFiles(folderPath, "*.chd", SearchOption.TopDirectoryOnly);
+        var chdFiles = Directory.GetFiles(folderPath, "*.chd", SearchOption.AllDirectories);
         if (chdFiles.Length == 0)
         {
             EmitLog("No .chd files found in the selected folder.");
