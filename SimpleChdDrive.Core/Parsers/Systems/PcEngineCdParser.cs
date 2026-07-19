@@ -172,9 +172,9 @@ public class PcEngineCdParser : IConsoleParser
                 if (!_reader.ReadSector(track.StartLba + rel, sector))
                     continue;
 
-                for (var i = 0; i < sector.Length; i++)
+                foreach (var t in sector)
                 {
-                    if (sector[i] != 0)
+                    if (t != 0)
                         return track.StartLba + rel;
                 }
             }

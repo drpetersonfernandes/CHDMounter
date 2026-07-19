@@ -24,7 +24,7 @@ public class SegaGenesisCdBulkTests
     [Fact]
     public void ParseEntireMameMegacdLibrary()
     {
-        var path = @"G:\MAME\MAME Software List CHDs\megacd";
+        const string path = @"G:\MAME\MAME Software List CHDs\megacd";
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +42,7 @@ public class SegaGenesisCdBulkTests
     [Fact]
     public void ParseEntireISegaGenesisCdLibrary()
     {
-        var path = @"I:\Sega Genesis CD";
+        const string path = @"I:\Sega Genesis CD";
 
         if (!Directory.Exists(path))
         {
@@ -151,7 +151,10 @@ public class SegaGenesisCdBulkTests
     {
         var count = 0;
         foreach (var c in node.Children)
+        {
             count += c.IsDirectory ? CountFiles(c) : 1;
+        }
+
         return count;
     }
 }

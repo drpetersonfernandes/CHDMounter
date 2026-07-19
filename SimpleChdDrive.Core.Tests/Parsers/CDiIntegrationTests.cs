@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
 using SimpleChdDrive.Core.Parsers.Systems;
@@ -7,24 +6,27 @@ using Xunit.Abstractions;
 
 namespace SimpleChdDrive.Core.Tests.Parsers;
 
-public class Ps2IntegrationTests
+public class CDiIntegrationTests
 {
     private readonly ITestOutputHelper _output;
 
-    public Ps2IntegrationTests(ITestOutputHelper output)
+    public CDiIntegrationTests(ITestOutputHelper output)
     {
         _output = output;
     }
 
-    public static TheoryData<string> Ps2ChdPaths
+    public static TheoryData<string> CDiChdPaths
     {
         get
         {
             var data = new TheoryData<string>();
-            const string dir = @"X:\Sony PlayStation 2";
+            string[] dirs = [@"G:\MAME\MAME Software List CHDs\cdi", @"I:\Philips CD-i"];
 
-            if (Directory.Exists(dir))
+            foreach (var dir in dirs)
             {
+                if (!Directory.Exists(dir))
+                    continue;
+
                 foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
                     data.Add(chd);
             }
@@ -34,8 +36,8 @@ public class Ps2IntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(Ps2ChdPaths))]
-    public void Iso9660ParserParsesPs2Disc(string chdPath)
+    [MemberData(nameof(CDiChdPaths))]
+    public void CDiFsParserParsesCdiDisc(string chdPath)
     {
         if (!File.Exists(chdPath))
         {
@@ -51,29 +53,27 @@ public class Ps2IntegrationTests
         {
             var unitBytes = chd.UnitBytes;
             var reader = new SectorReader(chd, unitBytes);
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            Assert.NotNull(track);
-
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
+            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count}");
 
             var root = new FsNode();
-            var parser = new Iso9660Parser(reader);
+            var parser = new CDiFsParser(reader);
 
+            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+            Assert.NotNull(track);
             var ok = parser.Parse(root, track);
-            _output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}");
+            _output.WriteLine($"CDiFsParser: {(ok ? "OK" : "FAILED")}");
 
-            Assert.True(ok, "Iso9660Parser could not parse the disc");
+            Assert.True(ok, "CDiFsParser could not parse the disc");
 
             int files = 0, dirs = 0;
             ulong maxSize = 0;
             Walk(root, ref files, ref dirs, ref maxSize);
             _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
 
-            var topTwenty = root.Children.OrderByDescending(static n => n.Size).Take(20);
-            foreach (var c in topTwenty)
-                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
+            Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
 
-            Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
+            foreach (var c in root.Children.OrderByDescending(static n => n.Size).Take(15))
+                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}");
         }
         finally
         {
@@ -82,8 +82,8 @@ public class Ps2IntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(Ps2ChdPaths))]
-    public void PlayStation2ParserParsesPs2Disc(string chdPath)
+    [MemberData(nameof(CDiChdPaths))]
+    public void CDiParserParsesCdiDisc(string chdPath)
     {
         if (!File.Exists(chdPath))
         {
@@ -98,24 +98,22 @@ public class Ps2IntegrationTests
         try
         {
             var reader = new SectorReader(chd, chd.UnitBytes);
+            _output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
+
             var root = new FsNode();
-            var parser = new PlayStation2Parser(reader);
+            var parser = new CDiParser(reader);
 
             var ok = parser.Parse(root);
-            _output.WriteLine($"PlayStation2Parser: {(ok ? "OK" : "FAILED")}");
+            _output.WriteLine($"CDiParser: {(ok ? "OK" : "FAILED")}");
 
-            Assert.True(ok, "PlayStation2Parser could not parse the disc");
+            Assert.True(ok, "CDiParser could not parse the disc");
 
             int files = 0, dirs = 0;
             ulong maxSize = 0;
             Walk(root, ref files, ref dirs, ref maxSize);
             _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
 
-            Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
-
-            var hasSystemCnf = root.Children.Any(static n => n.Name == "SYSTEM.CNF");
-            var hasIop = root.Children.Any(static n => n.Name.StartsWith("IOP", StringComparison.OrdinalIgnoreCase));
-            _output.WriteLine($"SYSTEM.CNF: {(hasSystemCnf ? "YES" : "NO")}  IOP modules: {(hasIop ? "YES" : "NO")}");
+            Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
         }
         finally
         {
@@ -124,8 +122,8 @@ public class Ps2IntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(Ps2ChdPaths))]
-    public void ChdContainerMountAndParsePs2Disc(string chdPath)
+    [MemberData(nameof(CDiChdPaths))]
+    public void ChdContainerMountAndParseCdiDisc(string chdPath)
     {
         if (!File.Exists(chdPath))
         {
@@ -136,34 +134,21 @@ public class Ps2IntegrationTests
         var container = new ChdContainer(chdPath);
         try
         {
-            Assert.True(container.MountAndParse(ConsoleType.Ps2), "MountAndParse failed");
-
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+            Assert.True(container.MountAndParse(ConsoleType.CDi), "MountAndParse failed");
 
             var all = CollectEntries(container, "\\").ToList();
             var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
             _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
 
-            Assert.True(fileEntries.Count > 10, $"Suspiciously few files: {fileEntries.Count}");
+            Assert.True(fileEntries.Count > 2, $"Suspiciously few files: {fileEntries.Count}");
 
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
+            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Contains('\0')).ToList();
             foreach (var bad in badNames)
                 _output.WriteLine($"BAD NAME: {bad.FullPath}");
             Assert.Empty(badNames);
 
-            var systemCnf = container.FindFile(@"\SYSTEM.CNF");
-            if (systemCnf != null)
-            {
-                var buf = new byte[256];
-                var bytesRead = container.ReadFile(systemCnf, 0, buf, 0, buf.Length);
-                var text = Encoding.ASCII.GetString(buf, 0, bytesRead);
-                _output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "").Replace("\n", " / ")}");
-            }
-            else
-            {
-                _output.WriteLine("SYSTEM.CNF: NOT FOUND");
-            }
+            foreach (var e in container.ListDirectory("\\"))
+                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
         }
         finally
         {
@@ -175,14 +160,9 @@ public class Ps2IntegrationTests
     {
         foreach (var c in node.Children)
         {
-            if (c.IsDirectory)
-            {
-                dirs++;
-                Walk(c, ref files, ref dirs, ref maxSize);
-            }
-            else
-            {
-                files++;
+            if (c.IsDirectory) { dirs++;
+                Walk(c, ref files, ref dirs, ref maxSize); }
+            else { files++;
                 if (c.Size > maxSize)
                 {
                     maxSize = c.Size;
@@ -198,10 +178,8 @@ public class Ps2IntegrationTests
             yield return e;
 
             if (e.IsDirectory)
-            {
                 foreach (var sub in CollectEntries(container, e.FullPath))
                     yield return sub;
-            }
         }
     }
 }

@@ -94,7 +94,10 @@ public class DreamcastBulkTests
     {
         var count = 0;
         foreach (var c in node.Children)
+        {
             count += c.IsDirectory ? CountFiles(c) : 1;
+        }
+
         return count;
     }
 }

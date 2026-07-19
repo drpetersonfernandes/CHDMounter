@@ -15,14 +15,25 @@ public class AmigaCd32IntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> AmigaCd32ChdPaths =>
-    [
-        @"J:\Commodore Amiga CD32\Akira (Europe).chd",
-        @"J:\Commodore Amiga CD32\Alfred Chicken (Europe).chd",
-        @"J:\Commodore Amiga CD32\Alien Breed - Tower Assault (Europe).chd",
-        @"J:\Commodore Amiga CD32\Alien Breed 3D (Europe).chd",
-        @"J:\Commodore Amiga CD32\Alien Breed Special Edition & Qwak (Europe) (En,Fr,De,It,Da).chd"
-    ];
+    public static TheoryData<string> AmigaCd32ChdPaths
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            string[] dirs = [@"G:\MAME\MAME Software List CHDs\cd32", @"I:\Commodore Amiga CD32"];
+
+            foreach (var dir in dirs)
+            {
+                if (!Directory.Exists(dir))
+                    continue;
+
+                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
+                    data.Add(chd);
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(AmigaCd32ChdPaths))]

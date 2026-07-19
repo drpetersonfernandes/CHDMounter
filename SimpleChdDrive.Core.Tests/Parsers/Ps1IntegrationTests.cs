@@ -16,14 +16,25 @@ public class Ps1IntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> Ps1ChdPaths =>
-    [
-        @"X:\Sony PlayStation 1\007 - The World Is Not Enough (USA).chd",
-        @"X:\Sony PlayStation 1\007 - Tomorrow Never Dies (USA).chd",
-        @"X:\Sony PlayStation 1\007 Racing (USA).chd",
-        @"X:\Sony PlayStation 1\1Xtreme (USA).chd",
-        @"X:\Sony PlayStation 1\2Xtreme (USA).chd"
-    ];
+    public static TheoryData<string> Ps1ChdPaths
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            string[] dirs = [@"G:\MAME\MAME Software List CHDs\psx", @"X:\Sony PlayStation 1"];
+
+            foreach (var dir in dirs)
+            {
+                if (!Directory.Exists(dir))
+                    continue;
+
+                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
+                    data.Add(chd);
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(Ps1ChdPaths))]
@@ -44,8 +55,9 @@ public class Ps1IntegrationTests
             var unitBytes = chd.UnitBytes;
             var reader = new SectorReader(chd, unitBytes);
             var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+            Assert.NotNull(track);
 
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track?.TrackType ?? "N/A"}");
+            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
 
             var root = new FsNode();
             var parser = new Iso9660Parser(reader);

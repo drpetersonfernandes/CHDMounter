@@ -16,14 +16,25 @@ public class PspIntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> PspChdPaths =>
-    [
-        @"X:\Sony PSP\007 - From Russia with Love (USA).chd",
-        @"X:\Sony PSP\300 - March to Glory (USA).chd",
-        @"X:\Sony PSP\3rd Birthday, The (USA).chd",
-        @"X:\Sony PSP\7 Wonders of the Ancient World (USA).chd",
-        @"X:\Sony PSP\50 Cent - Bulletproof - G-Unit Edition (USA).chd"
-    ];
+    public static TheoryData<string> PspChdPaths
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            string[] dirs = [@"X:\Sony PSP", @"X:\Sony PSP Minis", @"X:\Sony PSP PSN"];
+
+            foreach (var dir in dirs)
+            {
+                if (!Directory.Exists(dir))
+                    continue;
+
+                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
+                    data.Add(chd);
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(PspChdPaths))]
@@ -44,8 +55,9 @@ public class PspIntegrationTests
             var unitBytes = chd.UnitBytes;
             var reader = new SectorReader(chd, unitBytes);
             var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+            Assert.NotNull(track);
 
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track?.TrackType ?? "N/A"}");
+            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
 
             var root = new FsNode();
             var parser = new Iso9660Parser(reader);

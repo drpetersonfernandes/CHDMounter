@@ -15,47 +15,25 @@ public class ThreeDoIntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> ThreeDoChdPaths =>
-    [
-        @"G:\MAME\MAME Software List CHDs\3do\cpquazar\captain quazar (usa).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\espnfit\espn fitness pros - step aerobics (usa).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\virtuoso\virtuoso (usa).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\vpreika\virtual puppet reika (japan).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\cowcasn\cowboy casino (usa).chd",
-        @"I:\Panasonic 3DO\20th Century Video Almanac (USA).chd",
-        @"I:\Panasonic 3DO\3D Atlas (USA).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark (USA).chd",
-        @"I:\Panasonic 3DO\Battle Chess (USA).chd"
-    ];
+    public static TheoryData<string> ThreeDoChdPaths
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            string[] dirs = [@"J:\Panasonic 3DO", @"G:\MAME\MAME Software List CHDs\3do", @"G:\MAME\MAME Software List CHDs\3do_m2"];
 
-    public static TheoryData<string> AllThreeDoChdPaths =>
-    [
-        @"G:\MAME\MAME Software List CHDs\3do\cpquazar\captain quazar (usa).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\espnfit\espn fitness pros - step aerobics (usa).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\virtuoso\virtuoso (usa).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\vpreika\virtual puppet reika (japan).chd",
-        @"G:\MAME\MAME Software List CHDs\3do\cowcasn\cowboy casino (usa).chd",
-        @"I:\Panasonic 3DO\20th Century Video Almanac (USA).chd",
-        @"I:\Panasonic 3DO\3D Atlas (Europe).chd",
-        @"I:\Panasonic 3DO\3D Atlas (USA).chd",
-        @"I:\Panasonic 3DO\3DO de Shiru Miru Asobu - Nakajima Miyuki (Japan).chd",
-        @"I:\Panasonic 3DO\3DO Game Guru (USA, Europe).chd",
-        @"I:\Panasonic 3DO\Adventures Of Captain J, The (USA) (Unl).chd",
-        @"I:\Panasonic 3DO\AI Shougi (Japan).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark (Europe) (En,Fr) (NTSC Version).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark (Europe) (En,Fr).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark (Japan).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark (USA).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark 2 (Europe).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark 2 (Japan).chd",
-        @"I:\Panasonic 3DO\Alone in the Dark 2 (USA).chd",
-        @"I:\Panasonic 3DO\Another World (Europe).chd",
-        @"I:\Panasonic 3DO\AutoBahn Tokio (Japan).chd",
-        @"I:\Panasonic 3DO\Battle Chess (Europe).chd",
-        @"I:\Panasonic 3DO\Battle Chess (Japan).chd",
-        @"I:\Panasonic 3DO\Battle Chess (USA).chd",
-        @"I:\Panasonic 3DO\BattleSport (USA).chd"
-    ];
+            foreach (var dir in dirs)
+            {
+                if (!Directory.Exists(dir))
+                    continue;
+
+                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
+                    data.Add(chd);
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(ThreeDoChdPaths))]
@@ -81,6 +59,7 @@ public class ThreeDoIntegrationTests
             var parser = new ThreeDoParser(reader);
 
             var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+            Assert.NotNull(track);
             var ok = parser.Parse(root, track);
             _output.WriteLine($"ThreeDoParser: {(ok ? "OK" : "FAILED")}");
 
@@ -178,7 +157,7 @@ public class ThreeDoIntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(AllThreeDoChdPaths))]
+    [MemberData(nameof(ThreeDoChdPaths))]
     public void BulkParseAllThreeDoDiscs(string chdPath)
     {
         if (!File.Exists(chdPath))
@@ -198,6 +177,7 @@ public class ThreeDoIntegrationTests
             var root = new FsNode();
             var parser = new ThreeDoParser(reader);
             var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+            Assert.NotNull(track);
 
             var ok = parser.Parse(root, track);
             var fileName = Path.GetFileName(chdPath);
@@ -232,17 +212,12 @@ public class ThreeDoIntegrationTests
             {
                 files++;
                 if (c.Size > maxSize)
+                {
                     maxSize = c.Size;
+                }
             }
         }
     }
-
-    public static TheoryData<string> ThreeDoM2ChdPaths =>
-    [
-        @"G:\MAME\MAME Software List CHDs\3do_m2\olds\oldsmobile (disc 2).chd",
-        @"G:\MAME\MAME Software List CHDs\3do_m2\imsarcng\imsa racing.chd",
-        @"G:\MAME\MAME Software List CHDs\3do_m2\shootr2d\shootr2d.chd"
-    ];
 
     private static void WalkTest(FsNode root, ITestOutputHelper output, out int files, out int dirs, out ulong maxSize)
     {
@@ -254,7 +229,7 @@ public class ThreeDoIntegrationTests
     }
 
     [Theory]
-    [MemberData(nameof(ThreeDoM2ChdPaths))]
+    [MemberData(nameof(ThreeDoChdPaths))]
     public void M2DiscPaserDiagnostic(string chdPath)
     {
         if (!File.Exists(chdPath))
@@ -275,16 +250,41 @@ public class ThreeDoIntegrationTests
 
             _output.WriteLine($"--- {fileName} (UnitBytes={chd.UnitBytes}, Tracks={reader.Tracks.Count}) ---");
 
-            var ok3do = TryThreeDo(reader, track, out var f3, out var d3, out var m3);
-            _output.WriteLine($"  ThreeDoParser: {(ok3do ? $"OK ({f3} files, {d3} dirs, max={m3:N0})" : "FAIL")}");
+            bool ok3Do;
+            int f3, d3;
+            ulong m3;
+            if (track is not null)
+            {
+                ok3Do = TryThreeDo(reader, track, out f3, out d3, out m3);
+            }
+            else
+            {
+                ok3Do = false;
+                f3 = 0;
+                d3 = 0;
+                m3 = 0;
+            }
+
+            _output.WriteLine($"  ThreeDoParser: {(ok3Do ? $"OK ({f3} files, {d3} dirs, max={m3:N0})" : "FAIL")}");
 
             reader = new SectorReader(chd, chd.UnitBytes);
-            track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            var okIso = TryIso9660(reader, track, out var fi, out var di);
+            var track2 = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+            bool okIso;
+            int fi, di;
+            if (track2 is not null)
+            {
+                okIso = TryIso9660(reader, track2, out fi, out di);
+            }
+            else
+            {
+                okIso = false;
+                fi = 0;
+                di = 0;
+            }
             _output.WriteLine($"  Iso9660Parser: {(okIso ? $"OK ({fi} files, {di} dirs)" : "FAIL")}");
 
-            var okThreeDoCt = TryContainerMount(chdPath, ConsoleType.ThreeDo, out var c3f, out var c3d);
-            _output.WriteLine($"  Container ThreeDo: {(okThreeDoCt ? $"OK ({c3f} files, {c3d} dirs)" : "FAIL")}");
+            var okThreeDoCt = TryContainerMount(chdPath, ConsoleType.ThreeDo, out var c3F, out var c3D);
+            _output.WriteLine($"  Container ThreeDo: {(okThreeDoCt ? $"OK ({c3F} files, {c3D} dirs)" : "FAIL")}");
 
             var okIsoCt = TryContainerMount(chdPath, ConsoleType.GenericIso9660, out var cif, out var cid);
             _output.WriteLine($"  Container ISO9660: {(okIsoCt ? $"OK ({cif} files, {cid} dirs)" : "FAIL")}");
@@ -295,7 +295,7 @@ public class ThreeDoIntegrationTests
         }
     }
 
-    private bool TryThreeDo(SectorReader reader, TrackInfo track, out int files, out int dirs, out ulong maxSize)
+    private static bool TryThreeDo(SectorReader reader, TrackInfo track, out int files, out int dirs, out ulong maxSize)
     {
         files = 0;
         dirs = 0;
@@ -307,7 +307,7 @@ public class ThreeDoIntegrationTests
         return ok;
     }
 
-    private bool TryIso9660(SectorReader reader, TrackInfo track, out int files, out int dirs)
+    private static bool TryIso9660(SectorReader reader, TrackInfo track, out int files, out int dirs)
     {
         files = 0;
         dirs = 0;
@@ -319,7 +319,7 @@ public class ThreeDoIntegrationTests
         return ok;
     }
 
-    private bool TryContainerMount(string chdPath, ConsoleType consoleType, out int files, out int dirs)
+    private static bool TryContainerMount(string chdPath, ConsoleType consoleType, out int files, out int dirs)
     {
         files = 0;
         dirs = 0;

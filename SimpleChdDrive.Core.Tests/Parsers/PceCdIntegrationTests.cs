@@ -18,14 +18,25 @@ public class PceCdIntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> PceCdChdPaths =>
-    [
-        @"J:\NEC PC Engine CD\1552 Tenka Tairan (Japan).chd",
-        @"J:\NEC PC Engine CD\3x3 Eyes - Sanjiyan Henjou (Japan) (Rev 1).chd",
-        @"J:\NEC PC Engine CD\A.III. - A Ressha de Ikou III (Japan).chd",
-        @"J:\NEC PC Engine CD\Addams Family, The (USA).chd",
-        @"J:\NEC PC Engine CD\Akumajou Dracula X - Chi no Rondo (Japan).chd"
-    ];
+    public static TheoryData<string> PceCdChdPaths
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            string[] dirs = [@"G:\MAME\MAME Software List CHDs\pcecd", @"I:\NEC PC Engine CD"];
+
+            foreach (var dir in dirs)
+            {
+                if (!Directory.Exists(dir))
+                    continue;
+
+                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
+                    data.Add(chd);
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(PceCdChdPaths))]
@@ -64,7 +75,9 @@ public class PceCdIntegrationTests
                 _output.WriteLine($"Track {track.Index}: dataStart={dataStart} descriptor='{descriptor}'");
 
                 if (descriptor == BootSignature)
+                {
                     found = true;
+                }
             }
 
             Assert.True(found, "No PC Engine CD-ROM SYSTEM signature found on any data track");

@@ -225,7 +225,9 @@ public class AmigaCdIntegrationTests
             {
                 files++;
                 if (c.Size > maxSize)
+                {
                     maxSize = c.Size;
+                }
             }
         }
     }

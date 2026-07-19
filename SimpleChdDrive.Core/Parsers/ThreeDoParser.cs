@@ -48,16 +48,21 @@ public class ThreeDoParser
 
         var blockSize = Be32(sectorData, 0x4C);
         if (blockSize == 0)
+        {
             blockSize = 2048;
+        }
 
         var blockSizeRatio = blockSize / 2048;
-        if (blockSizeRatio == 0) blockSizeRatio = 1;
+        if (blockSizeRatio == 0)
+        {
+            blockSizeRatio = 1;
+        }
 
         var firstRootBlock = (int)Be32(sectorData, 0x64);
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
-        rootNode.Lba = (uint)(trackStart + (long)firstRootBlock * blockSizeRatio);
+        rootNode.Lba = (uint)(trackStart + firstRootBlock * blockSizeRatio);
         rootNode.Size = 0;
 
         return ParseDirectory(firstRootBlock, blockSizeRatio, rootNode, trackStart);
@@ -66,21 +71,23 @@ public class ThreeDoParser
     private bool ParseDirectory(int firstBlock, uint blockSizeRatio, FsNode parentNode, uint trackStart)
     {
         var sectorData = new byte[2048];
-        int nextBlock = firstBlock;
+        var nextBlock = firstBlock;
         var visited = new HashSet<int>();
 
         while (true)
         {
             if (!visited.Add(nextBlock)) break;
 
-            var currentLba = (uint)(trackStart + (long)nextBlock * blockSizeRatio);
+            var currentLba = (uint)(trackStart + nextBlock * blockSizeRatio);
             if (!_reader.ReadSector(currentLba, sectorData)) return false;
 
             var headerNextBlock = (int)Be32(sectorData, 0x00);
             var firstEntryOffset = Be32(sectorData, 0x10);
 
-            if (firstEntryOffset == 0 || firstEntryOffset >= 2048)
+            if (firstEntryOffset is 0 or >= 2048)
+            {
                 firstEntryOffset = 0x14;
+            }
 
             uint lastEntryFlags = 0;
             var hasEntries = false;

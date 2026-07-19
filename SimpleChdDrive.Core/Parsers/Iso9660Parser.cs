@@ -110,7 +110,8 @@ public class Iso9660Parser
 
         if (!foundPvd)
         {
-            for (uint i = 0; i < 100; i++)
+            var scanLimit = track is { Frames: > 0 } ? Math.Min(track.Frames, 2000u) : 2000u;
+            for (uint i = 0; i < scanLimit; i++)
             {
                 if (_reader.ReadSector(effectiveTrackStart + i, sectorData) && sectorData.Length >= 16)
                 {

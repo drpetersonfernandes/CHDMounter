@@ -24,7 +24,7 @@ public class SegaSaturnBulkTests
     [Fact]
     public void ParseEntireMameSaturnLibrary()
     {
-        var path = @"G:\MAME\MAME Software List CHDs\saturn";
+        const string path = @"G:\MAME\MAME Software List CHDs\saturn";
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +42,7 @@ public class SegaSaturnBulkTests
     [Fact]
     public void ParseEntireISegaSaturnLibrary()
     {
-        var path = @"I:\Sega Saturn";
+        const string path = @"I:\Sega Saturn";
 
         if (!Directory.Exists(path))
         {
@@ -151,7 +151,10 @@ public class SegaSaturnBulkTests
     {
         var count = 0;
         foreach (var c in node.Children)
+        {
             count += c.IsDirectory ? CountFiles(c) : 1;
+        }
+
         return count;
     }
 }

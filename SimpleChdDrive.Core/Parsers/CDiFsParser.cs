@@ -5,7 +5,10 @@ namespace SimpleChdDrive.Core.Parsers;
 public class CDiFsParser
 {
     private readonly SectorReader _reader;
-    private int _lbaOffset;
+    private static readonly Encoding Encoding = Encoding.GetEncoding("iso8859-1");
+
+    private const int CdiRecordHeaderSize = 33;
+    private const int CdiSystemAreaSize = 12;
 
     public CDiFsParser(SectorReader reader)
     {
@@ -14,94 +17,194 @@ public class CDiFsParser
 
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
-        _reader.Reset();
-        if (track != null)
-            _reader.SetTrack(track, true);
-        else
-            _reader.SetTrack(null!);
-        _lbaOffset = 0;
-
         var sectorData = new byte[2048];
-        var trackStart = track?.StartLba ?? 0;
+        var trackStart = track?.StartLba ?? 0u;
 
-        var foundVd = false;
-        byte[]? bestVdData = null;
+        if (TryParseFromLba(rootNode, 0u, trackStart, sectorData))
+            return true;
 
+        if (track != null)
+            return TryParseFromLba(rootNode, trackStart, trackStart, sectorData);
+
+        return false;
+    }
+
+    private bool TryParseFromLba(FsNode rootNode, uint searchLba, uint baseLba, byte[] sectorData)
+    {
+        _reader.Reset();
+        _reader.SetTrack(null!);
+
+        var bestVdData = SearchForVolumeDescriptor(searchLba, sectorData);
+        if (bestVdData == null) return false;
+
+        var vd = bestVdData;
+        var pathTableSize = BeU32(vd, 136);
+        var pathTableAddr = BeU32(vd, 148);
+
+        if (pathTableSize == 0 || pathTableAddr == 0) return false;
+
+        var pathTable = ParsePathTable(baseLba + pathTableAddr, pathTableSize);
+        if (pathTable == null || pathTable.Count == 0) return false;
+
+        var rootPt = pathTable[0];
+        var rootLba = baseLba + rootPt.Lba;
+
+        var rootDirBytes = _reader.ReadSector(rootLba);
+        if (rootDirBytes == null) return false;
+
+        var rootRecord = ParseRootRecord(rootDirBytes);
+        if (rootRecord == null) return false;
+
+        rootNode.Lba = rootLba;
+        rootNode.Size = rootRecord.Size;
+
+        var rootDir = new CdiDirContext
+        {
+            Lba = rootLba,
+            Size = rootRecord.Size,
+            PathTableIndex = 1
+        };
+
+        ParseDirectory(rootNode, rootDir, pathTable, baseLba);
+
+        rootNode.Name = "/";
+        rootNode.IsDirectory = true;
+        return true;
+    }
+
+    private byte[]? SearchForVolumeDescriptor(uint startLba, byte[] sectorData)
+    {
         for (uint offset = 0; offset < 100; offset++)
         {
-            var currentLba = trackStart + offset;
+            var currentLba = startLba + offset;
             if (!_reader.ReadSector(currentLba, sectorData)) continue;
 
             var type = sectorData[0];
-            var hasCdi = CheckSig(sectorData, 1, "CD-I ") || CheckSig(sectorData, 8, "CD-RTOS");
+            var hasCdi = CheckSig(sectorData, 1, "CD-I ");
             var hasIso = CheckSig(sectorData, 1, "CD001");
+            var hasHighSierra = CheckSig(sectorData, 9, "CDROM");
 
-            if (hasCdi || hasIso)
+            if (hasCdi || hasIso || hasHighSierra)
             {
-                ReadCDiU32(sectorData, 158);
-                var rootSize = ReadCDiU32(sectorData, 166);
-
-                if (rootSize > 0 || ReadCDiU32(sectorData, 148) > 0)
-                {
-                    bestVdData = sectorData;
-                    foundVd = true;
-                    break; }
+                var copy = new byte[2048];
+                Array.Copy(sectorData, copy, 2048);
+                return copy;
             }
 
             if (type == 255) break;
         }
 
-        if (!foundVd) return false;
+        return null;
+    }
 
-        var vd = bestVdData!;
-        var rootRelLba2 = ReadCDiU32(vd, 158);
-        var rootSize2 = ReadCDiU32(vd, 166);
+    private List<CdiPathEntry>? ParsePathTable(uint pathTableLba, uint pathTableSize)
+    {
+        var table = new List<CdiPathEntry>();
 
-        if (rootSize2 == 0)
+        var sectorsNeeded = (pathTableSize + 2047) / 2048;
+        var buf = new byte[sectorsNeeded * 2048];
+
+        for (uint i = 0; i < sectorsNeeded; i++)
         {
-            var pathTableLba = BeU32(vd, 148);
-            if (pathTableLba > 0 && _reader.ReadSector(trackStart + pathTableLba, sectorData))
+            var sector = _reader.ReadSector(pathTableLba + i);
+            if (sector == null) return null;
+
+            Array.Copy(sector, 0, buf, (int)(i * 2048), 2048);
+        }
+
+        uint off = 0;
+        while (off < pathTableSize)
+        {
+            if (off + 8 > pathTableSize) break;
+
+            var nameLen = buf[off];
+            if (nameLen == 0) break;
+
+            var xattrLen = buf[off + 1];
+            var startLbn = BeU32(buf, (int)off + 2);
+            var parentDirNo = BeU16(buf, (int)off + 6);
+
+            off += 8;
+            var name = Encoding.GetString(buf, (int)off, nameLen);
+
+            table.Add(new CdiPathEntry
             {
-                rootRelLba2 = BeU32(sectorData, 2);
-                rootSize2 = 2048;
+                Lba = startLbn,
+                Name = name,
+                Parent = parentDirNo,
+                XattrLength = xattrLen
+            });
+
+            off += nameLen;
+            if ((nameLen & 1) != 0)
+            {
+                off++;
             }
         }
 
-        if (rootRelLba2 == 0) return false;
-
-        rootNode.Name = "/";
-        rootNode.IsDirectory = true;
-        rootNode.Lba = trackStart + rootRelLba2 + (uint)_lbaOffset;
-        rootNode.Size = rootSize2;
-
-        return ParseDirectory(rootNode, trackStart);
+        return table;
     }
 
-    private bool ParseDirectory(FsNode dirNode, uint trackStart)
+    private static CdiRootRecord? ParseRootRecord(byte[] sectorData)
     {
-        var size = dirNode.Size == 0 ? 2048 : (uint)dirNode.Size;
-        var sectorData = new byte[2048];
-        var maxSectors = Math.Min((size + 2047) / 2048, 4096);
+        if (sectorData.Length < CdiRecordHeaderSize) return null;
 
-        for (uint i = 0; i < maxSectors; i++)
+        var recordLen = sectorData[0];
+        if (recordLen is 0 or < CdiRecordHeaderSize) return null;
+
+        var startLbn = BeU32(sectorData, 6);
+        var size = BeU32(sectorData, 14);
+        var nameLen = sectorData[32];
+
+        return new CdiRootRecord
         {
-            if (!_reader.ReadSector(dirNode.Lba + i, sectorData)) break;
+            StartLbn = startLbn,
+            Size = size,
+            NameLen = nameLen
+        };
+    }
+
+    private void ParseDirectory(FsNode dirNode, CdiDirContext dirCtx,
+        List<CdiPathEntry> pathTable, uint trackStart)
+    {
+        var size = dirCtx.Size == 0 ? 2048u : dirCtx.Size;
+        var sectorsToRead = Math.Min((size + 2047) / 2048, 4096);
+
+        for (uint i = 0; i < sectorsToRead; i++)
+        {
+            var sector = _reader.ReadSector(dirCtx.Lba + i);
+            if (sector == null) break;
 
             uint pos = 0;
             var hasRecords = false;
-            while (pos < 2048)
+
+            while (pos <= 2048 - CdiRecordHeaderSize)
             {
-                var recordLen = sectorData[pos];
-                if (recordLen == 0) break;
-                if (pos + recordLen > 2048 || recordLen < 34) break;
+                var recordLen = sector[pos];
+                if (recordLen == 0)
+                {
+                    var nextSector = (pos / 2048 + 1) * 2048;
+                    if (nextSector <= 2048 - CdiRecordHeaderSize && nextSector > pos)
+                    {
+                        pos = nextSector;
+                    }
+                    else
+                        break;
+
+                    continue;
+                }
+
+                if (recordLen < CdiRecordHeaderSize || pos + recordLen > 2048)
+                    break;
 
                 hasRecords = true;
-                var relLba = ReadCDiU32(sectorData, (int)pos + 2);
-                ulong fileSize = ReadCDiU32(sectorData, (int)pos + 10);
-                var nameLen = sectorData[pos + 32];
 
-                if (33 + nameLen > recordLen || pos + 33 + nameLen > 2048)
-                { pos += recordLen;
+                var startLbn = BeU32(sector, (int)pos + 6);
+                var fileSize = BeU32(sector, (int)pos + 14);
+                var nameLen = sector[pos + 32];
+                _ = sector[pos + 25];
+
+                if (nameLen == 0) { pos += recordLen;
                     if ((pos & 1) != 0)
                     {
                         pos++;
@@ -109,63 +212,113 @@ public class CDiFsParser
 
                     continue; }
 
-                var suOffset = 33 + nameLen + ((nameLen & 1) != 0 ? 1 : 0);
+                if (33 + nameLen > recordLen || pos + 33 + nameLen > 2048) break;
+
+                if (nameLen == 1)
+                {
+                    var nameByte = sector[pos + 33];
+                    if (nameByte is 0x00 or 0x01)
+                    {
+                        pos += recordLen;
+                        if ((pos & 1) != 0)
+                        {
+                            pos++;
+                        }
+
+                        continue;
+                    }
+                }
+
+                var name = Encoding.GetString(sector, (int)pos + 33, nameLen);
+
+                var saOff = (int)pos + 33 + nameLen;
+                if ((saOff & 1) != 0)
+                {
+                    saOff++;
+                }
+
                 var isDir = false;
                 byte fileNumber = 0;
                 var isInterleaved = false;
 
-                if (suOffset + 10 <= recordLen)
+                if (saOff + CdiSystemAreaSize <= pos + recordLen)
                 {
-                    var fileAttr = BeU16(sectorData, (uint)(pos + suOffset + 4));
-                    isDir = (fileAttr & 0x8000) != 0;
-                    fileNumber = sectorData[pos + suOffset + 8];
+                    _ = BeU16(sector, (uint)saOff);
+                    _ = BeU16(sector, (uint)(saOff + 2));
+                    var attrs = BeU16(sector, (uint)(saOff + 4));
+                    fileNumber = sector[saOff + 8];
+
+                    isDir = (attrs & 0x8000) != 0;
+                    isInterleaved = (attrs & 0x2000) != 0;
                 }
 
-                if (!isDir)
+                switch (isDir)
                 {
-                    isDir = (sectorData[pos + 25] & 0x02) != 0;
-                }
-
-                if (sectorData[pos + 26] > 1)
-                {
-                    isInterleaved = true;
-                }
-
-                string name;
-                switch (nameLen)
-                {
-                    case 1 when sectorData[pos + 33] == 0x00:
-                        name = ".";
-                        break;
-                    case 1 when sectorData[pos + 33] == 0x01:
-                        name = "..";
-                        break;
-                    default:
+                    case true when pathTable.Count > 0:
                     {
-                        name = Encoding.ASCII.GetString(sectorData, (int)pos + 33, nameLen);
-                        var semi = name.IndexOf(';');
-                        if (semi >= 0)
+                        var subDirs = GetSubdirsFromPathTable(dirCtx.PathTableIndex, pathTable, trackStart);
+                        if (subDirs.Count > 0)
                         {
-                            name = name[..semi];
+                            foreach (var sub in subDirs)
+                            {
+                                var child = new FsNode
+                                {
+                                    Name = sub.Name,
+                                    Lba = sub.Lba,
+                                    Size = sub.Size,
+                                    IsDirectory = true,
+                                    FileNumber = 0
+                                };
+
+                                var childCtx = new CdiDirContext
+                                {
+                                    Lba = sub.Lba,
+                                    Size = sub.Size,
+                                    PathTableIndex = sub.PathTableIndex
+                                };
+
+                                ParseDirectory(child, childCtx, pathTable, trackStart);
+                                dirNode.Children.Add(child);
+                            }
                         }
 
                         break;
                     }
-                }
-
-                if (name != "." && name != "..")
-                {
-                    var child = new FsNode
+                    case false:
                     {
-                        Name = name,
-                        Lba = trackStart + relLba + (uint)_lbaOffset,
-                        Size = fileSize,
-                        IsDirectory = isDir,
-                        FileNumber = fileNumber,
-                        IsInterleaved = isInterleaved
-                    };
-                    if (child.IsDirectory) ParseDirectory(child, trackStart);
-                    dirNode.Children.Add(child);
+                        var child = new FsNode
+                        {
+                            Name = name,
+                            Lba = trackStart + startLbn,
+                            Size = fileSize,
+                            IsDirectory = false,
+                            FileNumber = fileNumber,
+                            IsInterleaved = isInterleaved
+                        };
+                        dirNode.Children.Add(child);
+                        break;
+                    }
+                    default:
+                    {
+                        var child = new FsNode
+                        {
+                            Name = name,
+                            Lba = trackStart + startLbn,
+                            Size = fileSize,
+                            IsDirectory = true,
+                            FileNumber = fileNumber,
+                            IsInterleaved = isInterleaved
+                        };
+                        var childCtx = new CdiDirContext
+                        {
+                            Lba = child.Lba,
+                            Size = fileSize,
+                            PathTableIndex = dirCtx.PathTableIndex
+                        };
+                        ParseDirectory(child, childCtx, pathTable, trackStart);
+                        dirNode.Children.Add(child);
+                        break;
+                    }
                 }
 
                 pos += recordLen;
@@ -177,8 +330,35 @@ public class CDiFsParser
 
             if (!hasRecords) break;
         }
+    }
 
-        return true;
+    private List<CdiSubDirEntry> GetSubdirsFromPathTable(int parentIndex,
+        List<CdiPathEntry> pathTable, uint trackStart)
+    {
+        var result = new List<CdiSubDirEntry>();
+
+        for (var i = 0; i < pathTable.Count; i++)
+        {
+            var entry = pathTable[i];
+            if (entry.Parent != parentIndex || i == 0) continue;
+
+            var dirLba = trackStart + entry.Lba;
+            var sector = _reader.ReadSector(dirLba);
+            if (sector == null) continue;
+
+            var record = ParseRootRecord(sector);
+            if (record == null) continue;
+
+            result.Add(new CdiSubDirEntry
+            {
+                Name = entry.Name,
+                Lba = dirLba,
+                Size = record.Size,
+                PathTableIndex = i + 1
+            });
+        }
+
+        return result;
     }
 
     private static bool CheckSig(byte[] d, int o, string s)
@@ -190,24 +370,48 @@ public class CDiFsParser
         return true;
     }
 
-    private static uint ReadCDiU32(byte[] p, int o)
-    {
-        var be = BeU32(p, o + 4);
-        if (be != 0) return be;
-
-        var beF = BeU32(p, o);
-        if (beF != 0) return beF;
-
-        return (uint)(p[o] | (p[o + 1] << 8) | (p[o + 2] << 16) | (p[o + 3] << 24));
-    }
-
     private static uint BeU32(byte[] d, int o)
     {
         return (uint)((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]);
     }
 
+    private static ushort BeU16(byte[] d, int o)
+    {
+        return (ushort)((d[o] << 8) | d[o + 1]);
+    }
+
     private static ushort BeU16(byte[] d, uint o)
     {
         return (ushort)((d[o] << 8) | d[o + 1]);
+    }
+
+    private class CdiPathEntry
+    {
+        public uint Lba;
+        public string Name = "";
+        public ushort Parent;
+        public byte XattrLength;
+    }
+
+    private class CdiRootRecord
+    {
+        public uint StartLbn;
+        public uint Size;
+        public byte NameLen;
+    }
+
+    private class CdiDirContext
+    {
+        public uint Lba;
+        public uint Size;
+        public int PathTableIndex;
+    }
+
+    private class CdiSubDirEntry
+    {
+        public string Name = "";
+        public uint Lba;
+        public uint Size;
+        public int PathTableIndex;
     }
 }

@@ -24,7 +24,7 @@ public class NeoGeoCdBulkTests
     [Fact]
     public void ParseEntireMameNeocdLibrary()
     {
-        var path = @"G:\MAME\MAME Software List CHDs\neocd";
+        const string path = @"G:\MAME\MAME Software List CHDs\neocd";
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +42,7 @@ public class NeoGeoCdBulkTests
     [Fact]
     public void ParseEntireJNeoGeoCdLibrary()
     {
-        var path = @"J:\SNK Neo Geo CD";
+        const string path = @"J:\SNK Neo Geo CD";
 
         if (!Directory.Exists(path))
         {
@@ -151,7 +151,10 @@ public class NeoGeoCdBulkTests
     {
         var count = 0;
         foreach (var c in node.Children)
+        {
             count += c.IsDirectory ? CountFiles(c) : 1;
+        }
+
         return count;
     }
 }

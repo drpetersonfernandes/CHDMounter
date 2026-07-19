@@ -24,7 +24,7 @@ public class CDiBulkTests
     [Fact]
     public void ParseEntireMameCdiLibrary()
     {
-        var path = @"G:\MAME\MAME Software List CHDs\cdi";
+        const string path = @"G:\MAME\MAME Software List CHDs\cdi";
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +42,7 @@ public class CDiBulkTests
     [Fact]
     public void ParseEntireIPhilipsCdiLibrary()
     {
-        var path = @"I:\Philips CD-i";
+        const string path = @"I:\Philips CD-i";
 
         if (!Directory.Exists(path))
         {
@@ -110,7 +110,6 @@ public class CDiBulkTests
         Assert.NotEmpty(allChdFiles);
 
         var cdiFailures = new List<string>();
-        var isoFailures = new List<string>();
         int cdiParsed = 0, cdiFiles = 0;
         int isoParsed = 0, isoFiles = 0;
         var sw = Stopwatch.StartNew();
@@ -256,7 +255,10 @@ public class CDiBulkTests
     {
         var count = 0;
         foreach (var c in node.Children)
+        {
             count += c.IsDirectory ? CountFiles(c) : 1;
+        }
+
         return count;
     }
 }
