@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
         Height="180" Width="380"
-        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Style="{StaticResource ModernWindowStyle}">
     <Grid Margin="24,20">
         <Grid.RowDefinitions>

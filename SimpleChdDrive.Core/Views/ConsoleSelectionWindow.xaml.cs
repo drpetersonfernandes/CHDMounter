@@ -17,6 +17,13 @@ public partial class ConsoleSelectionWindow
         ConsoleComboBox.SelectedIndex = 0;
     }
 
+    public ConsoleSelectionWindow(string chdPath) : this()
+    {
+        var fileName = Path.GetFileName(chdPath);
+        ChdPathTextBlock.Text = !string.IsNullOrEmpty(fileName) ? fileName : chdPath;
+        ChdPathTextBlock.ToolTip = chdPath;
+    }
+
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
         if (ConsoleComboBox.SelectedItem is ConsoleInfo ci)

@@ -1,3 +1,5 @@
+using System.Security.AccessControl;
+using System.Security.Principal;
 using Fsp;
 using Microsoft.Win32;
 using SimpleChdDrive.Core.Interfaces;
@@ -57,12 +59,42 @@ internal class MountService : IMountService, IDisposable
 
         _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
 
-        MountPoint = mountPoint ?? DriveHelper.PickDriveLetter();
+        var crossIntegrity = IsRunningAsAdministrator();
+        if (crossIntegrity)
+            _loggingService.Log("Running as Administrator: Cross-integrity mount enforced so standard processes can access the drive.");
+
+        if (string.IsNullOrEmpty(mountPoint))
+        {
+            MountPoint = crossIntegrity
+                ? GetCrossIntegrityMountPath(chdPath)
+                : DriveHelper.PickDriveLetter();
+        }
+        else
+        {
+            if (crossIntegrity && IsDriveLetterMountPoint(mountPoint))
+            {
+                _loggingService.Log("Cross-integrity mode: Drive letter mounts are not supported. Redirecting to folder mount.");
+                MountPoint = GetCrossIntegrityMountPath(chdPath);
+            }
+            else
+            {
+                MountPoint = mountPoint;
+            }
+        }
+
         _loggingService.Log($"Mounting at {MountPoint} (WinFsp)...");
 
-        _currentFs = new ChdFs(_container, _loggingService);
+        var isDriveLetter = IsDriveLetterMountPoint(MountPoint);
+        var persistentAcls = crossIntegrity && !isDriveLetter;
+
+        _currentFs = new ChdFs(_container, _loggingService, persistentAcls);
         _host = new FileSystemHost(_currentFs);
-        _host.Mount(MountPoint, null, true);
+
+        var securityDescriptor = persistentAcls ? CreateCrossIntegritySecurityDescriptor() : null;
+        if (securityDescriptor != null)
+            _loggingService.Log("Cross-integrity: using permissive DACL (Everyone Full Access).");
+
+        _host.Mount(MountPoint, securityDescriptor, true, unchecked((uint)-1));
 
         IsMounted = true;
         _loggingService.Log($"Mounted at {MountPoint} (WinFsp).");
@@ -86,6 +118,51 @@ internal class MountService : IMountService, IDisposable
         _container = null;
         IsMounted = false;
         MountPoint = "";
+    }
+
+    private static bool IsRunningAsAdministrator()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    private static byte[] CreateCrossIntegritySecurityDescriptor()
+    {
+        const string sddl = "D:P(A;;FA;;;WD)";
+        var sd = new RawSecurityDescriptor(sddl);
+        var bytes = new byte[sd.BinaryLength];
+        sd.GetBinaryForm(bytes, 0);
+        return bytes;
+    }
+
+    private static string GetCrossIntegrityMountPath(string chdPath)
+    {
+        var baseDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SimpleChdDrive", "Mounts");
+        var folderName = Path.GetFileNameWithoutExtension(chdPath);
+        return Path.Combine(baseDir, SanitizeFolderName(folderName));
+    }
+
+    private static string SanitizeFolderName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = name.ToCharArray();
+        for (var i = 0; i < chars.Length; i++)
+        {
+            if (invalid.Contains(chars[i]))
+            {
+                chars[i] = '_';
+            }
+        }
+        return new string(chars);
+    }
+
+    private static bool IsDriveLetterMountPoint(string mountPoint)
+    {
+        return mountPoint is [_, ':', ..] && char.IsLetter(mountPoint[0])
+                                          && (mountPoint.Length == 2 || mountPoint is [_, _, '\\']);
     }
 
     public void Dispose()

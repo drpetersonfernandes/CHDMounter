@@ -146,7 +146,27 @@ public partial class MainWindow
         ValidateAndEnableMount();
 
         if (ctFromNumber.HasValue && chdPath != null && File.Exists(chdPath))
+        {
             MountDisk();
+        }
+        else if (chdPath != null && File.Exists(chdPath) && !ctFromNumber.HasValue)
+        {
+            ShowDragDropConsoleModal(chdPath);
+        }
+    }
+
+    private void ShowDragDropConsoleModal(string chdPath)
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            var dialog = new ConsoleSelectionWindow(chdPath) { Owner = this };
+            if (dialog.ShowDialog() == true)
+            {
+                _selectedConsoleType = dialog.SelectedConsoleType;
+                SelectConsoleTypeInCombo(dialog.SelectedConsoleType);
+                MountDisk();
+            }
+        }), System.Windows.Threading.DispatcherPriority.Background);
     }
 
     private void SelectConsoleTypeInCombo(ConsoleType type)

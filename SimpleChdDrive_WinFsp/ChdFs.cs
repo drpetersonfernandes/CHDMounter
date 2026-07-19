@@ -14,11 +14,13 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
 {
     private readonly ChdContainer _container;
     private readonly ILoggingService _loggingService;
+    private readonly bool _persistentAcls;
 
-    public ChdFs(ChdContainer container, ILoggingService loggingService)
+    public ChdFs(ChdContainer container, ILoggingService loggingService, bool persistentAcls = false)
     {
         _container = container;
         _loggingService = loggingService;
+        _persistentAcls = persistentAcls;
     }
 
     public override int Init(object Host)
@@ -27,6 +29,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
         {
             host.CasePreservedNames = true;
             host.UnicodeOnDisk = true;
+            host.PersistentAcls = _persistentAcls;
             host.PostCleanupWhenModifiedOnly = true;
             host.FlushAndPurgeOnCleanup = true;
             host.FileSystemName = _container.VolumeName;
