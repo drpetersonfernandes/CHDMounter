@@ -8,11 +8,7 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 
 public class CDiBulkTests
 {
-    private static readonly string[] LibraryPaths =
-    [
-        @"G:\MAME\MAME Software List CHDs\cdi",
-        @"I:\Philips CD-i"
-    ];
+    private static readonly string[] LibraryPaths = ChdPathCatalog.CDi.Paths;
 
     private readonly ITestOutputHelper _output;
 
@@ -24,7 +20,7 @@ public class CDiBulkTests
     [Fact]
     public void ParseEntireMameCdiLibrary()
     {
-        const string path = @"G:\MAME\MAME Software List CHDs\cdi";
+        var path = ChdPathCatalog.CDi.Paths[0];
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +38,7 @@ public class CDiBulkTests
     [Fact]
     public void ParseEntireIPhilipsCdiLibrary()
     {
-        const string path = @"I:\Philips CD-i";
+        var path = ChdPathCatalog.CDi.Paths[1];
 
         if (!Directory.Exists(path))
         {

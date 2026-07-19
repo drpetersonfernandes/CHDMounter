@@ -24,5 +24,8 @@ public enum ConsoleType
     PlayStation,
     GenericIso9660,
     GenericCueBin,
-    GenericCueBin2048
+    GenericCueBin2048,
+    GenericCueIso,
+    GenericCueBinWav,
+    GenericCueIsoWav
 }

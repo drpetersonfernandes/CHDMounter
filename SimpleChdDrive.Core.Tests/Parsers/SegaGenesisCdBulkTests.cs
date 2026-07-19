@@ -8,11 +8,7 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 
 public class SegaGenesisCdBulkTests
 {
-    private static readonly string[] LibraryPaths =
-    [
-        @"G:\MAME\MAME Software List CHDs\megacd",
-        @"I:\Sega Genesis CD"
-    ];
+    private static readonly string[] LibraryPaths = ChdPathCatalog.SegaGenesisCd.Paths;
 
     private readonly ITestOutputHelper _output;
 
@@ -24,7 +20,7 @@ public class SegaGenesisCdBulkTests
     [Fact]
     public void ParseEntireMameMegacdLibrary()
     {
-        const string path = @"G:\MAME\MAME Software List CHDs\megacd";
+        var path = ChdPathCatalog.SegaGenesisCd.Paths[0];
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +38,7 @@ public class SegaGenesisCdBulkTests
     [Fact]
     public void ParseEntireISegaGenesisCdLibrary()
     {
-        const string path = @"I:\Sega Genesis CD";
+        var path = ChdPathCatalog.SegaGenesisCd.Paths[1];
 
         if (!Directory.Exists(path))
         {

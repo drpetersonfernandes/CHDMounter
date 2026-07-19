@@ -55,7 +55,10 @@ public static class ParserFactory
             new ConsoleInfo(ConsoleType.PcFx, "PC-FX"),
             new ConsoleInfo(ConsoleType.GenericIso9660, "Generic ISO 9660"),
             new ConsoleInfo(ConsoleType.GenericCueBin, "CUE/BIN (Raw)"),
-            new ConsoleInfo(ConsoleType.GenericCueBin2048, "CUE/BIN (Cooked)")
+            new ConsoleInfo(ConsoleType.GenericCueBin2048, "CUE/BIN (Cooked)"),
+            new ConsoleInfo(ConsoleType.GenericCueIso, "CUE/ISO (2048)"),
+            new ConsoleInfo(ConsoleType.GenericCueBinWav, "CUE/BIN/WAV"),
+            new ConsoleInfo(ConsoleType.GenericCueIsoWav, "CUE/ISO/WAV")
         ];
     }
 }

@@ -16,283 +16,262 @@ public class Ps3IntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> ChdPaths
+    private static List<string> GetPaths()
     {
-        get
-        {
-            var data = new TheoryData<string>();
-            const string dir = @"X:\Sony PlayStation 3";
-
-            if (Directory.Exists(dir))
-            {
-                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
-                    data.Add(chd);
-            }
-
-            return data;
-        }
+        return SequentialTestRunner.CollectPaths(
+            ChdPathCatalog.PlayStation3.Paths);
     }
 
-    [Theory]
-    [MemberData(nameof(ChdPaths))]
-    public void UdfParserParsesPs3Disc(string chdPath)
+    [Fact]
+    public void UdfParserParsesPs3Disc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(UdfParserParsesPs3Disc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
+            try
+            {
+                var unitBytes = chd.UnitBytes;
+                var reader = new SectorReader(chd, unitBytes);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                Assert.NotNull(track);
 
-        try
-        {
-            var unitBytes = chd.UnitBytes;
-            var reader = new SectorReader(chd, unitBytes);
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            Assert.NotNull(track);
+                var root = new FsNode();
+                var udfOk = new UdfParser(reader).Parse(root, track);
+                output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} UdfParser={(udfOk ? "OK" : "FAILED")}");
+                Assert.True(udfOk, "UdfParser.Parse failed (PS3 would fall back to ISO9660)");
 
-            var root = new FsNode();
-            var udfOk = new UdfParser(reader).Parse(root, track);
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} UdfParser={(udfOk ? "OK" : "FAILED")}");
-            Assert.True(udfOk, "UdfParser.Parse failed (PS3 would fall back to ISO9660)");
+                int files = 0, dirs = 0, multiExtent = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref multiExtent, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, {multiExtent} multi-extent files, largest file {maxSize:N0} bytes");
 
-            int files = 0, dirs = 0, multiExtent = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref multiExtent, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, {multiExtent} multi-extent files, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 10, "Suspiciously few files parsed");
-            Assert.Contains(root.Children, static n => n is { Name: "PS3_GAME", IsDirectory: true });
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+                Assert.True(files > 10, "Suspiciously few files parsed");
+                Assert.Contains(root.Children, static n => n is { Name: "PS3_GAME", IsDirectory: true });
+                return true;
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+        });
     }
 
-    [Theory]
-    [MemberData(nameof(ChdPaths))]
-    public void Iso9660BridgeParsesPs3Disc(string chdPath)
+    [Fact]
+    public void Iso9660BridgeParsesPs3Disc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(Iso9660BridgeParsesPs3Disc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                var root = new FsNode();
+                var ok = new Iso9660Parser(reader).Parse(root);
+                output.WriteLine($"ISO9660 bridge parse: {(ok ? "OK" : "FAILED")}, top-level entries: {root.Children.Count}");
+                Assert.True(ok, "Iso9660Parser failed on the PS3 UDF-bridge ISO part");
 
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-            var root = new FsNode();
-            var ok = new Iso9660Parser(reader).Parse(root);
-            _output.WriteLine($"ISO9660 bridge parse: {(ok ? "OK" : "FAILED")}, top-level entries: {root.Children.Count}");
-            Assert.True(ok, "Iso9660Parser failed on the PS3 UDF-bridge ISO part");
+                foreach (var c in root.Children)
+                    output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
 
-            foreach (var c in root.Children)
-                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
+                var sfb = root.Children.FirstOrDefault(static n => n.Name == "PS3_DISC.SFB");
+                Assert.NotNull(sfb);
+                Assert.NotNull(sfb.ModifiedTime);
 
-            var sfb = root.Children.FirstOrDefault(static n => n.Name == "PS3_DISC.SFB");
-            Assert.NotNull(sfb);
-            Assert.NotNull(sfb.ModifiedTime);
-
-            var sec = new byte[2048];
-            Assert.True(reader.ReadSector(sfb.Lba, sec));
-            Assert.Equal(".SFB"u8.ToArray(), sec[..4]);
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+                var sec = new byte[2048];
+                Assert.True(reader.ReadSector(sfb.Lba, sec));
+                Assert.Equal(".SFB"u8.ToArray(), sec[..4]);
+                return true;
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+        });
     }
 
-    [Theory]
-    [MemberData(nameof(ChdPaths))]
-    public void PlayStation3ParserParsesPs3Disc(string chdPath)
+    [Fact]
+    public void PlayStation3ParserParsesPs3Disc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(PlayStation3ParserParsesPs3Disc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                var root = new FsNode();
+                var parser = new PlayStation3Parser(reader);
 
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-            var root = new FsNode();
-            var parser = new PlayStation3Parser(reader);
+                var ok = parser.Parse(root);
+                output.WriteLine($"PlayStation3Parser: {(ok ? "OK" : "FAILED")}");
 
-            var ok = parser.Parse(root);
-            _output.WriteLine($"PlayStation3Parser: {(ok ? "OK" : "FAILED")}");
+                Assert.True(ok, "PlayStation3Parser could not parse the disc");
 
-            Assert.True(ok, "PlayStation3Parser could not parse the disc");
+                int files = 0, dirs = 0, multiExtent = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref multiExtent, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, {multiExtent} multi-extent files, largest file {maxSize:N0} bytes");
 
-            int files = 0, dirs = 0, multiExtent = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref multiExtent, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, {multiExtent} multi-extent files, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
-            Assert.Contains(root.Children, static n => n is { Name: "PS3_GAME", IsDirectory: true });
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+                Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
+                Assert.Contains(root.Children, static n => n is { Name: "PS3_GAME", IsDirectory: true });
+                return true;
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+        });
     }
 
-    [Theory]
-    [MemberData(nameof(ChdPaths))]
-    public void ChdContainerMountAndParsePs3Disc(string chdPath)
+    [Fact]
+    public void ChdContainerMountAndParsePs3Disc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePs3Disc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.Ps3), "MountAndParse failed");
-
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
-
-            var all = CollectEntries(container, "\\").ToList();
-            var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
-            _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
-
-            Assert.True(fileEntries.Count > 10, $"Suspiciously few files: {fileEntries.Count}");
-
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
-            foreach (var bad in badNames)
-                _output.WriteLine($"BAD NAME: {bad.FullPath}");
-            Assert.Empty(badNames);
-
-            var magic = new byte[4];
-
-            var sfb = container.FindFile(@"\PS3_DISC.SFB");
-            if (sfb != null)
+            var container = new ChdContainer(path);
+            try
             {
-                Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
-                Assert.Equal(".SFB"u8.ToArray(), magic);
-                _output.WriteLine("PS3_DISC.SFB: OK");
-            }
-            else
-            {
-                _output.WriteLine("PS3_DISC.SFB: NOT FOUND");
-            }
+                Assert.True(container.MountAndParse(ConsoleType.Ps3), "MountAndParse failed");
 
-            var sfo = container.FindFile(@"\PS3_GAME\PARAM.SFO");
-            if (sfo != null)
-            {
-                Assert.Equal(4, container.ReadFile(sfo, 0, magic, 0, 4));
-                Assert.Equal("\0PSF"u8.ToArray(), magic);
-                _output.WriteLine("PARAM.SFO: OK");
+                foreach (var e in container.ListDirectory("\\"))
+                    output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
 
-                var sfoBuf = new byte[(int)Math.Min(sfo.Size, 2048)];
-                var sfoLen = container.ReadFile(sfo, 0, sfoBuf, 0, sfoBuf.Length);
-                var title = ReadSfoString(sfoBuf, sfoLen);
-                if (title != null)
-                    _output.WriteLine($"  TITLE_ID: {title}");
-            }
-            else
-            {
-                _output.WriteLine("PARAM.SFO: NOT FOUND");
-            }
-        }
-        finally
-        {
-            container.Dispose();
-        }
-    }
+                var all = CollectEntries(container, "\\").ToList();
+                var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
+                output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
 
-    [Theory]
-    [MemberData(nameof(ChdPaths))]
-    public void ChdContentsMatchOriginalIso(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+                Assert.True(fileEntries.Count > 10, $"Suspiciously few files: {fileEntries.Count}");
 
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.Ps3), "MountAndParse failed");
+                var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
+                foreach (var bad in badNames)
+                    output.WriteLine($"BAD NAME: {bad.FullPath}");
+                Assert.Empty(badNames);
 
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+                var magic = new byte[4];
 
-            var all = CollectEntries(container, "\\").ToList();
-            var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
-            _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
-
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
-            foreach (var bad in badNames)
-                _output.WriteLine($"BAD NAME: {bad.FullPath}");
-            Assert.Empty(badNames);
-
-            var magic = new byte[4];
-            var sfb = container.FindFile("\\PS3_DISC.SFB");
-            Assert.NotNull(sfb);
-            Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
-            Assert.Equal(".SFB"u8.ToArray(), magic);
-
-            var sfo = container.FindFile(@"\PS3_GAME\PARAM.SFO");
-            Assert.NotNull(sfo);
-            Assert.Equal(4, container.ReadFile(sfo, 0, magic, 0, 4));
-            Assert.Equal("\0PSF"u8.ToArray(), magic);
-
-            var isoPath = Path.ChangeExtension(chdPath, ".iso");
-            if (!File.Exists(isoPath))
-            {
-                _output.WriteLine("SKIP: no companion .iso for cross-validation");
-                return;
-            }
-
-            using var iso = File.OpenRead(isoPath);
-
-            var samples = fileEntries
-                .Where(static e => e.Size > 0)
-                .OrderByDescending(static e => e.Size)
-                .Take(8)
-                .Concat([sfo, sfb])
-                .ToList();
-
-            foreach (var entry in samples)
-                VerifyHead(container, iso, entry);
-
-            var multi = fileEntries.Where(static e => e.Extents.Count > 1).ToList();
-            _output.WriteLine($"Multi-extent files: {multi.Count}");
-            foreach (var entry in multi.Take(4))
-            {
-                ulong sum = 0;
-                foreach (var x in entry.Extents)
+                var sfb = container.FindFile(@"\PS3_DISC.SFB");
+                if (sfb != null)
                 {
-                    sum += x.Size;
+                    Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
+                    Assert.Equal(".SFB"u8.ToArray(), magic);
+                    output.WriteLine("PS3_DISC.SFB: OK");
+                }
+                else
+                {
+                    output.WriteLine("PS3_DISC.SFB: NOT FOUND");
                 }
 
-                Assert.Equal(entry.Size, sum);
-                VerifyExtentBoundary(container, iso, entry);
+                var sfo = container.FindFile(@"\PS3_GAME\PARAM.SFO");
+                if (sfo != null)
+                {
+                    Assert.Equal(4, container.ReadFile(sfo, 0, magic, 0, 4));
+                    Assert.Equal("\0PSF"u8.ToArray(), magic);
+                    output.WriteLine("PARAM.SFO: OK");
+
+                    var sfoBuf = new byte[(int)Math.Min(sfo.Size, 2048)];
+                    var sfoLen = container.ReadFile(sfo, 0, sfoBuf, 0, sfoBuf.Length);
+                    var title = ReadSfoString(sfoBuf, sfoLen);
+                    if (title != null)
+                        output.WriteLine($"  TITLE_ID: {title}");
+                }
+                else
+                {
+                    output.WriteLine("PARAM.SFO: NOT FOUND");
+                }
+                return true;
             }
-        }
-        finally
+            finally
+            {
+                container.Dispose();
+            }
+        });
+    }
+
+    [Fact]
+    public void ChdContentsMatchOriginalIso()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContentsMatchOriginalIso), paths, (path, output) =>
         {
-            container.Dispose();
-        }
+            var container = new ChdContainer(path);
+            try
+            {
+                Assert.True(container.MountAndParse(ConsoleType.Ps3), "MountAndParse failed");
+
+                foreach (var e in container.ListDirectory("\\"))
+                    output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+
+                var all = CollectEntries(container, "\\").ToList();
+                var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
+                output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
+
+                var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
+                foreach (var bad in badNames)
+                    output.WriteLine($"BAD NAME: {bad.FullPath}");
+                Assert.Empty(badNames);
+
+                var magic = new byte[4];
+                var sfb = container.FindFile("\\PS3_DISC.SFB");
+                Assert.NotNull(sfb);
+                Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
+                Assert.Equal(".SFB"u8.ToArray(), magic);
+
+                var sfo = container.FindFile(@"\PS3_GAME\PARAM.SFO");
+                Assert.NotNull(sfo);
+                Assert.Equal(4, container.ReadFile(sfo, 0, magic, 0, 4));
+                Assert.Equal("\0PSF"u8.ToArray(), magic);
+
+                var isoPath = Path.ChangeExtension(path, ".iso");
+                if (!File.Exists(isoPath))
+                {
+                    output.WriteLine("SKIP: no companion .iso for cross-validation");
+                    return true;
+                }
+
+                using var iso = File.OpenRead(isoPath);
+
+                var samples = fileEntries
+                    .Where(static e => e.Size > 0)
+                    .OrderByDescending(static e => e.Size)
+                    .Take(8)
+                    .Concat([sfo, sfb])
+                    .ToList();
+
+                foreach (var entry in samples)
+                    VerifyHead(container, iso, entry);
+
+                var multi = fileEntries.Where(static e => e.Extents.Count > 1).ToList();
+                output.WriteLine($"Multi-extent files: {multi.Count}");
+                foreach (var entry in multi.Take(4))
+                {
+                    ulong sum = 0;
+                    foreach (var x in entry.Extents)
+                    {
+                        sum += x.Size;
+                    }
+
+                    Assert.Equal(entry.Size, sum);
+                    VerifyExtentBoundary(container, iso, entry);
+                }
+                return true;
+            }
+            finally
+            {
+                container.Dispose();
+            }
+        });
     }
 
     private void VerifyHead(ChdContainer container, FileStream iso, FileEntry entry)

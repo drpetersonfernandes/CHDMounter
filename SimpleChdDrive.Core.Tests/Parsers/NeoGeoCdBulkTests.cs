@@ -8,11 +8,7 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 
 public class NeoGeoCdBulkTests
 {
-    private static readonly string[] LibraryPaths =
-    [
-        @"G:\MAME\MAME Software List CHDs\neocd",
-        @"J:\SNK Neo Geo CD"
-    ];
+    private static readonly string[] LibraryPaths = ChdPathCatalog.NeoGeoCd.Paths;
 
     private readonly ITestOutputHelper _output;
 
@@ -24,7 +20,7 @@ public class NeoGeoCdBulkTests
     [Fact]
     public void ParseEntireMameNeocdLibrary()
     {
-        const string path = @"G:\MAME\MAME Software List CHDs\neocd";
+        var path = ChdPathCatalog.NeoGeoCd.Paths[0];
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +38,7 @@ public class NeoGeoCdBulkTests
     [Fact]
     public void ParseEntireJNeoGeoCdLibrary()
     {
-        const string path = @"J:\SNK Neo Geo CD";
+        var path = ChdPathCatalog.NeoGeoCd.Paths[1];
 
         if (!Directory.Exists(path))
         {

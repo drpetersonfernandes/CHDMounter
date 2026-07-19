@@ -20,12 +20,24 @@ public class ChdContainer
     private readonly string _chdPath;
 
     private ChdFile? _primaryChd;
-    private bool _cueBinEnabled;
-    private string _cueBinText = "";
+    private enum CueExportMode
+    {
+        CueBin,
+        CueBin2048,
+        CueIso,
+        CueBinWav,
+        CueIsoWav
+    }
+
+    private bool _cueExportEnabled;
+    private CueExportMode _cueMode;
+    private string _cueText = "";
+    private string _cueStemName = "";
     private ulong _cueBinSize;
-    private uint _cueBinRawSectorSize;
-    private string _cueBinStemName = "";
+    private uint _cueSectorSize;
     private List<TrackInfo>? _cachedTracks;
+    private Dictionary<int, byte[]>? _wavHeaders;
+    private Dictionary<int, ulong>? _wavDataSizes;
 
     public string VolumeName { get; private set; } = "";
     public ulong VolumeSize { get; private set; }
@@ -66,11 +78,25 @@ public class ChdContainer
         if (!Open(consoleType))
             return false;
 
-        if (consoleType is ConsoleType.GenericCueBin or ConsoleType.GenericCueBin2048)
+        if (consoleType is ConsoleType.GenericCueBin or ConsoleType.GenericCueBin2048
+            or ConsoleType.GenericCueIso or ConsoleType.GenericCueBinWav or ConsoleType.GenericCueIsoWav)
         {
             var rootNode = new FsNode { Name = "/", IsDirectory = true };
             BuildFromFsNode(rootNode);
-            BuildVirtualCueBin(consoleType == ConsoleType.GenericCueBin2048);
+
+            // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+            var mode = consoleType switch
+            {
+                ConsoleType.GenericCueBin => CueExportMode.CueBin,
+                ConsoleType.GenericCueBin2048 => CueExportMode.CueBin2048,
+                ConsoleType.GenericCueIso => CueExportMode.CueIso,
+                ConsoleType.GenericCueBinWav => CueExportMode.CueBinWav,
+                ConsoleType.GenericCueIsoWav => CueExportMode.CueIsoWav,
+                _ => throw new InvalidOperationException(
+                    $"Unexpected console type: {consoleType}")
+            };
+
+            BuildVirtualCueExport(mode);
             return true;
         }
 
@@ -85,7 +111,7 @@ public class ChdContainer
         BuildFromFsNode(parsedRoot);
 
         if (consoleType == ConsoleType.PcEngineCd)
-            BuildVirtualCueBin(false);
+            BuildVirtualCueExport(CueExportMode.CueBin);
 
         return true;
     }
@@ -215,19 +241,27 @@ public class ChdContainer
         var remaining = entry.Size - offset;
         var bytesToRead = (int)(remaining < (ulong)count ? remaining : (ulong)count);
 
-        if (_cueBinEnabled)
+        if (_cueExportEnabled)
         {
-            if (string.Equals(entry.Name, _cueBinStemName + ".cue", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(entry.Name, _cueStemName + ".cue", StringComparison.OrdinalIgnoreCase))
             {
-                if (offset >= (ulong)_cueBinText.Length) return 0;
+                if (offset >= (ulong)_cueText.Length) return 0;
 
-                var cueRead = Math.Min(bytesToRead, _cueBinText.Length - (int)offset);
-                Encoding.ASCII.GetBytes(_cueBinText, (int)offset, cueRead, buffer, bufOffset);
+                var cueRead = Math.Min(bytesToRead, _cueText.Length - (int)offset);
+                Encoding.ASCII.GetBytes(_cueText, (int)offset, cueRead, buffer, bufOffset);
                 return cueRead;
             }
 
-            if (string.Equals(entry.Name, _cueBinStemName + ".bin", StringComparison.OrdinalIgnoreCase))
-                return ReadVirtualBin(offset, buffer, bufOffset, bytesToRead);
+            if (string.Equals(entry.Name, _cueStemName + ".bin", StringComparison.OrdinalIgnoreCase))
+                return ReadVirtualBin(offset, buffer, bufOffset, bytesToRead,
+                    _cueMode == CueExportMode.CueBinWav);
+
+            if (string.Equals(entry.Name, _cueStemName + ".iso", StringComparison.OrdinalIgnoreCase))
+                return ReadVirtualBin(offset, buffer, bufOffset, bytesToRead,
+                    true);
+
+            if (TryParseWavTrackIndex(entry.Name, out var wavTrackIdx))
+                return ReadVirtualWav(wavTrackIdx, offset, buffer, bufOffset, bytesToRead);
         }
 
         if (entry.IsRawPassthrough)
@@ -312,65 +346,221 @@ public class ChdContainer
         finally { ReleaseReader(reader); }
     }
 
-    private void BuildVirtualCueBin(bool cooked2048)
+    private void BuildVirtualCueExport(CueExportMode mode)
     {
         _cachedTracks = SectorReader.ParseTracksWithLba(_primaryChd!, UnitBytes);
         if (_cachedTracks.Count == 0) return;
 
-        _cueBinEnabled = true;
-        _cueBinStemName = Path.GetFileNameWithoutExtension(_chdPath);
+        _cueExportEnabled = true;
+        _cueMode = mode;
+        _cueStemName = Path.GetFileNameWithoutExtension(_chdPath);
 
-        var rawSize = cooked2048 ? 2048u : Math.Min(UnitBytes, 2352u);
-        _cueBinRawSectorSize = rawSize;
+        var isIsoMode = mode is CueExportMode.CueIso or CueExportMode.CueIsoWav;
+        var isWavMode = mode is CueExportMode.CueBinWav or CueExportMode.CueIsoWav;
+
+        _cueSectorSize = mode switch
+        {
+            CueExportMode.CueBin2048 => 2048u,
+            CueExportMode.CueIso => 2048u,
+            CueExportMode.CueIsoWav => 2048u,
+            _ => Math.Min(UnitBytes, 2352u)
+        };
+
+        _wavHeaders = new Dictionary<int, byte[]>();
+        _wavDataSizes = new Dictionary<int, ulong>();
 
         uint cumulativeFrames = 0;
         _cueBinSize = 0;
         var sb = new StringBuilder();
-        sb.AppendLine(CultureInfo.InvariantCulture, $"FILE \"{_cueBinStemName}.bin\" BINARY");
+
+        var hasDataTracks = false;
+        foreach (var t in _cachedTracks)
+        {
+            if (t.IsDataTrack)
+            {
+                hasDataTracks = true;
+                break;
+            }
+        }
+
+        var currentFile = "";
+        var freshFile = true;
 
         var trackNum = 0;
         foreach (var t in _cachedTracks)
         {
             trackNum++;
-            var mode = t.IsDataTrack
-                ? t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? $"MODE2/{rawSize}" : $"MODE1/{rawSize}"
-                : "AUDIO";
 
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  TRACK {trackNum:D2} {mode}");
-
-            if (t.Pregap > 0)
+            if (t.IsDataTrack)
             {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 00 {SectorToMsf(cumulativeFrames)}");
-                sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames + t.Pregap)}");
+                var dataFileExt = isIsoMode ? "iso" : "bin";
+                var dataFileName = $"{_cueStemName}.{dataFileExt}";
+
+                if (currentFile != dataFileName)
+                {
+                    if (!freshFile)
+                        sb.AppendLine();
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"FILE \"{dataFileName}\" BINARY");
+                    currentFile = dataFileName;
+                }
+
+                var modeStr = isIsoMode
+                    ? (t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? "MODE2/2048" : "MODE1/2048")
+                    : t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? $"MODE2/{_cueSectorSize}" : $"MODE1/{_cueSectorSize}";
+
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  TRACK {trackNum:D2} {modeStr}");
+
+                if (t.Pregap > 0)
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 00 {SectorToMsf(cumulativeFrames)}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames + t.Pregap)}");
+                }
+                else
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames)}");
+                }
+
+                cumulativeFrames += t.Frames;
+                _cueBinSize += (ulong)t.Frames * _cueSectorSize;
+                freshFile = false;
             }
             else
             {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames)}");
-            }
+                if (isWavMode)
+                {
+                    var wavFileName = $"{_cueStemName}_Track{trackNum:D2}.wav";
 
-            cumulativeFrames += t.Frames;
-            _cueBinSize += (ulong)t.Frames * rawSize;
+                    if (currentFile != wavFileName)
+                    {
+                        if (!freshFile)
+                            sb.AppendLine();
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"FILE \"{wavFileName}\" WAVE");
+                        currentFile = wavFileName;
+                    }
+
+                    var pcmSize = (ulong)t.Frames * 2352;
+                    _wavHeaders[trackNum] = BuildWavHeader(pcmSize);
+                    _wavDataSizes[trackNum] = pcmSize;
+                }
+                else
+                {
+                    var containerFile = isIsoMode ? $"{_cueStemName}.iso" : $"{_cueStemName}.bin";
+                    if (currentFile != containerFile)
+                    {
+                        if (!freshFile)
+                            sb.AppendLine();
+                        sb.AppendLine(CultureInfo.InvariantCulture, $"FILE \"{containerFile}\" BINARY");
+                        currentFile = containerFile;
+                    }
+                }
+
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  TRACK {trackNum:D2} AUDIO");
+
+                if (isWavMode)
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 00:00:00");
+                }
+                else if (t.Pregap > 0)
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 00 {SectorToMsf(cumulativeFrames)}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames + t.Pregap)}");
+                }
+                else
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    INDEX 01 {SectorToMsf(cumulativeFrames)}");
+                }
+
+                cumulativeFrames += t.Frames;
+
+                if (!isWavMode)
+                {
+                    _cueBinSize += (ulong)t.Frames * _cueSectorSize;
+                }
+
+                freshFile = false;
+            }
         }
 
-        _cueBinText = sb.ToString();
+        _cueText = sb.ToString();
 
-        FileEntry cueEntry = new()
+        var cueEntry = new FileEntry
         {
-            Name = _cueBinStemName + ".cue",
+            Name = _cueStemName + ".cue",
             Lba = 0,
-            Size = (ulong)_cueBinText.Length,
+            Size = (ulong)_cueText.Length,
             IsDirectory = false
         };
         RegisterEntry(cueEntry, 0);
 
-        FileEntry binEntry = new()
+        if (hasDataTracks)
         {
-            Name = _cueBinStemName + ".bin",
-            Lba = 0,
-            Size = _cueBinSize,
-            IsDirectory = false
-        };
-        RegisterEntry(binEntry, 0);
+            var dataFileExt = isIsoMode ? "iso" : "bin";
+            var dataEntry = new FileEntry
+            {
+                Name = _cueStemName + "." + dataFileExt,
+                Lba = 0,
+                Size = _cueBinSize,
+                IsDirectory = false
+            };
+            RegisterEntry(dataEntry, 0);
+        }
+
+        if (isWavMode)
+        {
+            trackNum = 0;
+            foreach (var t in _cachedTracks)
+            {
+                trackNum++;
+                if (!t.IsDataTrack)
+                {
+                    var wavTotalSize = 44ul + _wavDataSizes![trackNum];
+                    var wavEntry = new FileEntry
+                    {
+                        Name = _cueStemName + "_Track" + $"{trackNum:D2}" + ".wav",
+                        Lba = 0,
+                        Size = wavTotalSize,
+                        IsDirectory = false
+                    };
+                    RegisterEntry(wavEntry, 0);
+                }
+            }
+        }
+    }
+
+    private bool TryParseWavTrackIndex(string entryName, out int trackIndex)
+    {
+        trackIndex = 0;
+        if (_wavHeaders == null) return false;
+
+        var prefix = _cueStemName + "_Track";
+        const string suffix = ".wav";
+        if (!entryName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return false;
+        if (!entryName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) return false;
+
+        var numStr = entryName.Substring(prefix.Length, entryName.Length - prefix.Length - suffix.Length);
+        return int.TryParse(numStr, out trackIndex) && _wavHeaders.ContainsKey(trackIndex);
+    }
+
+    private static byte[] BuildWavHeader(ulong pcmDataSize)
+    {
+        var header = new byte[44];
+        var riffSize = (uint)(36 + pcmDataSize);
+
+        Encoding.ASCII.GetBytes("RIFF", 0, 4, header, 0);
+        Array.Copy(BitConverter.GetBytes(riffSize), 0, header, 4, 4);
+        Encoding.ASCII.GetBytes("WAVE", 0, 4, header, 8);
+        Encoding.ASCII.GetBytes("fmt ", 0, 4, header, 12);
+        Array.Copy(BitConverter.GetBytes(16u), 0, header, 16, 4);
+        Array.Copy(BitConverter.GetBytes((ushort)1), 0, header, 20, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)2), 0, header, 22, 2);
+        Array.Copy(BitConverter.GetBytes(44100u), 0, header, 24, 4);
+        Array.Copy(BitConverter.GetBytes(176400u), 0, header, 28, 4);
+        Array.Copy(BitConverter.GetBytes((ushort)4), 0, header, 32, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)16), 0, header, 34, 2);
+        Encoding.ASCII.GetBytes("data", 0, 4, header, 36);
+        Array.Copy(BitConverter.GetBytes((uint)pcmDataSize), 0, header, 40, 4);
+
+        return header;
     }
 
     private static string SectorToMsf(uint sectors)
@@ -381,7 +571,8 @@ public class ChdContainer
         return $"{m:D2}:{s:D2}:{f:D2}";
     }
 
-    private int ReadVirtualBin(ulong offset, byte[] buffer, int bufOffset, int bytesToRead)
+    private int ReadVirtualBin(ulong offset, byte[] buffer, int bufOffset, int bytesToRead,
+        bool dataTracksOnly = false)
     {
         if (_cachedTracks == null || _cachedTracks.Count == 0) return 0;
 
@@ -401,7 +592,10 @@ public class ChdContainer
 
                 foreach (var t in _cachedTracks)
                 {
-                    var trackBytes = (ulong)t.Frames * _cueBinRawSectorSize;
+                    if (dataTracksOnly && !t.IsDataTrack)
+                        continue;
+
+                    var trackBytes = (ulong)t.Frames * _cueSectorSize;
                     if (currentOffset >= cumulative && currentOffset < cumulative + trackBytes)
                     {
                         targetTrack = t;
@@ -416,14 +610,14 @@ public class ChdContainer
 
                 reader.SetTrack(targetTrack, true);
                 var offsetInTrack = currentOffset - trackByteOffset;
-                var frameInTrack = (uint)(offsetInTrack / _cueBinRawSectorSize);
-                var byteInFrame = (uint)(offsetInTrack % _cueBinRawSectorSize);
+                var frameInTrack = (uint)(offsetInTrack / _cueSectorSize);
+                var byteInFrame = (uint)(offsetInTrack % _cueSectorSize);
                 var logicalLba = targetTrack.StartLba + frameInTrack;
 
                 if (reader.ReadRawSector(logicalLba, out var rawSector) && rawSector != null)
                 {
-                    var dataOffset = _cueBinRawSectorSize == 2048 ? reader.SectorHeaderOffset : reader.SyncOffset;
-                    var available = (int)(_cueBinRawSectorSize - byteInFrame);
+                    var dataOffset = _cueSectorSize == 2048 ? reader.SectorHeaderOffset : reader.SyncOffset;
+                    var available = (int)(_cueSectorSize - byteInFrame);
                     var toCopy = Math.Min(available, bytesToRead - totalRead);
 
                     if (dataOffset + byteInFrame + toCopy <= rawSector.Length)
@@ -433,6 +627,65 @@ public class ChdContainer
 
                     totalRead += toCopy;
                     currentOffset += (uint)toCopy;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return totalRead;
+        }
+        finally { ReleaseReader(reader); }
+    }
+
+    private int ReadVirtualWav(int trackIndex, ulong offset, byte[] buffer, int bufOffset, int bytesToRead)
+    {
+        if (_cachedTracks == null || _wavHeaders == null || !_wavHeaders.TryGetValue(trackIndex, out var header))
+            return 0;
+
+        if (offset < (ulong)header.Length)
+        {
+            var headerRead = Math.Min(bytesToRead, header.Length - (int)offset);
+            Array.Copy(header, (int)offset, buffer, bufOffset, headerRead);
+            return headerRead;
+        }
+
+        var track = _cachedTracks.Find(t => t.Index == trackIndex);
+        if (track == null) return 0;
+
+        var reader = AcquireReader();
+        if (reader == null) return 0;
+
+        reader.SetTrack(track, true);
+
+        try
+        {
+            var pcmOffset = offset - (ulong)header.Length;
+            var totalRead = 0;
+            const uint audioSectorSize = 2352;
+
+            while (totalRead < bytesToRead)
+            {
+                var currentPcmOffset = pcmOffset + (ulong)totalRead;
+                var frameInTrack = (uint)(currentPcmOffset / audioSectorSize);
+                var byteInFrame = (uint)(currentPcmOffset % audioSectorSize);
+
+                if (frameInTrack >= track.Frames) break;
+
+                var logicalLba = track.StartLba + frameInTrack;
+
+                if (reader.ReadRawSector(logicalLba, out var rawSector) && rawSector != null)
+                {
+                    var available = (int)(audioSectorSize - byteInFrame);
+                    var toCopy = Math.Min(available, bytesToRead - totalRead);
+
+                    if (byteInFrame + toCopy <= rawSector.Length)
+                        Array.Copy(rawSector, byteInFrame, buffer, bufOffset + totalRead, toCopy);
+                    else
+                        Array.Clear(buffer, bufOffset + totalRead, toCopy);
+
+                    totalRead += toCopy;
                 }
                 else
                 {

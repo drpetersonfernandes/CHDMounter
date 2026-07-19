@@ -8,11 +8,7 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 
 public class SegaSaturnBulkTests
 {
-    private static readonly string[] LibraryPaths =
-    [
-        @"G:\MAME\MAME Software List CHDs\saturn",
-        @"I:\Sega Saturn"
-    ];
+    private static readonly string[] LibraryPaths = ChdPathCatalog.SegaSaturn.Paths;
 
     private readonly ITestOutputHelper _output;
 
@@ -24,7 +20,7 @@ public class SegaSaturnBulkTests
     [Fact]
     public void ParseEntireMameSaturnLibrary()
     {
-        const string path = @"G:\MAME\MAME Software List CHDs\saturn";
+        var path = ChdPathCatalog.SegaSaturn.Paths[0];
 
         if (!Directory.Exists(path))
         {
@@ -42,7 +38,7 @@ public class SegaSaturnBulkTests
     [Fact]
     public void ParseEntireISegaSaturnLibrary()
     {
-        const string path = @"I:\Sega Saturn";
+        var path = ChdPathCatalog.SegaSaturn.Paths[1];
 
         if (!Directory.Exists(path))
         {

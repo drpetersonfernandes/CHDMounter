@@ -8,7 +8,7 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 
 public class DreamcastBulkTests
 {
-    private const string LibraryPath = @"X:\Sega Dreamcast";
+    private static string LibraryPath => ChdPathCatalog.Dreamcast.Paths[0];
 
     private readonly ITestOutputHelper _output;
 

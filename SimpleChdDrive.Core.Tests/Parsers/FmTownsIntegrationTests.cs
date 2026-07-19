@@ -15,186 +15,167 @@ public class FmTownsIntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> FmTownsSampleChdPaths
+    private static List<string> GetPaths()
     {
-        get
+        return SequentialTestRunner.CollectPaths(ChdPathCatalog.FmTowns.Paths);
+    }
+
+    [Fact]
+    public void Iso9660ParserParsesFmTownsDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesFmTownsDisc), paths, (path, output) =>
         {
-            var data = new TheoryData<string>();
-            string[] dirs = [@"G:\MAME\MAME Software List CHDs\fmtowns_cd", @"G:\Fujitsu - FM-Towns"];
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-            foreach (var dir in dirs)
+            try
             {
-                if (!Directory.Exists(dir))
-                    continue;
+                var unitBytes = chd.UnitBytes;
+                var reader = new SectorReader(chd, unitBytes);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                Assert.NotNull(track);
 
-                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
-                    data.Add(chd);
+                output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
+
+                var root = new FsNode();
+                var parser = new Iso9660Parser(reader);
+
+                var ok = parser.Parse(root, track);
+                output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}");
+
+                Assert.True(ok, "Iso9660Parser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
+                Assert.True(files > 1, $"Suspiciously few files parsed: {files}");
+
+                foreach (var c in root.Children.OrderByDescending(static n => n.Size).Take(15))
+                    output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
+            }
+            finally
+            {
+                chd.Dispose();
             }
 
-            return data;
-        }
+            return true;
+        });
     }
 
-    [Theory]
-    [MemberData(nameof(FmTownsSampleChdPaths))]
-    public void Iso9660ParserParsesFmTownsDisc(string chdPath)
+    [Fact]
+    public void GenericIso9660ParserParsesFmTownsDisc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(GenericIso9660ParserParsesFmTownsDisc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var unitBytes = chd.UnitBytes;
-            var reader = new SectorReader(chd, unitBytes);
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            Assert.NotNull(track);
-
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
-
-            var root = new FsNode();
-            var parser = new Iso9660Parser(reader);
-
-            var ok = parser.Parse(root, track);
-            _output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}");
-
-            Assert.True(ok, "Iso9660Parser could not parse the disc");
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 1, $"Suspiciously few files parsed: {files}");
-
-            foreach (var c in root.Children.OrderByDescending(static n => n.Size).Take(15))
-                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(FmTownsSampleChdPaths))]
-    public void GenericIso9660ParserParsesFmTownsDisc(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-            _output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
-
-            var root = new FsNode();
-            var parser = new GenericIso9660Parser(reader);
-
-            var ok = parser.Parse(root);
-            _output.WriteLine($"GenericIso9660Parser: {(ok ? "OK" : "FAILED")}");
-
-            Assert.True(ok, "GenericIso9660Parser could not parse the disc");
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 1, $"Suspiciously few files parsed: {files}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(FmTownsSampleChdPaths))]
-    public void ChdContainerMountAndParseFmTownsDisc(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.GenericIso9660), "MountAndParse failed");
-
-            var all = CollectEntries(container, "\\").ToList();
-            var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
-            _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
-
-            Assert.True(fileEntries.Count > 1, $"Suspiciously few files: {fileEntries.Count}");
-
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
-            foreach (var bad in badNames)
-                _output.WriteLine($"BAD NAME: {bad.FullPath}");
-            Assert.Empty(badNames);
-
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
-        }
-        finally
-        {
-            container.Dispose();
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(FmTownsSampleChdPaths))]
-    public void ChdContainerCheckParseAndRead(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.GenericIso9660), "MountAndParse failed");
-
-            foreach (var e in container.ListDirectory("\\"))
+            try
             {
-                if (e.IsDirectory) continue;
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
 
-                var entry = container.FindFile(e.FullPath);
-                Assert.NotNull(entry);
+                var root = new FsNode();
+                var parser = new GenericIso9660Parser(reader);
 
-                var readSize = (int)Math.Min(e.Size, 4096);
-                var buffer = new byte[readSize];
-                var bytesRead = container.ReadFile(entry, 0, buffer, 0, readSize);
-                _output.WriteLine($"  Read: {e.Name}  size={e.Size}  bytesRead={bytesRead}");
+                var ok = parser.Parse(root);
+                output.WriteLine($"GenericIso9660Parser: {(ok ? "OK" : "FAILED")}");
 
-                if (bytesRead > 0)
+                Assert.True(ok, "GenericIso9660Parser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
+                Assert.True(files > 1, $"Suspiciously few files parsed: {files}");
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+
+            return true;
+        });
+    }
+
+    [Fact]
+    public void ChdContainerMountAndParseFmTownsDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseFmTownsDisc), paths, (path, output) =>
+        {
+            var container = new ChdContainer(path);
+            try
+            {
+                Assert.True(container.MountAndParse(ConsoleType.GenericIso9660), "MountAndParse failed");
+
+                var all = CollectEntries(container, "\\").ToList();
+                var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
+                output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
+
+                Assert.True(fileEntries.Count > 1, $"Suspiciously few files: {fileEntries.Count}");
+
+                var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
+                foreach (var bad in badNames)
+                    output.WriteLine($"BAD NAME: {bad.FullPath}");
+                Assert.Empty(badNames);
+
+                foreach (var e in container.ListDirectory("\\"))
+                    output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+            }
+            finally
+            {
+                container.Dispose();
+            }
+
+            return true;
+        });
+    }
+
+    [Fact]
+    public void ChdContainerCheckParseAndRead()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, (path, output) =>
+        {
+            var container = new ChdContainer(path);
+            try
+            {
+                Assert.True(container.MountAndParse(ConsoleType.GenericIso9660), "MountAndParse failed");
+
+                foreach (var e in container.ListDirectory("\\"))
                 {
-                    Assert.True(true, $"Failed to read {e.Name}");
-                    break;
+                    if (e.IsDirectory) continue;
+
+                    var entry = container.FindFile(e.FullPath);
+                    Assert.NotNull(entry);
+
+                    var readSize = (int)Math.Min(e.Size, 4096);
+                    var buffer = new byte[readSize];
+                    var bytesRead = container.ReadFile(entry, 0, buffer, 0, readSize);
+                    output.WriteLine($"  Read: {e.Name}  size={e.Size}  bytesRead={bytesRead}");
+
+                    if (bytesRead > 0)
+                    {
+                        Assert.True(true, $"Failed to read {e.Name}");
+                        break;
+                    }
                 }
             }
-        }
-        finally
-        {
-            container.Dispose();
-        }
+            finally
+            {
+                container.Dispose();
+            }
+
+            return true;
+        });
     }
 
     private static void Walk(FsNode node, ref int files, ref int dirs, ref ulong maxSize)

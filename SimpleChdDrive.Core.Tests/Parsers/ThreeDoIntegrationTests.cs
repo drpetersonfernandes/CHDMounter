@@ -15,188 +15,230 @@ public class ThreeDoIntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> ThreeDoChdPaths
+    private static List<string> GetPaths()
     {
-        get
+        return SequentialTestRunner.CollectPaths(ChdPathCatalog.ThreeDo.Paths);
+    }
+
+    [Fact]
+    public void ThreeDoParserParsesThreeDoDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ThreeDoParserParsesThreeDoDisc), paths, (path, output) =>
         {
-            var data = new TheoryData<string>();
-            string[] dirs = [@"J:\Panasonic 3DO", @"G:\MAME\MAME Software List CHDs\3do", @"G:\MAME\MAME Software List CHDs\3do_m2"];
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-            foreach (var dir in dirs)
+            try
             {
-                if (!Directory.Exists(dir))
-                    continue;
+                var unitBytes = chd.UnitBytes;
+                var reader = new SectorReader(chd, unitBytes);
+                output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count}");
 
-                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
-                    data.Add(chd);
+                var root = new FsNode();
+                var parser = new ThreeDoParser(reader);
+
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                Assert.NotNull(track);
+                var ok = parser.Parse(root, track);
+                output.WriteLine($"ThreeDoParser: {(ok ? "OK" : "FAILED")}");
+
+                Assert.True(ok, "ThreeDoParser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
+                Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
+
+                foreach (var c in root.Children.OrderByDescending(static n => n.Size).Take(15))
+                    output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}");
             }
-
-            return data;
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(ThreeDoChdPaths))]
-    public void ThreeDoParserParsesThreeDoDisc(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var unitBytes = chd.UnitBytes;
-            var reader = new SectorReader(chd, unitBytes);
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count}");
-
-            var root = new FsNode();
-            var parser = new ThreeDoParser(reader);
-
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            Assert.NotNull(track);
-            var ok = parser.Parse(root, track);
-            _output.WriteLine($"ThreeDoParser: {(ok ? "OK" : "FAILED")}");
-
-            Assert.True(ok, "ThreeDoParser could not parse the disc");
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
-
-            foreach (var c in root.Children.OrderByDescending(static n => n.Size).Take(15))
-                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(ThreeDoChdPaths))]
-    public void ThreeDoConsoleParserParsesThreeDoDisc(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-            _output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
-
-            var root = new FsNode();
-            var parser = new ThreeDoConsoleParser(reader);
-
-            var ok = parser.Parse(root);
-            _output.WriteLine($"ThreeDoConsoleParser: {(ok ? "OK" : "FAILED")}");
-
-            Assert.True(ok, "ThreeDoConsoleParser could not parse the disc");
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(ThreeDoChdPaths))]
-    public void ChdContainerMountAndParseThreeDoDisc(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.ThreeDo), "MountAndParse failed");
-
-            var all = CollectEntries(container, "\\").ToList();
-            var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
-            _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
-
-            Assert.True(fileEntries.Count > 2, $"Suspiciously few files: {fileEntries.Count}");
-
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Contains('\0')).ToList();
-            foreach (var bad in badNames)
-                _output.WriteLine($"BAD NAME: {bad.FullPath}");
-            Assert.Empty(badNames);
-
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
-        }
-        finally
-        {
-            container.Dispose();
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(ThreeDoChdPaths))]
-    public void BulkParseAllThreeDoDiscs(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-
-            var root = new FsNode();
-            var parser = new ThreeDoParser(reader);
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            Assert.NotNull(track);
-
-            var ok = parser.Parse(root, track);
-            var fileName = Path.GetFileName(chdPath);
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-
-            _output.WriteLine($"[{(ok ? "OK" : "FAIL")}] {fileName}  UnitBytes={chd.UnitBytes}  Tracks={reader.Tracks.Count}  Files={files}  Dirs={dirs}  MaxFile={maxSize:N0}");
-
-            if (ok)
+            finally
             {
+                chd.Dispose();
+            }
+            return true;
+        });
+    }
+
+    [Fact]
+    public void ThreeDoConsoleParserParsesThreeDoDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ThreeDoConsoleParserParsesThreeDoDisc), paths, (path, output) =>
+        {
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
+
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
+
+                var root = new FsNode();
+                var parser = new ThreeDoConsoleParser(reader);
+
+                var ok = parser.Parse(root);
+                output.WriteLine($"ThreeDoConsoleParser: {(ok ? "OK" : "FAILED")}");
+
+                Assert.True(ok, "ThreeDoConsoleParser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
                 Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
             }
-        }
-        finally
+            finally
+            {
+                chd.Dispose();
+            }
+            return true;
+        });
+    }
+
+    [Fact]
+    public void ChdContainerMountAndParseThreeDoDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseThreeDoDisc), paths, (path, output) =>
         {
-            chd.Dispose();
-        }
+            var container = new ChdContainer(path);
+            try
+            {
+                Assert.True(container.MountAndParse(ConsoleType.ThreeDo), "MountAndParse failed");
+
+                var all = CollectEntries(container, "\\").ToList();
+                var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
+                output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
+
+                Assert.True(fileEntries.Count > 2, $"Suspiciously few files: {fileEntries.Count}");
+
+                var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Contains('\0')).ToList();
+                foreach (var bad in badNames)
+                    output.WriteLine($"BAD NAME: {bad.FullPath}");
+                Assert.Empty(badNames);
+
+                foreach (var e in container.ListDirectory("\\"))
+                    output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+            }
+            finally
+            {
+                container.Dispose();
+            }
+            return true;
+        });
+    }
+
+    [Fact]
+    public void BulkParseAllThreeDoDiscs()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(BulkParseAllThreeDoDiscs), paths, (path, output) =>
+        {
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
+
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+
+                var root = new FsNode();
+                var parser = new ThreeDoParser(reader);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                Assert.NotNull(track);
+
+                var ok = parser.Parse(root, track);
+                var fileName = Path.GetFileName(path);
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+
+                output.WriteLine($"[{(ok ? "OK" : "FAIL")}] {fileName}  UnitBytes={chd.UnitBytes}  Tracks={reader.Tracks.Count}  Files={files}  Dirs={dirs}  MaxFile={maxSize:N0}");
+
+                if (ok)
+                {
+                    Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
+                }
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+            return true;
+        });
+    }
+
+    [Fact]
+    public void M2DiscPaserDiagnostic()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(M2DiscPaserDiagnostic), paths, (path, output) =>
+        {
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
+
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                var fileName = Path.GetFileName(path);
+
+                output.WriteLine($"--- {fileName} (UnitBytes={chd.UnitBytes}, Tracks={reader.Tracks.Count}) ---");
+
+                bool ok3Do;
+                int f3, d3;
+                ulong m3;
+                if (track is not null)
+                {
+                    ok3Do = TryThreeDo(reader, track, out f3, out d3, out m3);
+                }
+                else
+                {
+                    ok3Do = false;
+                    f3 = 0;
+                    d3 = 0;
+                    m3 = 0;
+                }
+
+                output.WriteLine($"  ThreeDoParser: {(ok3Do ? $"OK ({f3} files, {d3} dirs, max={m3:N0})" : "FAIL")}");
+
+                reader = new SectorReader(chd, chd.UnitBytes);
+                var track2 = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                bool okIso;
+                int fi, di;
+                if (track2 is not null)
+                {
+                    okIso = TryIso9660(reader, track2, out fi, out di);
+                }
+                else
+                {
+                    okIso = false;
+                    fi = 0;
+                    di = 0;
+                }
+                output.WriteLine($"  Iso9660Parser: {(okIso ? $"OK ({fi} files, {di} dirs)" : "FAIL")}");
+
+                var okThreeDoCt = TryContainerMount(path, ConsoleType.ThreeDo, out var c3F, out var c3D);
+                output.WriteLine($"  Container ThreeDo: {(okThreeDoCt ? $"OK ({c3F} files, {c3D} dirs)" : "FAIL")}");
+
+                var okIsoCt = TryContainerMount(path, ConsoleType.GenericIso9660, out var cif, out var cid);
+                output.WriteLine($"  Container ISO9660: {(okIsoCt ? $"OK ({cif} files, {cid} dirs)" : "FAIL")}");
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+            return true;
+        });
     }
 
     private static void Walk(FsNode node, ref int files, ref int dirs, ref ulong maxSize)
@@ -226,73 +268,6 @@ public class ThreeDoIntegrationTests
         maxSize = 0;
         Walk(root, ref files, ref dirs, ref maxSize);
         output.WriteLine($"  FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-    }
-
-    [Theory]
-    [MemberData(nameof(ThreeDoChdPaths))]
-    public void M2DiscPaserDiagnostic(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            var fileName = Path.GetFileName(chdPath);
-
-            _output.WriteLine($"--- {fileName} (UnitBytes={chd.UnitBytes}, Tracks={reader.Tracks.Count}) ---");
-
-            bool ok3Do;
-            int f3, d3;
-            ulong m3;
-            if (track is not null)
-            {
-                ok3Do = TryThreeDo(reader, track, out f3, out d3, out m3);
-            }
-            else
-            {
-                ok3Do = false;
-                f3 = 0;
-                d3 = 0;
-                m3 = 0;
-            }
-
-            _output.WriteLine($"  ThreeDoParser: {(ok3Do ? $"OK ({f3} files, {d3} dirs, max={m3:N0})" : "FAIL")}");
-
-            reader = new SectorReader(chd, chd.UnitBytes);
-            var track2 = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            bool okIso;
-            int fi, di;
-            if (track2 is not null)
-            {
-                okIso = TryIso9660(reader, track2, out fi, out di);
-            }
-            else
-            {
-                okIso = false;
-                fi = 0;
-                di = 0;
-            }
-            _output.WriteLine($"  Iso9660Parser: {(okIso ? $"OK ({fi} files, {di} dirs)" : "FAIL")}");
-
-            var okThreeDoCt = TryContainerMount(chdPath, ConsoleType.ThreeDo, out var c3F, out var c3D);
-            _output.WriteLine($"  Container ThreeDo: {(okThreeDoCt ? $"OK ({c3F} files, {c3D} dirs)" : "FAIL")}");
-
-            var okIsoCt = TryContainerMount(chdPath, ConsoleType.GenericIso9660, out var cif, out var cid);
-            _output.WriteLine($"  Container ISO9660: {(okIsoCt ? $"OK ({cif} files, {cid} dirs)" : "FAIL")}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
     }
 
     private static bool TryThreeDo(SectorReader reader, TrackInfo track, out int files, out int dirs, out ulong maxSize)

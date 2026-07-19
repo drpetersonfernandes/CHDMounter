@@ -15,201 +15,167 @@ public class AmigaCdIntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> AmigaCdChdPaths =>
-    [
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\almathera clipart & fonts cd, the (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\almathera comms & networking cd (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\cdpd 1 (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\17bit5th\17_bit_-_the_fifth_dimension_(europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\bigred\big_red_adventure_(1997)(ludomedia-power_computing)[m4].chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\finlodys\final_odyssey_-_theseus_verses_the_minotaur_(europe)_(en,de,es,it,no,da,fi).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\gunbee\gunbee_f-99_-_the_kidnapping_of_lady_akiko_(europe)_(en,de).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\kangfu\kangfu_cd32.chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\pballdmg\pinball_brain_damage_(europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\wendetta\wendetta_2175_(europe).chd"
-    ];
-
-    public static TheoryData<string> AllAmigaCdChdPaths =>
-    [
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\almathera clipart & fonts cd, the (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\almathera comms & networking cd (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\almathera photo library cd, the (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\cdpd 1 (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\cdpd 2 (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\demo 1 (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\illustrated works of shakespeare (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\pandora's cd (europe) (alt).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\team yankee (europe) (ten on ten).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\10on10\world vista (europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\17bit5th\17_bit_-_the_fifth_dimension_(europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\17bitlv6\17_bit_-_level_6_(europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\17bitph4\17_bit_-_phase_four_(europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\amigames\aminet_games.chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\bigred\big_red_adventure_(1997)(ludomedia-power_computing)[m4].chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\emuplus\emulators_unlimited_plus_(germany)_(en,de).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\finlodys\final_odyssey_-_theseus_verses_the_minotaur_(europe)_(en,de,es,it,no,da,fi).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\gunbee\gunbee_f-99_-_the_kidnapping_of_lady_akiko_(europe)_(en,de).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\kangfu\kangfu_cd32.chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\pballdmg\pinball_brain_damage_(europe).chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\redhat51\redhat_5_1_m68k.chd",
-        @"G:\MAME\MAME Software List CHDs\amiga_cd\wendetta\wendetta_2175_(europe).chd"
-    ];
-
-    [Theory]
-    [MemberData(nameof(AmigaCdChdPaths))]
-    public void Iso9660ParserParsesAmigaCdDisc(string chdPath)
+    private static List<string> GetSamplePaths()
     {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var unitBytes = chd.UnitBytes;
-            var reader = new SectorReader(chd, unitBytes);
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track?.TrackType ?? "N/A"}");
-
-            var root = new FsNode();
-            var parser = new Iso9660Parser(reader);
-
-            var ok = parser.Parse(root, track);
-            _output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}");
-
-            Assert.True(ok, "Iso9660Parser could not parse the disc");
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
-
-            foreach (var c in root.Children.OrderByDescending(static n => n.Size).Take(15))
-                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+        return SequentialTestRunner.CollectPaths(ChdPathCatalog.AmigaCd.Paths);
     }
 
-    [Theory]
-    [MemberData(nameof(AmigaCdChdPaths))]
-    public void AmigaCdParserParsesAmigaCdDisc(string chdPath)
+    private static List<string> GetAllPaths()
     {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-            _output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
-
-            var root = new FsNode();
-            var parser = new AmigaCdParser(reader);
-
-            var ok = parser.Parse(root);
-            _output.WriteLine($"AmigaCdParser: {(ok ? "OK" : "FAILED")}");
-
-            Assert.True(ok, "AmigaCdParser could not parse the disc");
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-
-            Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+        return SequentialTestRunner.CollectPaths(ChdPathCatalog.AmigaCd.Paths);
     }
 
-    [Theory]
-    [MemberData(nameof(AmigaCdChdPaths))]
-    public void ChdContainerMountAndParseAmigaCdDisc(string chdPath)
+    [Fact]
+    public void Iso9660ParserParsesAmigaCdDisc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetSamplePaths();
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesAmigaCdDisc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.AmigaCd), "MountAndParse failed");
+            try
+            {
+                var unitBytes = chd.UnitBytes;
+                var reader = new SectorReader(chd, unitBytes);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
 
-            var all = CollectEntries(container, "\\").ToList();
-            var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
-            _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
+                output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track?.TrackType ?? "N/A"}");
 
-            Assert.True(fileEntries.Count > 2, $"Suspiciously few files: {fileEntries.Count}");
+                var root = new FsNode();
+                var parser = new Iso9660Parser(reader);
 
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
-            foreach (var bad in badNames)
-                _output.WriteLine($"BAD NAME: {bad.FullPath}");
-            Assert.Empty(badNames);
+                var ok = parser.Parse(root, track);
+                output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}");
 
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
-        }
-        finally
-        {
-            container.Dispose();
-        }
+                Assert.True(ok, "Iso9660Parser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
+                Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
+
+                foreach (var c in root.Children.OrderByDescending(static n => n.Size).Take(15))
+                    output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+
+            return true;
+        });
     }
 
-    [Theory]
-    [MemberData(nameof(AllAmigaCdChdPaths))]
-    public void BulkParseAllAmigaCdDiscs(string chdPath)
+    [Fact]
+    public void AmigaCdParserParsesAmigaCdDisc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetSamplePaths();
+        SequentialTestRunner.Run(_output, nameof(AmigaCdParserParsesAmigaCdDisc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
 
-        try
+                var root = new FsNode();
+                var parser = new AmigaCdParser(reader);
+
+                var ok = parser.Parse(root);
+                output.WriteLine($"AmigaCdParser: {(ok ? "OK" : "FAILED")}");
+
+                Assert.True(ok, "AmigaCdParser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
+                Assert.True(files > 2, $"Suspiciously few files parsed: {files}");
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+
+            return true;
+        });
+    }
+
+    [Fact]
+    public void ChdContainerMountAndParseAmigaCdDisc()
+    {
+        var paths = GetSamplePaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseAmigaCdDisc), paths, (path, output) =>
         {
-            var reader = new SectorReader(chd, chd.UnitBytes);
+            var container = new ChdContainer(path);
+            try
+            {
+                Assert.True(container.MountAndParse(ConsoleType.AmigaCd), "MountAndParse failed");
 
-            var root = new FsNode();
-            var parser = new AmigaCdParser(reader);
+                var all = CollectEntries(container, "\\").ToList();
+                var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
+                output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
 
-            var ok = parser.Parse(root);
-            var fileName = Path.GetFileName(chdPath);
+                Assert.True(fileEntries.Count > 2, $"Suspiciously few files: {fileEntries.Count}");
 
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
+                var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
+                foreach (var bad in badNames)
+                    output.WriteLine($"BAD NAME: {bad.FullPath}");
+                Assert.Empty(badNames);
 
-            _output.WriteLine($"[{(ok ? "OK" : "FAIL")}] {fileName}  UnitBytes={chd.UnitBytes}  Tracks={reader.Tracks.Count}  Files={files}  Dirs={dirs}  MaxFile={maxSize:N0}");
-        }
-        finally
+                foreach (var e in container.ListDirectory("\\"))
+                    output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+            }
+            finally
+            {
+                container.Dispose();
+            }
+
+            return true;
+        });
+    }
+
+    [Fact]
+    public void BulkParseAllAmigaCdDiscs()
+    {
+        var paths = GetAllPaths();
+        SequentialTestRunner.Run(_output, nameof(BulkParseAllAmigaCdDiscs), paths, (path, output) =>
         {
-            chd.Dispose();
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
+
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+
+                var root = new FsNode();
+                var parser = new AmigaCdParser(reader);
+
+                var ok = parser.Parse(root);
+                var fileName = Path.GetFileName(path);
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+
+                output.WriteLine($"[{(ok ? "OK" : "FAIL")}] {fileName}  UnitBytes={chd.UnitBytes}  Tracks={reader.Tracks.Count}  Files={files}  Dirs={dirs}  MaxFile={maxSize:N0}");
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+
+            return true;
+        });
     }
 
     private static void Walk(FsNode node, ref int files, ref int dirs, ref ulong maxSize)

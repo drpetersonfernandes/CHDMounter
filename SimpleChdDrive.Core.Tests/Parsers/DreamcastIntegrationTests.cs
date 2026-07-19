@@ -16,227 +16,209 @@ public class DreamcastIntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> DreamcastChdPaths
+    private static List<string> GetPaths()
     {
-        get
-        {
-            var data = new TheoryData<string>();
-            string[] dirs = [@"X:\Sega Dreamcast", @"G:\MAME\MAME Software List CHDs\dc"];
-
-            foreach (var dir in dirs)
-            {
-                if (!Directory.Exists(dir))
-                    continue;
-
-                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
-                    data.Add(chd);
-            }
-
-            return data;
-        }
+        return SequentialTestRunner.CollectPaths(ChdPathCatalog.Dreamcast.Paths);
     }
 
-    [Theory]
-    [MemberData(nameof(DreamcastChdPaths))]
-    public void DreamcastParserParsesDreamcastDisc(string chdPath)
+    [Fact]
+    public void DreamcastParserParsesDreamcastDisc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(DreamcastParserParsesDreamcastDisc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
-
-        try
-        {
-            var unitBytes = chd.UnitBytes;
-            var reader = new SectorReader(chd, unitBytes);
-            var track = reader.Tracks.LastOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            Assert.NotNull(track);
-
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
-            foreach (var t in reader.Tracks)
-                _output.WriteLine($"  idx={t.Index} LBA={t.StartLba} frames={t.Frames} type={t.TrackType} data={t.IsDataTrack}");
-
-            var root = new FsNode();
-            var parser = new DreamcastParser(reader);
-
-            var ok = parser.Parse(root);
-
-            _output.WriteLine($"DreamcastParser: {(ok ? "OK" : "FAILED")}");
-            _output.WriteLine($"Root LBA={root.Lba} Size={root.Size}");
-
-            Assert.True(ok, "DreamcastParser could not parse the disc");
-
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-
-            var allNodes = FindNodes(root);
-            var rockRidgeNodes = allNodes.Count(n => n.UnixMode.HasValue);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes, RR entries={rockRidgeNodes}");
-
-            var topFifteen = root.Children.OrderByDescending(static n => n.Size).Take(15);
-            foreach (var c in topFifteen)
-                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
-
-            Assert.True(files >= 5, $"Suspiciously few files parsed: {files}");
-
-            var executables = allNodes.Count(n => !n.IsDirectory && n.Name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase));
-            _output.WriteLine($"BIN files: {executables}");
-
-            if (rockRidgeNodes > 0)
+            try
             {
-                var sample = allNodes.First(n => n.UnixMode.HasValue);
-                _output.WriteLine($"Rock Ridge sample: {sample.Name} mode=0x{sample.UnixMode:X8} uid={sample.Uid} gid={sample.Gid}");
-            }
-        }
-        finally
-        {
-            chd.Dispose();
-        }
-    }
+                var unitBytes = chd.UnitBytes;
+                var reader = new SectorReader(chd, unitBytes);
+                var track = reader.Tracks.LastOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                Assert.NotNull(track);
 
-    [Theory]
-    [MemberData(nameof(DreamcastChdPaths))]
-    public void ChdContainerMountAndParseDreamcastDisc(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+                output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
+                foreach (var t in reader.Tracks)
+                    output.WriteLine($"  idx={t.Index} LBA={t.StartLba} frames={t.Frames} type={t.TrackType} data={t.IsDataTrack}");
 
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.Dreamcast), "MountAndParse failed");
+                var root = new FsNode();
+                var parser = new DreamcastParser(reader);
 
-            var all = CollectEntries(container, "\\").ToList();
-            var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
-            _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
+                var ok = parser.Parse(root);
 
-            Assert.True(fileEntries.Count >= 5, $"Suspiciously few files: {fileEntries.Count}");
+                output.WriteLine($"DreamcastParser: {(ok ? "OK" : "FAILED")}");
+                output.WriteLine($"Root LBA={root.Lba} Size={root.Size}");
 
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
-            foreach (var bad in badNames)
-                _output.WriteLine($"BAD NAME: {bad.FullPath}");
-            Assert.Empty(badNames);
+                Assert.True(ok, "DreamcastParser could not parse the disc");
 
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
-        }
-        finally
-        {
-            container.Dispose();
-        }
-    }
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
 
-    [Theory]
-    [MemberData(nameof(DreamcastChdPaths))]
-    public void DiagnoseSectorReaderForGdrom(string chdPath)
-    {
-        if (!File.Exists(chdPath))
-        {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+                var allNodes = FindNodes(root);
+                var rockRidgeNodes = allNodes.Count(n => n.UnixMode.HasValue);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes, RR entries={rockRidgeNodes}");
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
+                var topFifteen = root.Children.OrderByDescending(static n => n.Size).Take(15);
+                foreach (var c in topFifteen)
+                    output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
 
-        try
-        {
-            var unitBytes = chd.UnitBytes;
-            var hunkBytes = chd.HunkBytes;
-            var sectorsPerHunk = hunkBytes / unitBytes;
-            var totalFrames = (uint)(chd.TotalBytes / unitBytes);
+                Assert.True(files >= 5, $"Suspiciously few files parsed: {files}");
 
-            _output.WriteLine($"UnitBytes={unitBytes} HunkBytes={hunkBytes} sectorsPerHunk={sectorsPerHunk} totalFrames={totalFrames}");
+                var executables = allNodes.Count(n => !n.IsDirectory && n.Name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase));
+                output.WriteLine($"BIN files: {executables}");
 
-            var reader = new SectorReader(chd, unitBytes);
-            _output.WriteLine($"Tracks: {reader.Tracks.Count}");
-            foreach (var t in reader.Tracks)
-                _output.WriteLine($"  idx={t.Index} LBA={t.StartLba} frames={t.Frames} ChdOff={t.ChdOffset} data={t.IsDataTrack} type={t.TrackType}");
-
-            TrackInfo? hdTrack = null;
-            for (var i = reader.Tracks.Count - 1; i >= 0; i--)
-            {
-                if (reader.Tracks[i].IsDataTrack)
+                if (rockRidgeNodes > 0)
                 {
-                    hdTrack = reader.Tracks[i];
-                    break;
+                    var sample = allNodes.First(n => n.UnixMode.HasValue);
+                    output.WriteLine($"Rock Ridge sample: {sample.Name} mode=0x{sample.UnixMode:X8} uid={sample.Uid} gid={sample.Gid}");
                 }
             }
-
-            if (hdTrack == null)
+            finally
             {
-                _output.WriteLine("No data track found, skipping");
-                return;
+                chd.Dispose();
             }
 
-            _output.WriteLine($"HD track: idx={hdTrack.Index} LBA={hdTrack.StartLba} frames={hdTrack.Frames} ChdOff={hdTrack.ChdOffset}");
+            return true;
+        });
+    }
 
-            var buf = new byte[2048];
-
-            var ipBinLba = hdTrack.StartLba;
-            var ipBinOk = reader.ReadSector(ipBinLba, buf);
-            _output.WriteLine($"IP.BIN at LBA={ipBinLba}: {(ipBinOk ? "OK" : "FAIL")}");
-            if (ipBinOk)
+    [Fact]
+    public void ChdContainerMountAndParseDreamcastDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseDreamcastDisc), paths, (path, output) =>
+        {
+            var container = new ChdContainer(path);
+            try
             {
-                var id = Encoding.ASCII.GetString(buf, 0, 16).TrimEnd('\0');
-                _output.WriteLine($"  [0-15]: '{id}'");
+                Assert.True(container.MountAndParse(ConsoleType.Dreamcast), "MountAndParse failed");
+
+                var all = CollectEntries(container, "\\").ToList();
+                var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
+                output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
+
+                Assert.True(fileEntries.Count >= 5, $"Suspiciously few files: {fileEntries.Count}");
+
+                var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
+                foreach (var bad in badNames)
+                    output.WriteLine($"BAD NAME: {bad.FullPath}");
+                Assert.Empty(badNames);
+
+                foreach (var e in container.ListDirectory("\\"))
+                    output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+            }
+            finally
+            {
+                container.Dispose();
             }
 
-            var pvdLba = hdTrack.StartLba + 16;
-            var pvdOk = reader.ReadSector(pvdLba, buf);
-            _output.WriteLine($"PVD at LBA={pvdLba}: {(pvdOk ? "OK" : "FAIL")}");
-            if (pvdOk)
+            return true;
+        });
+    }
+
+    [Fact]
+    public void DiagnoseSectorReaderForGdrom()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(DiagnoseSectorReaderForGdrom), paths, (path, output) =>
+        {
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
+
+            try
             {
-                var type = buf[0];
-                var magic = Encoding.ASCII.GetString(buf, 1, 5);
-                var rlba = BitConverter.ToUInt32(buf, 158);
-                _output.WriteLine($"  type={type} magic='{magic}' rootLBA={rlba}");
-            }
+                var unitBytes = chd.UnitBytes;
+                var hunkBytes = chd.HunkBytes;
+                var sectorsPerHunk = hunkBytes / unitBytes;
+                var totalFrames = (uint)(chd.TotalBytes / unitBytes);
 
-            var rootLbaFromPvd = 0u;
-            if (reader.ReadSector(hdTrack.StartLba + 16, buf))
-            {
-                rootLbaFromPvd = BitConverter.ToUInt32(buf, 158);
-            }
+                output.WriteLine($"UnitBytes={unitBytes} HunkBytes={hunkBytes} sectorsPerHunk={sectorsPerHunk} totalFrames={totalFrames}");
 
-            _output.WriteLine($"PVD rootLBA={rootLbaFromPvd}");
+                var reader = new SectorReader(chd, unitBytes);
+                output.WriteLine($"Tracks: {reader.Tracks.Count}");
+                foreach (var t in reader.Tracks)
+                    output.WriteLine($"  idx={t.Index} LBA={t.StartLba} frames={t.Frames} ChdOff={t.ChdOffset} data={t.IsDataTrack} type={t.TrackType}");
 
-            var candA = hdTrack.StartLba + rootLbaFromPvd;
-            var candB = rootLbaFromPvd;
-            var rootLbaSimple = rootLbaFromPvd > 45000 ? rootLbaFromPvd - 45000 : rootLbaFromPvd;
-            var candC = hdTrack.StartLba + rootLbaSimple;
-
-            foreach (var (label, lba) in new[] { ("A:start+root", candA), ("B:absolute", candB), ("C:start+root-norm", candC) })
-            {
-                var ok = reader.ReadSector(lba, buf);
-                var b0 = buf[0];
-                var magic = ok ? Encoding.ASCII.GetString(buf, 1, 5) : "";
-                _output.WriteLine($"  {label}: LBA={lba} ok={ok} byte0={b0:X2} magic='{magic}'");
-                if (ok && b0 >= 34 && (b0 & 1) == 0)
+                TrackInfo? hdTrack = null;
+                for (var i = reader.Tracks.Count - 1; i >= 0; i--)
                 {
-                    const int nameLenPos = 32;
+                    if (reader.Tracks[i].IsDataTrack)
                     {
-                        var nameLen = buf[nameLenPos];
-                        var name = Encoding.ASCII.GetString(buf, 33, Math.Min(nameLen, b0 - 33)).Trim('\0');
-                        _output.WriteLine($"    Looks like a dir record! nameLen={nameLen} name='{name}'");
+                        hdTrack = reader.Tracks[i];
+                        break;
+                    }
+                }
+
+                if (hdTrack == null)
+                {
+                    output.WriteLine("No data track found, skipping");
+                    return true;
+                }
+
+                output.WriteLine($"HD track: idx={hdTrack.Index} LBA={hdTrack.StartLba} frames={hdTrack.Frames} ChdOff={hdTrack.ChdOffset}");
+
+                var buf = new byte[2048];
+
+                var ipBinLba = hdTrack.StartLba;
+                var ipBinOk = reader.ReadSector(ipBinLba, buf);
+                output.WriteLine($"IP.BIN at LBA={ipBinLba}: {(ipBinOk ? "OK" : "FAIL")}");
+                if (ipBinOk)
+                {
+                    var id = Encoding.ASCII.GetString(buf, 0, 16).TrimEnd('\0');
+                    output.WriteLine($"  [0-15]: '{id}'");
+                }
+
+                var pvdLba = hdTrack.StartLba + 16;
+                var pvdOk = reader.ReadSector(pvdLba, buf);
+                output.WriteLine($"PVD at LBA={pvdLba}: {(pvdOk ? "OK" : "FAIL")}");
+                if (pvdOk)
+                {
+                    var type = buf[0];
+                    var magic = Encoding.ASCII.GetString(buf, 1, 5);
+                    var rlba = BitConverter.ToUInt32(buf, 158);
+                    output.WriteLine($"  type={type} magic='{magic}' rootLBA={rlba}");
+                }
+
+                var rootLbaFromPvd = 0u;
+                if (reader.ReadSector(hdTrack.StartLba + 16, buf))
+                {
+                    rootLbaFromPvd = BitConverter.ToUInt32(buf, 158);
+                }
+
+                output.WriteLine($"PVD rootLBA={rootLbaFromPvd}");
+
+                var candA = hdTrack.StartLba + rootLbaFromPvd;
+                var candB = rootLbaFromPvd;
+                var rootLbaSimple = rootLbaFromPvd > 45000 ? rootLbaFromPvd - 45000 : rootLbaFromPvd;
+                var candC = hdTrack.StartLba + rootLbaSimple;
+
+                foreach (var (label, lba) in new[] { ("A:start+root", candA), ("B:absolute", candB), ("C:start+root-norm", candC) })
+                {
+                    var ok = reader.ReadSector(lba, buf);
+                    var b0 = buf[0];
+                    var magic = ok ? Encoding.ASCII.GetString(buf, 1, 5) : "";
+                    output.WriteLine($"  {label}: LBA={lba} ok={ok} byte0={b0:X2} magic='{magic}'");
+                    if (ok && b0 >= 34 && (b0 & 1) == 0)
+                    {
+                        const int nameLenPos = 32;
+                        {
+                            var nameLen = buf[nameLenPos];
+                            var name = Encoding.ASCII.GetString(buf, 33, Math.Min(nameLen, b0 - 33)).Trim('\0');
+                            output.WriteLine($"    Looks like a dir record! nameLen={nameLen} name='{name}'");
+                        }
                     }
                 }
             }
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+            finally
+            {
+                chd.Dispose();
+            }
+
+            return true;
+        });
     }
 
     private static void Walk(FsNode node, ref int files, ref int dirs, ref ulong maxSize)

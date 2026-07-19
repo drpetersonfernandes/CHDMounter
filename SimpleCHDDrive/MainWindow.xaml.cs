@@ -134,6 +134,10 @@ public partial class MainWindow
             "amigacd" or "amiga" => ConsoleType.AmigaCd,
             "iso9660" or "generic" or "iso" => ConsoleType.GenericIso9660,
             "cuebin" or "cue" => ConsoleType.GenericCueBin,
+            "cuebin2048" or "cue2048" => ConsoleType.GenericCueBin2048,
+            "cueiso" => ConsoleType.GenericCueIso,
+            "cuebinwav" or "cuewav" => ConsoleType.GenericCueBinWav,
+            "cueisowav" => ConsoleType.GenericCueIsoWav,
             _ => ConsoleType.Unknown
         };
     }

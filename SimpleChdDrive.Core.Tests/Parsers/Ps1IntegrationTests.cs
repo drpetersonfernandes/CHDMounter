@@ -16,162 +16,142 @@ public class Ps1IntegrationTests
         _output = output;
     }
 
-    public static TheoryData<string> Ps1ChdPaths
+    private static List<string> GetPaths()
     {
-        get
-        {
-            var data = new TheoryData<string>();
-            string[] dirs = [@"G:\MAME\MAME Software List CHDs\psx", @"X:\Sony PlayStation 1"];
-
-            foreach (var dir in dirs)
-            {
-                if (!Directory.Exists(dir))
-                    continue;
-
-                foreach (var chd in Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories))
-                    data.Add(chd);
-            }
-
-            return data;
-        }
+        return SequentialTestRunner.CollectPaths(
+            ChdPathCatalog.PlayStation1.Paths);
     }
 
-    [Theory]
-    [MemberData(nameof(Ps1ChdPaths))]
-    public void Iso9660ParserParsesPs1Disc(string chdPath)
+    [Fact]
+    public void Iso9660ParserParsesPs1Disc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPs1Disc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
+            try
+            {
+                var unitBytes = chd.UnitBytes;
+                var reader = new SectorReader(chd, unitBytes);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
+                Assert.NotNull(track);
 
-        try
-        {
-            var unitBytes = chd.UnitBytes;
-            var reader = new SectorReader(chd, unitBytes);
-            var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-            Assert.NotNull(track);
+                output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
 
-            _output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
+                var root = new FsNode();
+                var parser = new Iso9660Parser(reader);
 
-            var root = new FsNode();
-            var parser = new Iso9660Parser(reader);
+                var ok = parser.Parse(root, track);
+                output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}");
 
-            var ok = parser.Parse(root, track);
-            _output.WriteLine($"Iso9660Parser: {(ok ? "OK" : "FAILED")}");
+                Assert.True(ok, "Iso9660Parser could not parse the disc");
 
-            Assert.True(ok, "Iso9660Parser could not parse the disc");
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
 
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+                var topTwenty = root.Children.OrderByDescending(static n => n.Size).Take(20);
+                foreach (var c in topTwenty)
+                    output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
 
-            var topTwenty = root.Children.OrderByDescending(static n => n.Size).Take(20);
-            foreach (var c in topTwenty)
-                _output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
-
-            Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+                Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
+                return true;
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+        });
     }
 
-    [Theory]
-    [MemberData(nameof(Ps1ChdPaths))]
-    public void PlayStation1ParserParsesPs1Disc(string chdPath)
+    [Fact]
+    public void PlayStation1ParserParsesPs1Disc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(PlayStation1ParserParsesPs1Disc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
-        var err = ChdFile.Open(chdPath, out var chd);
-        Assert.Equal(ChdError.Chderrnone, err);
-        Assert.NotNull(chd);
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                var root = new FsNode();
+                var parser = new PlayStation1Parser(reader);
 
-        try
-        {
-            var reader = new SectorReader(chd, chd.UnitBytes);
-            var root = new FsNode();
-            var parser = new PlayStation1Parser(reader);
+                var ok = parser.Parse(root);
+                output.WriteLine($"PlayStation1Parser: {(ok ? "OK" : "FAILED")}");
 
-            var ok = parser.Parse(root);
-            _output.WriteLine($"PlayStation1Parser: {(ok ? "OK" : "FAILED")}");
+                Assert.True(ok, "PlayStation1Parser could not parse the disc");
 
-            Assert.True(ok, "PlayStation1Parser could not parse the disc");
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
 
-            int files = 0, dirs = 0;
-            ulong maxSize = 0;
-            Walk(root, ref files, ref dirs, ref maxSize);
-            _output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+                Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
 
-            Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
-
-            var hasSystemCnf = root.Children.Any(static n => n.Name == "SYSTEM.CNF");
-            var hasExe = root.Children.Any(static n => n.Name.EndsWith(".EXE", StringComparison.OrdinalIgnoreCase));
-            _output.WriteLine($"SYSTEM.CNF: {(hasSystemCnf ? "YES" : "NO")}  .EXE file: {(hasExe ? "YES" : "NO")}");
-        }
-        finally
-        {
-            chd.Dispose();
-        }
+                var hasSystemCnf = root.Children.Any(static n => n.Name == "SYSTEM.CNF");
+                var hasExe = root.Children.Any(static n => n.Name.EndsWith(".EXE", StringComparison.OrdinalIgnoreCase));
+                output.WriteLine($"SYSTEM.CNF: {(hasSystemCnf ? "YES" : "NO")}  .EXE file: {(hasExe ? "YES" : "NO")}");
+                return true;
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+        });
     }
 
-    [Theory]
-    [MemberData(nameof(Ps1ChdPaths))]
-    public void ChdContainerMountAndParsePs1Disc(string chdPath)
+    [Fact]
+    public void ChdContainerMountAndParsePs1Disc()
     {
-        if (!File.Exists(chdPath))
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePs1Disc), paths, (path, output) =>
         {
-            _output.WriteLine($"SKIP: {chdPath} not found");
-            return;
-        }
-
-        var container = new ChdContainer(chdPath);
-        try
-        {
-            Assert.True(container.MountAndParse(ConsoleType.Ps1), "MountAndParse failed");
-
-            foreach (var e in container.ListDirectory("\\"))
-                _output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
-
-            var all = CollectEntries(container, "\\").ToList();
-            var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
-            _output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
-
-            Assert.True(fileEntries.Count > 10, $"Suspiciously few files: {fileEntries.Count}");
-
-            var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
-            foreach (var bad in badNames)
-                _output.WriteLine($"BAD NAME: {bad.FullPath}");
-            Assert.Empty(badNames);
-
-            var systemCnf = container.FindFile(@"\SYSTEM.CNF");
-            if (systemCnf != null)
+            var container = new ChdContainer(path);
+            try
             {
-                var buf = new byte[256];
-                var bytesRead = container.ReadFile(systemCnf, 0, buf, 0, buf.Length);
-                var text = Encoding.ASCII.GetString(buf, 0, bytesRead);
-                _output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "").Replace("\n", " / ")}");
+                Assert.True(container.MountAndParse(ConsoleType.Ps1), "MountAndParse failed");
+
+                foreach (var e in container.ListDirectory("\\"))
+                    output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
+
+                var all = CollectEntries(container, "\\").ToList();
+                var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
+                output.WriteLine($"Container: {fileEntries.Count} files, {all.Count - fileEntries.Count} dirs");
+
+                Assert.True(fileEntries.Count > 10, $"Suspiciously few files: {fileEntries.Count}");
+
+                var badNames = all.Where(static e => e.Name.Contains('\uFFFD') || e.Name.Any(char.IsControl)).ToList();
+                foreach (var bad in badNames)
+                    output.WriteLine($"BAD NAME: {bad.FullPath}");
+                Assert.Empty(badNames);
+
+                var systemCnf = container.FindFile(@"\SYSTEM.CNF");
+                if (systemCnf != null)
+                {
+                    var buf = new byte[256];
+                    var bytesRead = container.ReadFile(systemCnf, 0, buf, 0, buf.Length);
+                    var text = Encoding.ASCII.GetString(buf, 0, bytesRead);
+                    output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "").Replace("\n", " / ")}");
+                }
+                else
+                {
+                    output.WriteLine("SYSTEM.CNF: NOT FOUND");
+                }
+                return true;
             }
-            else
+            finally
             {
-                _output.WriteLine("SYSTEM.CNF: NOT FOUND");
+                container.Dispose();
             }
-        }
-        finally
-        {
-            container.Dispose();
-        }
+        });
     }
 
     private static void Walk(FsNode node, ref int files, ref int dirs, ref ulong maxSize)
