@@ -17,20 +17,43 @@ public class PspParser : Iso9660Wrapper
     }
 }
 
-public class PcFxParser : Iso9660Wrapper
+public class PcFxParser : IConsoleParser
 {
-    public PcFxParser(SectorReader reader) : base(reader)
+    private readonly SectorReader _reader;
+    private readonly PcFxIsoParser _isoParser;
+
+    public PcFxParser(SectorReader reader)
     {
+        _reader = reader;
+        _isoParser = new PcFxIsoParser(reader);
     }
 
-    public override ConsoleType GetConsoleType()
+    public bool ForceMode { get; set; }
+
+    public ConsoleType GetConsoleType()
     {
         return ConsoleType.PcFx;
     }
 
-    public override string GetConsoleName()
+    public string GetConsoleName()
     {
         return "PC-FX";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        foreach (var t in _reader.Tracks)
+        {
+            if (t.IsDataTrack && _isoParser.Parse(rootNode, t))
+                return true;
+        }
+
+        return _isoParser.Parse(rootNode, null);
+    }
+
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
+    {
+        return _isoParser.Parse(rootNode, track);
     }
 }
 

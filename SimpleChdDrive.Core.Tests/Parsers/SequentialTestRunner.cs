@@ -5,7 +5,24 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 
 public static class SequentialTestRunner
 {
+    public const int DefaultMaxFilesPerCollection = 10;
+
     public static List<string> CollectPaths(params string[] directories)
+    {
+        return CollectPaths(DefaultMaxFilesPerCollection, directories);
+    }
+
+    public static List<string> CollectPaths(IEnumerable<string> directories)
+    {
+        return CollectPaths(DefaultMaxFilesPerCollection, directories);
+    }
+
+    public static List<string> CollectPaths(int maxFiles, params string[] directories)
+    {
+        return CollectPaths(maxFiles, (IEnumerable<string>)directories);
+    }
+
+    public static List<string> CollectPaths(int maxFiles, IEnumerable<string> directories)
     {
         var paths = new List<string>();
         foreach (var dir in directories)
@@ -15,12 +32,14 @@ public static class SequentialTestRunner
             paths.AddRange(Directory.EnumerateFiles(dir, "*.chd", SearchOption.AllDirectories));
         }
 
-        return paths;
-    }
+        paths.Sort(string.CompareOrdinal);
 
-    public static List<string> CollectPaths(IEnumerable<string> directories)
-    {
-        return CollectPaths(directories.ToArray());
+        if (maxFiles > 0 && paths.Count > maxFiles)
+        {
+            paths = paths.Take(maxFiles).ToList();
+        }
+
+        return paths;
     }
 
     public static void Run(ITestOutputHelper output, string testName, List<string> chdPaths,
