@@ -126,7 +126,8 @@ public partial class MainWindow
                 return;
             }
 
-            RunButton.IsEnabled = false;
+            RunButton.Visibility = Visibility.Collapsed;
+            CancelButton.Visibility = Visibility.Visible;
             ExportPdfButton.Visibility = Visibility.Collapsed;
             SummaryPanel.Visibility = Visibility.Collapsed;
 
@@ -159,7 +160,8 @@ public partial class MainWindow
             }
             finally
             {
-                RunButton.IsEnabled = true;
+                RunButton.Visibility = Visibility.Visible;
+                CancelButton.Visibility = Visibility.Collapsed;
                 _elapsedTimer.Stop();
                 StatusText.Text = "Ready";
                 _stopwatch = null;
@@ -172,6 +174,12 @@ public partial class MainWindow
             AppendLog($"[Error] {ex.Message}", Colors.Red);
             _logger.Error(ex, "Error during test run");
         }
+    }
+
+    private void CancelButton_Click(object sender, RoutedEventArgs e)
+    {
+        _cts?.Cancel();
+        CancelButton.IsEnabled = false;
     }
 
     private void OnLogMessage(string message)

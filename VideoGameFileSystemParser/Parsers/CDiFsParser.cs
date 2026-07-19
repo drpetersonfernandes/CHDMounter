@@ -104,7 +104,7 @@ public class CDiFsParser
                 return copy;
             }
 
-            if (type == 255) break;
+            if (type == 255 && offset >= 16) break;
         }
 
         return null;

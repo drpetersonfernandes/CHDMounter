@@ -57,6 +57,10 @@ public class ChdContainer : IDisposable
     /// </summary>
     public ulong VolumeSize { get; private set; }
     /// <summary>
+    /// Gets whether the CHD contains at least one data track.
+    /// </summary>
+    public bool HasDataTracks { get; private set; }
+    /// <summary>
     /// Gets the number of bytes per sector unit (e.g., 2048 or 2352).
     /// </summary>
     public uint UnitBytes { get; private set; }
@@ -101,6 +105,7 @@ public class ChdContainer : IDisposable
         VolumeName = Path.GetFileNameWithoutExtension(_chdPath);
 
         _readerPool.Add(reader);
+        HasDataTracks = reader.Tracks.Any(t => t.IsDataTrack);
         lock (_poolLock)
         {
             _availableReaders.Add(reader);

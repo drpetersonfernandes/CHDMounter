@@ -86,6 +86,12 @@
                         Width="110" Height="32" FontWeight="SemiBold"
                         Click="RunButton_Click" Style="{StaticResource PrimaryButtonStyle}"
                         ToolTip="Run parsing tests on all CHD files in the selected folder" />
+                <Button Grid.Column="5" x:Name="CancelButton" Content="Cancel"
+                        Width="110" Height="32" FontWeight="SemiBold"
+                        Click="CancelButton_Click" Style="{StaticResource PrimaryButtonStyle}"
+                        Background="{StaticResource ErrorBrush}"
+                        Visibility="Collapsed"
+                        ToolTip="Cancel the running test operation" />
             </Grid>
         </Border>
 

@@ -98,6 +98,22 @@ internal sealed class TestRunnerService
                     EmitLog($"  OK  Volume: {container.VolumeName}, Size: {FormatBytes(container.VolumeSize)}, " +
                             $"Files: {fileCount}, Dirs: {dirCount}, Time: {sw.Elapsed.TotalSeconds:F2}s");
                 }
+                else if (container is { HasDataTracks: false, VolumeSize: > 0 })
+                {
+                    result = new TestResult(
+                        fileName,
+                        chdPath,
+                        true,
+                        "Audio-only disc, no data track to parse",
+                        container.VolumeName,
+                        container.VolumeSize,
+                        0,
+                        0,
+                        sw.Elapsed
+                    );
+
+                    EmitLog($"  OK   Audio-only disc — no data track to parse. Size: {FormatBytes(container.VolumeSize)}, Time: {sw.Elapsed.TotalSeconds:F2}s");
+                }
                 else
                 {
                     result = new TestResult(

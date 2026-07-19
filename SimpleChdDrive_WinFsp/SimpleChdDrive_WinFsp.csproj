@@ -21,6 +21,7 @@
         <FileVersion>1.0.0</FileVersion>
         <NeutralLanguage>en</NeutralLanguage>
         <Company>PureLogicCode.com</Company>
+        <ApplicationIcon>Icon\chd.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>

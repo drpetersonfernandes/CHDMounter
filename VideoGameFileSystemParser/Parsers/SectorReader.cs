@@ -267,7 +267,6 @@ public class SectorReader
             _lastTrackIdx = -1;
             LbaOffset = 0;
         _trackLocked = false;
-        _trackOffsetCache.Clear();
     }
 
     /// <summary>
@@ -456,7 +455,13 @@ public class SectorReader
         rawOffsetInHunk = sectorInHunk * UnitBytes;
 
         var trackIdx = CurrentTrack?.Index ?? -1;
-        if (!_isOffsetDetected || hunkNum != _offsetDetectedHunk || CurrentTrack != _offsetDetectedTrack || trackIdx != _lastTrackIdx)
+
+        if (trackIdx >= 0 && _trackOffsetCache.TryGetValue(trackIdx, out var precached))
+        {
+            SectorHeaderOffset = precached.Offset;
+            _wasScrambled = precached.Scrambled;
+        }
+        else if (!_isOffsetDetected || hunkNum != _offsetDetectedHunk || CurrentTrack != _offsetDetectedTrack || trackIdx != _lastTrackIdx)
         {
             if (UnitBytes >= 2352)
             {
@@ -472,10 +477,6 @@ public class SectorReader
             _offsetDetectedHunk = hunkNum;
             _offsetDetectedTrack = CurrentTrack;
             _lastTrackIdx = trackIdx;
-        }
-        else if (trackIdx >= 0 && _trackOffsetCache.TryGetValue(trackIdx, out var cached))
-        {
-            _wasScrambled = cached.Scrambled;
         }
 
         return true;

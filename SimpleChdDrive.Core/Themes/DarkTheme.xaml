@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:wpfui="clr-namespace:Wpf.Ui.Controls;assembly=Wpf.Ui">
 
     <!-- ============================================ -->
     <!-- MODERN DARK THEME - COLOR PALETTE             -->
@@ -387,33 +388,55 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
                     <Grid>
-                        <Track x:Name="PART_Track" IsDirectionReversed="True"
+                        <Track x:Name="PART_Track"
+                               Orientation="{TemplateBinding Orientation}"
                                ViewportSize="{TemplateBinding ViewportSize}"
                                IsEnabled="{TemplateBinding IsMouseOver}">
                             <Track.DecreaseRepeatButton>
-                                <RepeatButton Command="ScrollBar.PageUpCommand"
-                                              Background="Transparent" />
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False"
+                                              Style="{x:Null}">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Rectangle Fill="Transparent" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
                             </Track.DecreaseRepeatButton>
                             <Track.IncreaseRepeatButton>
-                                <RepeatButton Command="ScrollBar.PageDownCommand"
-                                              Background="Transparent" />
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False"
+                                              Style="{x:Null}">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Rectangle Fill="Transparent" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
                             </Track.IncreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb>
+                                <Thumb Style="{x:Null}">
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
                                             <Border Background="{StaticResource BgQuaternaryBrush}"
-                                                    CornerRadius="4" Margin="2,1" />
+                                                    CornerRadius="4" Margin="2,1"
+                                                    MinHeight="30" />
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
                             </Track.Thumb>
                         </Track>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Vertical">
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="True" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style TargetType="wpfui:DynamicScrollBar"
+           BasedOn="{StaticResource {x:Type ScrollBar}}" />
 
     <!-- ============================================ -->
     <!-- CHECKBOX / RADIO STYLES                      -->
