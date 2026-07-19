@@ -32,20 +32,26 @@
                 </Grid.ColumnDefinitions>
 
                 <Label Grid.Column="0" Content="CHD Folder:" VerticalAlignment="Center"
-                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" />
+                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"
+                       ToolTip="Folder containing CHD disc image files to test" />
                 <TextBox Grid.Column="1" x:Name="ChdFolderTextBox" Margin="8,0"
-                         VerticalAlignment="Center" MinWidth="280" />
+                         VerticalAlignment="Center" MinWidth="280"
+                         ToolTip="Path to the folder containing CHD disc images to test" />
                 <Button Grid.Column="2" x:Name="BrowseButton" Content="Browse..."
-                        Width="90" Click="BrowseButton_Click" Margin="0,0,12,0" />
+                        Width="90" Click="BrowseButton_Click" Margin="0,0,12,0"
+                        ToolTip="Browse for a folder containing CHD disc images" />
 
                 <Label Grid.Column="3" Content="Console:" VerticalAlignment="Center"
-                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" />
+                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"
+                       ToolTip="Select the console type to test parsing for" />
                 <ComboBox Grid.Column="4" x:Name="ConsoleComboBox" Width="200"
-                          VerticalAlignment="Center" Margin="8,0,12,0" />
+                          VerticalAlignment="Center" Margin="8,0,12,0"
+                          ToolTip="Video game console filesystem type to test" />
 
                 <Button Grid.Column="5" x:Name="RunButton" Content="Run Tests"
                         Width="110" Height="32" FontWeight="SemiBold"
-                        Click="RunButton_Click" Style="{StaticResource PrimaryButtonStyle}" />
+                        Click="RunButton_Click" Style="{StaticResource PrimaryButtonStyle}"
+                        ToolTip="Run parsing tests on all CHD files in the selected folder" />
             </Grid>
         </Border>
 
@@ -66,18 +72,20 @@
                            Foreground="{StaticResource TextPrimaryBrush}" />
 
                 <Border Grid.Column="1" x:Name="SuccessBadge" Background="{StaticResource SuccessBrush}"
-                        CornerRadius="4" Padding="10,3" Margin="16,0,0,0" VerticalAlignment="Center">
+                        CornerRadius="4" Padding="10,3" Margin="16,0,0,0" VerticalAlignment="Center"
+                        ToolTip="Number of successful tests">
                     <TextBlock x:Name="SuccessCountText" Foreground="White" FontWeight="SemiBold" FontSize="13" />
                 </Border>
 
                 <Border Grid.Column="1" x:Name="FailBadge" Background="{StaticResource ErrorBrush}"
-                        CornerRadius="4" Padding="10,3" Margin="6,0,0,0" VerticalAlignment="Center">
+                        CornerRadius="4" Padding="10,3" Margin="6,0,0,0" VerticalAlignment="Center"
+                        ToolTip="Number of failed tests">
                     <TextBlock x:Name="FailCountText" Foreground="White" FontWeight="SemiBold" FontSize="13" />
                 </Border>
 
                 <Button Grid.Column="3" x:Name="ExportPdfButton" Content="Export PDF"
                         Width="110" Height="30" Click="ExportPdfButton_Click"
-                        Visibility="Collapsed" />
+                        Visibility="Collapsed" ToolTip="Export test results to a PDF report" />
             </Grid>
         </Border>
 
@@ -90,7 +98,8 @@
                          FontSize="12"
                          BorderThickness="0"
                          VerticalScrollBarVisibility="Auto"
-                         HorizontalScrollBarVisibility="Auto">
+                         HorizontalScrollBarVisibility="Auto"
+                         ToolTip="Test output log">
                 <RichTextBox.Resources>
                     <Style TargetType="Paragraph">
                         <Setter Property="Margin" Value="0" />
@@ -116,7 +125,8 @@
                 </StatusBar>
 
                 <TextBlock Grid.Column="1" x:Name="ElapsedText"
-                           Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                           Foreground="{StaticResource TextMutedBrush}" FontSize="12"
+                           ToolTip="Elapsed time since tests started" />
             </Grid>
         </Border>
     </Grid>

@@ -1,6 +1,7 @@
 using System.Text;
+using SimpleChdDrive.Parsing.Interfaces;
 
-namespace SimpleChdDrive.Core.Parsers.Systems;
+namespace SimpleChdDrive.Parsing.Parsers.Systems;
 
 public class PcEngineCdParser : IConsoleParser
 {

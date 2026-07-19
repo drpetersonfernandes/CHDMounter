@@ -1,4 +1,6 @@
-namespace SimpleChdDrive.Core.Parsers.Systems;
+using SimpleChdDrive.Parsing.Interfaces;
+
+namespace SimpleChdDrive.Parsing.Parsers.Systems;
 
 public class PlayStation1Parser : IConsoleParser
 {
@@ -164,44 +166,4 @@ public class PlayStation3Parser : IConsoleParser
     }
 }
 
-public class PlayStation3SingleFileParser : IConsoleParser
-{
-    private readonly SectorReader _reader;
-    public bool ForceMode { get; set; }
 
-    public PlayStation3SingleFileParser(SectorReader reader)
-    {
-        _reader = reader;
-    }
-
-    public ConsoleType GetConsoleType()
-    {
-        return ConsoleType.Ps3SingleFile;
-    }
-
-    public string GetConsoleName()
-    {
-        return "PS3 (Single File)";
-    }
-
-    public bool Parse(FsNode rootNode)
-    {
-        rootNode.Name = "/";
-        rootNode.IsDirectory = true;
-        rootNode.Lba = 0;
-        rootNode.Children.Add(new FsNode
-        {
-            Name = "image.iso",
-            Lba = 0,
-            Size = _reader.TotalBytes,
-            IsDirectory = false,
-            IsRawPassthrough = true
-        });
-        return true;
-    }
-
-    public bool ParseTrack(FsNode rootNode, TrackInfo track)
-    {
-        return Parse(rootNode);
-    }
-}

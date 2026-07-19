@@ -2,7 +2,7 @@ using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
 
-namespace SimpleChdDrive.Core.Parsers;
+namespace SimpleChdDrive.Parsing.Parsers;
 
 public class SectorReader
 {

@@ -7,8 +7,8 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Serilog;
-using SimpleChdDrive.Core.Models;
-using SimpleChdDrive.Core.Parsers;
+using SimpleChdDrive.Parsing.Models;
+using SimpleChdDrive.Parsing.Parsers;
 using Tester.Models;
 using Tester.Services;
 

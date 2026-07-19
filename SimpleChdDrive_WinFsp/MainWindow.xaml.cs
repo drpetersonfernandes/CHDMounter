@@ -5,6 +5,8 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using SimpleChdDrive.Core.Interfaces;
+using SimpleChdDrive.Parsing.Parsers;
 
 namespace SimpleChdDrive_WinFsp;
 
@@ -105,7 +107,7 @@ public partial class MainWindow
             "neogeo" or "ngcd" => ConsoleType.NeoGeoCd, "pcengine" or "pce" or "tgcd" => ConsoleType.PcEngineCd,
             "pcfx" => ConsoleType.PcFx, "segagenesis" or "megacd" or "segacd" => ConsoleType.SegaGenesisCd,
             "amigacd32" or "cd32" => ConsoleType.AmigaCd32, "amigacd" or "amiga" => ConsoleType.AmigaCd,
-            "iso9660" or "generic" or "iso" => ConsoleType.GenericIso9660, "cuebin" or "cue" => ConsoleType.GenericCueBin,
+            "iso9660" or "generic" or "iso" => ConsoleType.GenericIso9660, "cuebin" or "cue" => ConsoleType.GenericCueBin2352Default,
             "cuebin2048" or "cue2048" => ConsoleType.GenericCueBin2048,
             "cueiso" => ConsoleType.GenericCueIso,
             "cuebinwav" or "cuewav" => ConsoleType.GenericCueBinWav,

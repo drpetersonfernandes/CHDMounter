@@ -1,4 +1,6 @@
-namespace SimpleChdDrive.Core.Parsers.Systems;
+using SimpleChdDrive.Parsing.Interfaces;
+
+namespace SimpleChdDrive.Parsing.Parsers.Systems;
 
 public class PspParser : Iso9660Wrapper
 {

@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Fsp;
 using Fsp.Interop;
+using SimpleChdDrive.Core.Interfaces;
+using SimpleChdDrive.Parsing.Parsers;
 using FileInfo = Fsp.Interop.FileInfo;
 
 namespace SimpleChdDrive_WinFsp;

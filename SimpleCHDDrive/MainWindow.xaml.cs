@@ -5,6 +5,8 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using SimpleChdDrive.Core.Interfaces;
+using SimpleChdDrive.Parsing.Parsers;
 
 namespace SimpleChdDrive;
 
@@ -119,7 +121,7 @@ public partial class MainWindow
             "amigacd32" or "cd32" => ConsoleType.AmigaCd32,
             "amigacd" or "amiga" => ConsoleType.AmigaCd,
             "iso9660" or "generic" or "iso" => ConsoleType.GenericIso9660,
-            "cuebin" or "cue" => ConsoleType.GenericCueBin,
+            "cuebin" or "cue" => ConsoleType.GenericCueBin2352Default,
             "cuebin2048" or "cue2048" => ConsoleType.GenericCueBin2048,
             "cueiso" => ConsoleType.GenericCueIso,
             "cuebinwav" or "cuewav" => ConsoleType.GenericCueBinWav,

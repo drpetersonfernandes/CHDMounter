@@ -3,7 +3,7 @@ using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
 
-namespace SimpleChdDrive.Core.Parsers;
+namespace SimpleChdDrive.Parsing.Parsers;
 
 public class ChdContainer
 {
@@ -80,7 +80,7 @@ public class ChdContainer
         if (!Open(consoleType))
             return false;
 
-        if (consoleType is ConsoleType.GenericCueBin or ConsoleType.GenericCueBin2048
+        if (consoleType is ConsoleType.GenericCueBin2352Default or ConsoleType.GenericCueBin2048
             or ConsoleType.GenericCueIso or ConsoleType.GenericCueBinWav or ConsoleType.GenericCueIsoWav)
         {
             var rootNode = new FsNode { Name = "/", IsDirectory = true };
@@ -89,7 +89,7 @@ public class ChdContainer
             // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
             var mode = consoleType switch
             {
-                ConsoleType.GenericCueBin => CueExportMode.CueBin,
+                ConsoleType.GenericCueBin2352Default => CueExportMode.CueBin,
                 ConsoleType.GenericCueBin2048 => CueExportMode.CueBin2048,
                 ConsoleType.GenericCueIso => CueExportMode.CueIso,
                 ConsoleType.GenericCueBinWav => CueExportMode.CueBinWav,

@@ -1,7 +1,8 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
+using SimpleChdDrive.Core.Interfaces;
 
 namespace SimpleChdDrive;
 

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace SimpleChdDrive.Core.Parsers;
+namespace SimpleChdDrive.Parsing.Parsers;
 
 public class ThreeDoParser
 {

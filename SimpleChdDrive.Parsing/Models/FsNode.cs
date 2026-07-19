@@ -1,4 +1,4 @@
-namespace SimpleChdDrive.Core.Models;
+namespace SimpleChdDrive.Parsing.Models;
 
 public enum FsNodeType
 {

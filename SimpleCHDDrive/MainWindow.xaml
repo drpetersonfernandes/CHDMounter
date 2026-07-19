@@ -19,13 +19,13 @@
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0" Margin="0">
-            <MenuItem Header="File">
-                <MenuItem Header="Open CHD..." Click="OpenChd_Click" />
+            <MenuItem Header="File" ToolTip="File operations">
+                <MenuItem Header="Open CHD..." Click="OpenChd_Click" ToolTip="Select a CHD disc image file to mount" />
                 <Separator />
-                <MenuItem Header="Exit" Click="Exit_Click" />
+                <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application" />
             </MenuItem>
-            <MenuItem Header="Help">
-                <MenuItem Header="About" Click="About_Click" />
+            <MenuItem Header="Help" ToolTip="Help and information">
+                <MenuItem Header="About" Click="About_Click" ToolTip="About SimpleChdDrive" />
             </MenuItem>
         </Menu>
 
@@ -40,12 +40,14 @@
 
             <Label Grid.Column="0" Content="CHD File:" VerticalAlignment="Center" />
             <TextBox Grid.Column="1" x:Name="ChdFilePathTextBox" Margin="6,0" VerticalAlignment="Center"
-                     TextChanged="ChdFilePath_TextChanged" />
-            <Button Grid.Column="2" Content="Browse..." Click="BrowseChd_Click" Width="100" Margin="6,0" />
+                     TextChanged="ChdFilePath_TextChanged"
+                     ToolTip="Path to the CHD disc image file" />
+            <Button Grid.Column="2" Content="Browse..." Click="BrowseChd_Click" Width="100" Margin="6,0" ToolTip="Browse for a CHD disc image file" />
 
-            <Label Grid.Column="3" Content="Console:" VerticalAlignment="Center" Margin="12,0,6,0" />
+            <Label Grid.Column="3" Content="Console:" VerticalAlignment="Center" Margin="12,0,6,0" ToolTip="Select the video game console to parse the disc for" />
             <ComboBox Grid.Column="4" x:Name="ConsoleTypeComboBox" Width="220"
-                      VerticalAlignment="Center" SelectionChanged="ConsoleType_SelectionChanged">
+                      VerticalAlignment="Center" SelectionChanged="ConsoleType_SelectionChanged"
+                      ToolTip="Select the video game console filesystem type">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding Name}" />
@@ -62,23 +64,23 @@
             </Grid.ColumnDefinitions>
 
             <Button Grid.Column="0" x:Name="MountButton" Content="Mount" Width="100"
-                    Click="Mount_Click" IsEnabled="False" />
+                    Click="Mount_Click" IsEnabled="False" ToolTip="Mount the CHD file as a virtual drive" />
             <Button Grid.Column="1" x:Name="UnmountButton" Content="Unmount" Width="100"
                     Margin="8,0" IsEnabled="False"
-                    Click="Unmount_Click" />
+                    Click="Unmount_Click" ToolTip="Unmount the virtual drive" />
         </Grid>
 
         <TextBox Grid.Row="3" x:Name="LogTextBox"
                  Style="{StaticResource LogTextBoxStyle}"
-                 Margin="10,0,10,8" />
+                 Margin="10,0,10,8" ToolTip="Activity log output" />
 
-        <StatusBar Grid.Row="4" x:Name="StatusBarControl">
+        <StatusBar Grid.Row="4" x:Name="StatusBarControl" ToolTip="Application status">
             <StatusBarItem>
                 <TextBlock x:Name="StatusText" Text="Ready" />
             </StatusBarItem>
             <Separator Style="{x:Null}" />
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock x:Name="DriveLetterText" Text="" />
+                <TextBlock x:Name="DriveLetterText" Text="" ToolTip="Current mounted drive letter" />
             </StatusBarItem>
         </StatusBar>
     </Grid>

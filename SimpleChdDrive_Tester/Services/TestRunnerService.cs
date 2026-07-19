@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.IO;
 using Serilog;
-using SimpleChdDrive.Core.Models;
-using SimpleChdDrive.Core.Parsers;
+using SimpleChdDrive.Parsing.Models;
+using SimpleChdDrive.Parsing.Parsers;
 using Tester.Models;
 
 namespace Tester.Services;

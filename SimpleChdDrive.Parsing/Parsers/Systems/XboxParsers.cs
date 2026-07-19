@@ -1,4 +1,6 @@
-namespace SimpleChdDrive.Core.Parsers.Systems;
+using SimpleChdDrive.Parsing.Interfaces;
+
+namespace SimpleChdDrive.Parsing.Parsers.Systems;
 
 public class XboxParser : IConsoleParser
 {
@@ -82,44 +84,4 @@ public class Xbox360Parser : IConsoleParser
     }
 }
 
-public class XboxSingleFileParser : IConsoleParser
-{
-    private readonly SectorReader _reader;
-    public bool ForceMode { get; set; }
 
-    public XboxSingleFileParser(SectorReader reader)
-    {
-        _reader = reader;
-    }
-
-    public ConsoleType GetConsoleType()
-    {
-        return ConsoleType.XboxSingleFile;
-    }
-
-    public string GetConsoleName()
-    {
-        return "Xbox (Single File)";
-    }
-
-    public bool Parse(FsNode rootNode)
-    {
-        rootNode.Name = "/";
-        rootNode.IsDirectory = true;
-        rootNode.Lba = 0;
-        rootNode.Children.Add(new FsNode
-        {
-            Name = "image.iso",
-            Lba = 0,
-            Size = _reader.TotalBytes,
-            IsDirectory = false,
-            IsRawPassthrough = true
-        });
-        return true;
-    }
-
-    public bool ParseTrack(FsNode rootNode, TrackInfo track)
-    {
-        return Parse(rootNode);
-    }
-}

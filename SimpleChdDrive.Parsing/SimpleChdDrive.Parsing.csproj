@@ -1,21 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net10.0-windows</TargetFramework>
-        <UseWPF>true</UseWPF>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <IsPackable>false</IsPackable>
+        <IsPackable>true</IsPackable>
         <NeutralLanguage>en</NeutralLanguage>
-        <RootNamespace>SimpleChdDrive.Core</RootNamespace>
-        <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+        <RootNamespace>SimpleChdDrive.Parsing</RootNamespace>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
-        <NeutralLanguage>en</NeutralLanguage>
         <Company>PureLogicCode.com</Company>
+        <Description>CHD filesystem parsing library for video game console disc images. Supports ISO 9660, UDF, XDVDFS, OperaFS, and CD-i filesystems.</Description>
+        <PackageId>SimpleChdDrive.Parsing</PackageId>
+        <PackageTags>chd;mame;iso9660;udf;xdvdfs;operafs;cdi;ps1;ps2;ps3;psp;xbox;dreamcast;retro;videogame;disc;filesystem</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/purelogiccode/CSharp_SimpleChdDrive</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,13 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SimpleChdDrive.Parsing\SimpleChdDrive.Parsing.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Serilog" Version="4.4.0" />
-        <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
-        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+        <PackageReference Include="CHDSharp" Version="1.1.0" />
     </ItemGroup>
 
 </Project>

@@ -1,3 +1,5 @@
+using SimpleChdDrive.Parsing.Parsers;
+
 namespace SimpleChdDrive.Core.Tests.Parsers;
 
 public class ParserFactoryTests
@@ -19,7 +21,7 @@ public class ParserFactoryTests
         Assert.Contains(consoles, static c => c.Type == ConsoleType.CDi);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.ThreeDo);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericIso9660);
-        Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericCueBin);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericCueBin2352Default);
     }
 
     [Fact]

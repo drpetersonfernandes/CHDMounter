@@ -1,4 +1,4 @@
-namespace SimpleChdDrive.Core.Parsers;
+namespace SimpleChdDrive.Parsing.Interfaces;
 
 public interface IConsoleParser
 {

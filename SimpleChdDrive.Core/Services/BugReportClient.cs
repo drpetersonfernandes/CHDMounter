@@ -41,8 +41,11 @@ public static class BugReportClient
             === Environment Details ===
             {envDetails}
 
-            === Warning Details ===
+            === Error Details ===
             {message}
+
+            === Exception Details ===
+            No exception - this is a warning
             """;
 
         Enqueue(formatted, "");
@@ -51,6 +54,9 @@ public static class BugReportClient
     public static void SendError(string message, string? stackTrace)
     {
         var envDetails = BuildEnvironmentDetails();
+        var exceptionDetails = string.IsNullOrEmpty(stackTrace)
+            ? "No exception information available"
+            : $"Type: Unknown\nMessage: {message}\nSource: Unknown\nStackTrace: {stackTrace}";
 
         var formatted = $"""
             === Environment Details ===
@@ -58,6 +64,9 @@ public static class BugReportClient
 
             === Error Details ===
             {message}
+
+            === Exception Details ===
+            {exceptionDetails}
             """;
 
         Enqueue(formatted, stackTrace ?? "");
@@ -68,11 +77,11 @@ public static class BugReportClient
         PendingReports.Enqueue(() => SendAsync(message, stackTrace));
         if (Interlocked.CompareExchange(ref _isProcessing, 1, 0) == 0)
         {
-            _ = Task.Run(ProcessQueue);
+            _ = Task.Run(ProcessQueueAsync);
         }
     }
 
-    private static async Task ProcessQueue()
+    private static async Task ProcessQueueAsync()
     {
         try
         {
@@ -92,7 +101,7 @@ public static class BugReportClient
             Interlocked.Exchange(ref _isProcessing, 0);
             if (!PendingReports.IsEmpty && Interlocked.CompareExchange(ref _isProcessing, 1, 0) == 0)
             {
-                _ = Task.Run(ProcessQueue);
+                _ = Task.Run(ProcessQueueAsync);
             }
         }
     }

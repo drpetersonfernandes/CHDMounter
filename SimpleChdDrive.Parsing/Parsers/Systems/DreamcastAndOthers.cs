@@ -1,6 +1,7 @@
-namespace SimpleChdDrive.Core.Parsers.Systems;
-
 using System.Text;
+using SimpleChdDrive.Parsing.Interfaces;
+
+namespace SimpleChdDrive.Parsing.Parsers.Systems;
 
 public class DreamcastParser : IConsoleParser
 {
@@ -162,6 +163,48 @@ public class ThreeDoConsoleParser : IConsoleParser
             if (t.IsDataTrack) return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+    }
+}
+
+public class GenericIsoRawParser : IConsoleParser
+{
+    private readonly SectorReader _reader;
+    public bool ForceMode { get; set; }
+
+    public GenericIsoRawParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
+
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.GenericIsoRaw;
+    }
+
+    public string GetConsoleName()
+    {
+        return "Generic ISO Raw";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        rootNode.Name = "/";
+        rootNode.IsDirectory = true;
+        rootNode.Lba = 0;
+        rootNode.Children.Add(new FsNode
+        {
+            Name = "image.iso",
+            Lba = 0,
+            Size = _reader.TotalBytes,
+            IsDirectory = false,
+            IsRawPassthrough = true
+        });
+        return true;
+    }
+
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
+    {
+        return Parse(rootNode);
     }
 }
 

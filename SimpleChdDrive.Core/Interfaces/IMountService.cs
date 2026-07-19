@@ -1,4 +1,4 @@
-namespace SimpleChdDrive.Core.Services;
+namespace SimpleChdDrive.Core.Interfaces;
 
 public interface IMountService
 {

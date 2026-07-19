@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
 using Microsoft.Win32;
+using SimpleChdDrive.Core.Interfaces;
 
 namespace SimpleChdDrive_WinFsp;
 

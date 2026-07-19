@@ -28,6 +28,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Serilog" Version="4.4.0" />
+        <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="winfsp.net" Version="2.2.26194" />
         <PackageReference Include="WPF-UI" Version="4.3.0" />
     </ItemGroup>

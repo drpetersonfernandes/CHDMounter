@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace SimpleChdDrive.Core.Services;
+namespace SimpleChdDrive.Core.Interfaces;
 
 public interface ILoggingService
 {

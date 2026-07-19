@@ -70,6 +70,6 @@
                    Foreground="{StaticResource TextMutedBrush}" />
 
         <Button Grid.Row="4" Content="OK" Width="80" HorizontalAlignment="Right"
-                Margin="0,14,0,0" Click="Ok_Click" />
+                Margin="0,14,0,0" Click="Ok_Click" ToolTip="Close the about window" />
     </Grid>
 </Window>

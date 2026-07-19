@@ -2,6 +2,8 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
 using DokanNet;
+using SimpleChdDrive.Core.Interfaces;
+using SimpleChdDrive.Parsing.Parsers;
 using DokanFileAccess = DokanNet.FileAccess;
 
 namespace SimpleChdDrive;
