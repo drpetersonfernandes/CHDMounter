@@ -7,35 +7,43 @@ WPF desktop application that mounts CHD (Compressed Hunks of Data) disc images a
 
 ## Supported Consoles
 
-| Console | File System |
-|---------|-------------|
-| PlayStation 1 | CD-ROM XA / ISO 9660 |
-| PlayStation 2 | ISO 9660 |
-| PlayStation 3 | UDF |
-| PSP | ISO 9660 (UMD) |
-| Xbox | XDVDFS |
-| Xbox 360 | XGD / XSF |
-| Dreamcast | ISO 9660 + IP.BIN |
-| Saturn | ISO 9660 |
-| CD-i | CD-i File System |
-| 3DO | Opera File System |
-| Neo Geo CD | ISO 9660 |
-| PC Engine CD | PC Engine CD-ROM |
-| PC-FX | PC-FX ISO |
-| Amiga CD32 / Amiga CD | ISO 9660 |
-| Sega Genesis CD | ISO 9660 |
-| And more... | |
+| # | Console | File System |
+|---|---------|-------------|
+| 1 | Amiga CD | ISO 9660 |
+| 2 | Amiga CD32 | ISO 9660 |
+| 3 | CD-i | CD-i File System |
+| 4 | Generic ISO 9660 | ISO 9660 |
+| 5 | Generic ISO Raw | Raw Sectors |
+| 6 | CUE/BIN (2352 Default) | CUE/BIN (2352 bytes/sector) |
+| 7 | CUE/BIN (Cooked) | CUE/BIN (2048 bytes/sector) |
+| 8 | CUE/ISO (2048) | CUE/ISO (2048 bytes/sector) |
+| 9 | CUE/BIN/WAV | CUE/BIN with WAV audio |
+| 10 | CUE/ISO/WAV | CUE/ISO with WAV audio |
+| 11 | Dreamcast | ISO 9660 + IP.BIN |
+| 12 | Neo Geo CD | ISO 9660 |
+| 13 | PC Engine CD | PC Engine CD-ROM |
+| 14 | PC-FX | PC-FX ISO |
+| 15 | PlayStation (Auto) | Auto-detect (PS1/PS2/PS3/PSP) |
+| 16 | PS1 | CD-ROM XA / ISO 9660 |
+| 17 | PS2 | ISO 9660 |
+| 18 | PS3 | UDF |
+| 19 | PSP | ISO 9660 (UMD) |
+| 20 | Saturn | ISO 9660 |
+| 21 | Sega Genesis CD | ISO 9660 |
+| 22 | 3DO | Opera File System |
+| 23 | Xbox | XDVDFS |
+| 24 | Xbox 360 | XGD / XSF |
 
 ## Usage
 
 ```
-SimpleChdDrive.exe <chd_file> <console_type> [mount_point]
+SimpleChdDrive.exe <console_type> <chd_file>
 ```
 
 Examples:
 ```
-SimpleChdDrive.exe game.chd ps2 M
-SimpleChdDrive.exe game.chd xbox N
+SimpleChdDrive.exe 17 game.chd
+SimpleChdDrive.exe 23 game.chd
 ```
 
 Run without arguments to open the GUI for interactive file system type selection.

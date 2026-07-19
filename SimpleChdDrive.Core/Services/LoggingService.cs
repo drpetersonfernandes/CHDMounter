@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
-using SimpleChdDrive.Core.Interfaces;
 
 namespace SimpleChdDrive.Core.Services;
 

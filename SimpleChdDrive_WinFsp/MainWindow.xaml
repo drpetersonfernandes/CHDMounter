@@ -24,6 +24,8 @@
             <MenuItem Header="File" ToolTip="File operations">
                 <MenuItem Header="Open CHD..." Click="OpenChd_Click" ToolTip="Select a CHD disc image file to mount" />
                 <Separator />
+                <MenuItem Header="Settings" Click="Settings_Click" ToolTip="Open the settings window" />
+                <Separator />
                 <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application" />
             </MenuItem>
             <MenuItem Header="Help" ToolTip="Help and information">

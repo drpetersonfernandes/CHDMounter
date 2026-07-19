@@ -17,7 +17,7 @@ namespace Tester;
 public partial class MainWindow
 {
     private readonly ILogger _logger;
-    private readonly IScreenshotService _screenshotService;
+    private readonly ScreenshotService _screenshotService;
     private TestRunnerService? _testRunner;
     private TestSummary? _lastSummary;
     private CancellationTokenSource? _cts;

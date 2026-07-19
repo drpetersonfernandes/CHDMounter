@@ -54,9 +54,10 @@ public partial class MainWindow
 
     private void PopulateConsoleTypes()
     {
-        var consoles = ParserFactory.GetAllSupportedConsoles();
+        var consoles = new List<ConsoleInfo> { new(ConsoleType.Unknown, "Unknown") };
+        consoles.AddRange(ParserFactory.GetAllSupportedConsoles());
         ConsoleTypeComboBox.ItemsSource = consoles;
-        ConsoleTypeComboBox.SelectedIndex = -1;
+        ConsoleTypeComboBox.SelectedIndex = 0;
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -105,25 +106,47 @@ public partial class MainWindow
 
     private void HandleCommandLineArgs(string[] args)
     {
-        if (args.Length >= 1 && File.Exists(args[0]))
+        ConsoleType? ctFromNumber = null;
+        string? chdPath = null;
+
+        switch (args.Length)
         {
-            ChdFilePathTextBox.Text = args[0];
-            _chdPath = args[0];
-
-            if (args.Length >= 2)
+            case >= 2 when int.TryParse(args[0], out var consoleNumber)
+                           && (ctFromNumber = ParseConsoleTypeByNumber(consoleNumber)) != null:
+                chdPath = args[1];
+                break;
+            case >= 1 when File.Exists(args[0]):
             {
-                var ct = ParseConsoleType(args[1]);
-                if (ct != ConsoleType.Unknown)
+                chdPath = args[0];
+                if (args.Length >= 2)
                 {
-                    _selectedConsoleType = ct;
-                    SelectConsoleTypeInCombo(ct);
+                    var ct = ParseConsoleType(args[1]);
+                    if (ct != ConsoleType.Unknown)
+                    {
+                        ctFromNumber = ct;
+                    }
                 }
-            }
 
-            ValidateAndEnableMount();
-            if (_selectedConsoleType != ConsoleType.Unknown)
-                MountDisk();
+                break;
+            }
         }
+
+        if (chdPath != null)
+        {
+            ChdFilePathTextBox.Text = chdPath;
+            _chdPath = chdPath;
+        }
+
+        if (ctFromNumber.HasValue)
+        {
+            _selectedConsoleType = ctFromNumber.Value;
+            SelectConsoleTypeInCombo(ctFromNumber.Value);
+        }
+
+        ValidateAndEnableMount();
+
+        if (ctFromNumber.HasValue && chdPath != null && File.Exists(chdPath))
+            MountDisk();
     }
 
     private void SelectConsoleTypeInCombo(ConsoleType type)
@@ -134,6 +157,38 @@ public partial class MainWindow
             { ConsoleTypeComboBox.SelectedItem = item;
                 return; }
         }
+    }
+
+    private static ConsoleType? ParseConsoleTypeByNumber(int number)
+    {
+        return number switch
+        {
+            1 => ConsoleType.AmigaCd,
+            2 => ConsoleType.AmigaCd32,
+            3 => ConsoleType.CDi,
+            4 => ConsoleType.GenericIso9660,
+            5 => ConsoleType.GenericIsoRaw,
+            6 => ConsoleType.GenericCueBin2352Default,
+            7 => ConsoleType.GenericCueBin2048,
+            8 => ConsoleType.GenericCueIso,
+            9 => ConsoleType.GenericCueBinWav,
+            10 => ConsoleType.GenericCueIsoWav,
+            11 => ConsoleType.Dreamcast,
+            12 => ConsoleType.NeoGeoCd,
+            13 => ConsoleType.PcEngineCd,
+            14 => ConsoleType.PcFx,
+            15 => ConsoleType.PlayStation,
+            16 => ConsoleType.Ps1,
+            17 => ConsoleType.Ps2,
+            18 => ConsoleType.Ps3,
+            19 => ConsoleType.Psp,
+            20 => ConsoleType.Saturn,
+            21 => ConsoleType.SegaGenesisCd,
+            22 => ConsoleType.ThreeDo,
+            23 => ConsoleType.Xbox,
+            24 => ConsoleType.Xbox360,
+            _ => null
+        };
     }
 
     private static ConsoleType ParseConsoleType(string arg)
@@ -226,7 +281,15 @@ public partial class MainWindow
             await Task.Run(() => _mountService.Mount(_chdPath, null, type));
             if (_mountService.IsMounted) { StatusText.Text = "Mounted";
                 DriveLetterText.Text = _mountService.MountPoint;
-                UnmountButton.IsEnabled = true; }
+                UnmountButton.IsEnabled = true;
+                try
+                {
+                    var settings = ServiceProvider.TryGet<ISettingsService>();
+                    if (settings?.Settings.AutoOpenMountedDrive == true)
+                        Process.Start("explorer.exe", _mountService.MountPoint);
+                }
+                catch { /* ignored */ }
+            }
             else { StatusText.Text = "Mount failed";
                 MountButton.IsEnabled = true; }
         }
@@ -275,6 +338,13 @@ public partial class MainWindow
             Process.Start("explorer.exe", folder);
         else
             _loggingService.LogError($"AppData folder not found: {folder}");
+    }
+
+    private void Settings_Click(object sender, RoutedEventArgs e)
+    {
+        var settingsService = ServiceProvider.TryGet<ISettingsService>();
+        if (settingsService != null)
+            new SettingsWindow(settingsService) { Owner = this }.ShowDialog();
     }
 
     private void About_Click(object sender, RoutedEventArgs e)

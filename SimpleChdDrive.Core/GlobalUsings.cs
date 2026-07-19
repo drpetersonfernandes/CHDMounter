@@ -6,6 +6,7 @@ global using System.Linq;
 global using System.Net.Http;
 global using System.Threading;
 global using System.Threading.Tasks;
+global using SimpleChdDrive.Core.Interfaces;
 global using SimpleChdDrive.Core.Models;
 global using SimpleChdDrive.Core.Services;
 global using SimpleChdDrive.Core.Logging;

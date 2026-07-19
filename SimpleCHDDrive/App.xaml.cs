@@ -49,9 +49,9 @@ public partial class App
                 loggingService.Log("");
             }
 
-            loggingService.Log("Usage: SimpleChdDrive.exe <chd_file> <console_type> [mount_point]");
-            loggingService.Log("Example: SimpleChdDrive.exe game.chd ps2 M");
-            loggingService.Log("Example: SimpleChdDrive.exe game.chd xbox N");
+            loggingService.Log("Usage: SimpleChdDrive.exe <console_type> <chd_file>");
+            loggingService.Log("Example: SimpleChdDrive.exe 17 game.chd");
+            loggingService.Log("Example: SimpleChdDrive.exe 23 game.chd");
             loggingService.Log("Run without args to open the UI and select filesystem type.");
             loggingService.Log("");
 
@@ -86,6 +86,9 @@ public partial class App
 
         var screenshotService = new ScreenshotService(loggingService);
         ServiceProvider.Register<IScreenshotService>(screenshotService);
+
+        var settingsService = new SettingsService("SimpleChdDrive");
+        ServiceProvider.Register<ISettingsService>(settingsService);
     }
 
     protected override void OnExit(ExitEventArgs e)
