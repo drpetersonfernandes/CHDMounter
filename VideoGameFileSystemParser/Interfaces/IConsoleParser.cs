@@ -1,4 +1,4 @@
-namespace SimpleChdDrive.Parsing.Interfaces;
+namespace VideoGameFileSystemParser.Interfaces;
 
 public interface IConsoleParser
 {

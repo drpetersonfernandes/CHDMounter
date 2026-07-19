@@ -1,8 +1,8 @@
 using System.Globalization;
 using CHDSharp;
 using CHDSharp.Models;
-using SimpleChdDrive.Parsing.Parsers;
-using SimpleChdDrive.Parsing.Parsers.Systems;
+using VideoGameFileSystemParser.Parsers;
+using VideoGameFileSystemParser.Parsers.Systems;
 using Xunit.Abstractions;
 
 namespace SimpleChdDrive.Core.Tests.Parsers;

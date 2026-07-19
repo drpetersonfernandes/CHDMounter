@@ -1,8 +1,7 @@
 using System.Diagnostics;
-using System.IO;
 using Serilog;
-using SimpleChdDrive.Parsing.Models;
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Models;
+using VideoGameFileSystemParser.Parsers;
 using Tester.Models;
 
 namespace Tester.Services;

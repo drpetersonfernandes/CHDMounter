@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using Fsp;
 using Fsp.Interop;
 using SimpleChdDrive.Core.Interfaces;
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Parsers;
 using FileInfo = Fsp.Interop.FileInfo;
 
 namespace SimpleChdDrive_WinFsp;

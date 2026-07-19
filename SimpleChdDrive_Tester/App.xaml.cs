@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.IO;
 using System.Windows;
 using Serilog;
 
@@ -31,6 +30,8 @@ public partial class App
 
         Logger.Information("Tester application starting");
         Logger.Information("Log file: {LogFilePath}", LogFilePath);
+
+        StatsClient.SendStats();
 
         DispatcherUnhandledException += (_, args) =>
         {

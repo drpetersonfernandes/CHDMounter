@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using DokanNet;
 using DokanNet.Logging;
 using SimpleChdDrive.Core.Interfaces;
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Parsers;
 
 namespace SimpleChdDrive.Services;
 

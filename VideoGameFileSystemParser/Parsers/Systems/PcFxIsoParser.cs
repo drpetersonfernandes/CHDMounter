@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace SimpleChdDrive.Parsing.Parsers.Systems;
+namespace VideoGameFileSystemParser.Parsers.Systems;
 
 /// <summary>
 /// NEC PC-FX specific ISO9660 parser.

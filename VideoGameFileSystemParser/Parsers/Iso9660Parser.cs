@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace SimpleChdDrive.Parsing.Parsers;
+namespace VideoGameFileSystemParser.Parsers;
 
 public class Iso9660Parser
 {

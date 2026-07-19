@@ -1,7 +1,7 @@
 using Fsp;
 using Microsoft.Win32;
 using SimpleChdDrive.Core.Interfaces;
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Parsers;
 
 #pragma warning disable CA1707
 namespace SimpleChdDrive_WinFsp.Services;

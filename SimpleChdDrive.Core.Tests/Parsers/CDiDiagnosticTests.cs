@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Parsers;
 using Xunit.Abstractions;
 
 namespace SimpleChdDrive.Core.Tests.Parsers;

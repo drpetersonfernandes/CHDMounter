@@ -1,14 +1,13 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Serilog;
-using SimpleChdDrive.Parsing.Models;
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Models;
+using VideoGameFileSystemParser.Parsers;
 using Tester.Models;
 using Tester.Services;
 

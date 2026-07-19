@@ -3,7 +3,7 @@ using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
 
-namespace SimpleChdDrive.Parsing.Parsers;
+namespace VideoGameFileSystemParser.Parsers;
 
 public class ChdContainer
 {

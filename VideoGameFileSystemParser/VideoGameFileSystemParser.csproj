@@ -7,14 +7,14 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>true</IsPackable>
         <NeutralLanguage>en</NeutralLanguage>
-        <RootNamespace>SimpleChdDrive.Parsing</RootNamespace>
+        <RootNamespace>VideoGameFileSystemParser</RootNamespace>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <Company>PureLogicCode.com</Company>
-        <Description>CHD filesystem parsing library for video game console disc images. Supports ISO 9660, UDF, XDVDFS, OperaFS, and CD-i filesystems.</Description>
-        <PackageId>SimpleChdDrive.Parsing</PackageId>
+        <Description>Video game file system parsing library for console disc images. Supports ISO 9660, UDF, XDVDFS, OperaFS, CD-i, and other formats through CHD, ISO and raw sector readers.</Description>
+        <PackageId>VideoGameFileSystemParser</PackageId>
         <PackageTags>chd;mame;iso9660;udf;xdvdfs;operafs;cdi;ps1;ps2;ps3;psp;xbox;dreamcast;retro;videogame;disc;filesystem</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/purelogiccode/CSharp_SimpleChdDrive</RepositoryUrl>

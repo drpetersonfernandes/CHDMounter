@@ -1,6 +1,6 @@
-using SimpleChdDrive.Parsing.Interfaces;
+using VideoGameFileSystemParser.Interfaces;
 
-namespace SimpleChdDrive.Parsing.Parsers.Systems;
+namespace VideoGameFileSystemParser.Parsers.Systems;
 
 public class PlayStation1Parser : IConsoleParser
 {

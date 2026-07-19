@@ -1,4 +1,4 @@
-namespace SimpleChdDrive.Parsing.Models;
+namespace VideoGameFileSystemParser.Models;
 
 public enum ConsoleType
 {

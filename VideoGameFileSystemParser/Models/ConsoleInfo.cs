@@ -1,3 +1,3 @@
-namespace SimpleChdDrive.Parsing.Models;
+namespace VideoGameFileSystemParser.Models;
 
 public sealed record ConsoleInfo(ConsoleType Type, string Name);

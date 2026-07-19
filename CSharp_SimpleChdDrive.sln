@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleChdDrive.Core.Tests",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleChdDrive_Tester", "SimpleChdDrive_Tester\SimpleChdDrive_Tester.csproj", "{BA997464-5F74-432C-A327-A49922ACF6A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleChdDrive.Parsing", "SimpleChdDrive.Parsing\SimpleChdDrive.Parsing.csproj", "{E7AA9029-131C-46F2-BEF9-7B6E6F668316}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoGameFileSystemParser", "VideoGameFileSystemParser\VideoGameFileSystemParser.csproj", "{E7AA9029-131C-46F2-BEF9-7B6E6F668316}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

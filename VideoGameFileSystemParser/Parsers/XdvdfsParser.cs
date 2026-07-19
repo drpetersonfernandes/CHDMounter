@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace SimpleChdDrive.Parsing.Parsers;
+namespace VideoGameFileSystemParser.Parsers;
 
 public class XdvdfsParser
 {

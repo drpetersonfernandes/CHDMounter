@@ -1,5 +1,5 @@
 using System.Windows;
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Parsers;
 
 namespace SimpleChdDrive.Core.Views;
 

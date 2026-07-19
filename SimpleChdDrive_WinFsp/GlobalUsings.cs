@@ -8,6 +8,6 @@ global using SimpleChdDrive.Core.Logging;
 global using SimpleChdDrive.Core.Models;
 global using SimpleChdDrive.Core.Services;
 global using SimpleChdDrive.Core.Views;
-global using SimpleChdDrive.Parsing;
-global using SimpleChdDrive.Parsing.Models;
+global using VideoGameFileSystemParser;
+global using VideoGameFileSystemParser.Models;
 global using SimpleChdDrive_WinFsp.Services;

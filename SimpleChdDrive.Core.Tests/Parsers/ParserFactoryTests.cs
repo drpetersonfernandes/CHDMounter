@@ -1,4 +1,4 @@
-using SimpleChdDrive.Parsing.Parsers;
+using VideoGameFileSystemParser.Parsers;
 
 namespace SimpleChdDrive.Core.Tests.Parsers;
 

@@ -1,7 +1,7 @@
-using SimpleChdDrive.Parsing.Interfaces;
-using SimpleChdDrive.Parsing.Parsers.Systems;
+using VideoGameFileSystemParser.Interfaces;
+using VideoGameFileSystemParser.Parsers.Systems;
 
-namespace SimpleChdDrive.Parsing.Parsers;
+namespace VideoGameFileSystemParser.Parsers;
 
 public static class ParserFactory
 {

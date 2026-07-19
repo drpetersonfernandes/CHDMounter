@@ -6,5 +6,5 @@ global using System.Linq;
 global using System.Net.Http;
 global using System.Threading;
 global using System.Threading.Tasks;
-global using SimpleChdDrive.Parsing.Models;
-global using SimpleChdDrive.Parsing;
+global using VideoGameFileSystemParser.Models;
+global using VideoGameFileSystemParser;
