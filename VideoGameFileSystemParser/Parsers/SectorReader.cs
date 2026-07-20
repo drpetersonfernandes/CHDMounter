@@ -749,11 +749,17 @@ public class SectorReader
             track.StartLba = currentLogicalLba;
             track.ChdOffset = currentFileFrame;
 
-            var hasStoredPregap = track.Metadata?.Contains("PGTYPE:V", StringComparison.OrdinalIgnoreCase) == true && track.Pregap > 0;
-            if (hasStoredPregap)
+            if (track.Pregap > 0)
+            {
+                currentLogicalLba += track.Pregap;
+            }
+
+            var isStoredPregap = track is { Pregap: > 0 } &&
+                                 track.Metadata.Contains("PGTYPE:V", StringComparison.OrdinalIgnoreCase) &&
+                                 !track.Metadata.Contains("PGTYPE:VAUDIO", StringComparison.OrdinalIgnoreCase);
+            if (isStoredPregap)
             {
                 currentFileFrame += track.Pregap;
-                currentLogicalLba += track.Pregap;
             }
 
             currentLogicalLba += track.Frames;

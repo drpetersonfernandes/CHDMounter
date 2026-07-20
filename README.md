@@ -246,12 +246,8 @@ For SingleFile mode, the container serves the entire decompressed CHD image as a
 
 ## Acknowledgments
 
-- **CHDSharpLib** — C# port of MAME `libchdr`, embedded in this project
-- **CHDMounter** — Reference C++ project whose filesystem parsers were ported to C#
-- **SimpleZipDrive** — Reference C# project whose UI architecture and Dokan/WinFsp patterns were followed
-- **CUETools** — FLAC decoder (`Flake`)
-- **7-Zip SDK** — LZMA decoder
-- **MAME** — CHD format and `libchdr`
+- **CHDSharp library** — https://github.com/drpetersonfernandes/CHDSharp
+- **MAME** — https://github.com/mamedev/mame
 
 ---
 

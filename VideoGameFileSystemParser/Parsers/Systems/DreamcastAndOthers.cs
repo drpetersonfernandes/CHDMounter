@@ -163,7 +163,14 @@ public class ThreeDoConsoleParser : IConsoleParser
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new ThreeDoParser(_reader);
-        return parser.Parse(rootNode, track);
+        if (parser.Parse(rootNode, track))
+            return true;
+
+        var isoParser = new Iso9660Parser(_reader);
+        if (isoParser.Parse(rootNode, track))
+            return true;
+
+        return false;
     }
 
     private TrackInfo FindDataTrack()
