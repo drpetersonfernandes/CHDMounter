@@ -47,7 +47,7 @@ public static class ParserFactory
     {
         return
         [
-            new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CD"),
+            new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CD / CDTV"),
             new ConsoleInfo(ConsoleType.AmigaCd32, "Amiga CD32"),
             new ConsoleInfo(ConsoleType.CDi, "CD-i"),
             new ConsoleInfo(ConsoleType.GenericIso9660, "Generic ISO 9660"),
