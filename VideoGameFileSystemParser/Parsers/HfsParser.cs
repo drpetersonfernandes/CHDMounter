@@ -1,0 +1,667 @@
+using System.Text;
+
+namespace VideoGameFileSystemParser.Parsers;
+
+public class HfsParser
+{
+    private readonly SectorReader _reader;
+    private uint _hfsStartLba;
+    private uint _allocationBlockSize;
+    private readonly Dictionary<uint, HfsFolderRecord> _folders = [];
+    private readonly List<HfsCatalogEntry> _entries = [];
+
+    public HfsParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
+
+    public bool Parse(FsNode rootNode, TrackInfo? track = null)
+    {
+        _reader.Reset();
+
+        if (track is { Frames: > 0 })
+            _reader.SetTrack(track, true);
+        else
+            _reader.SetTrack(null);
+
+        _folders.Clear();
+        _entries.Clear();
+
+        if (!FindHfsPartitionAndMdb(track, out var catalogStartBlock, out var catalogBlockCount))
+            return false;
+
+        if (!ParseCatalogFile(catalogStartBlock, catalogBlockCount))
+            return false;
+
+        BuildTree(rootNode);
+        return true;
+    }
+
+    private bool FindHfsPartitionAndMdb(TrackInfo? track, out uint catalogStartBlock, out uint catalogBlockCount)
+    {
+        catalogStartBlock = 0;
+        catalogBlockCount = 0;
+
+        var trackStart = track?.StartLba ?? 0;
+
+        var sectors = ReadSectors(trackStart, 4);
+        if (sectors == null && trackStart != 0)
+        {
+            _reader.SetTrack(null);
+            sectors = ReadSectors(0, 4);
+            trackStart = 0;
+        }
+
+        if (sectors == null)
+            return false;
+
+        if (sectors[0] != 0x45 || sectors[1] != 0x52)
+            return false;
+
+        for (var entry = 0; entry < 64; entry++)
+        {
+            var byteOffset = 512 * entry;
+            if (byteOffset + 512 > sectors.Length)
+                break;
+
+            if (sectors[byteOffset] != 0x50 || sectors[byteOffset + 1] != 0x4d)
+                break;
+
+            var partitionType = Encoding.ASCII.GetString(sectors, byteOffset + 48, 32)
+                .TrimEnd('\0', ' ');
+
+            if (!partitionType.Equals("Apple_HFS", StringComparison.Ordinal))
+                continue;
+
+            var firstPhysicalBlock = BeU32(sectors, byteOffset + 8);
+            _hfsStartLba = trackStart + firstPhysicalBlock;
+
+            if (_hfsStartLba == trackStart)
+            {
+                _hfsStartLba++;
+            }
+
+            if (TryReadMdb(out catalogStartBlock, out catalogBlockCount))
+                return true;
+
+            if (TryReadMdb(out catalogStartBlock, out catalogBlockCount))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool TryReadMdb(out uint catalogStartBlock, out uint catalogBlockCount)
+    {
+        catalogStartBlock = 0;
+        catalogBlockCount = 0;
+
+        foreach (var candidateOffset in new[] { 1024, 0 })
+        {
+            for (var sectorOffset = 0; sectorOffset <= 2; sectorOffset++)
+            {
+                var mdbLba = _hfsStartLba + (uint)sectorOffset;
+                var sector = new byte[2048];
+
+                if (!_reader.ReadSector(mdbLba, sector))
+                    continue;
+
+                if (candidateOffset + 162 > sector.Length)
+                    continue;
+
+                if (sector[candidateOffset] != 0x42 || sector[candidateOffset + 1] != 0x44)
+                    continue;
+
+                var allocBlockSize = BeU32(sector, candidateOffset + 20);
+
+                if (allocBlockSize == 0)
+                    continue;
+
+                _allocationBlockSize = allocBlockSize;
+
+                catalogStartBlock = BeU16(sector, candidateOffset + 150);
+                catalogBlockCount = BeU16(sector, candidateOffset + 152);
+
+                return catalogBlockCount > 0;
+            }
+        }
+
+        return false;
+    }
+
+    private uint BlockToAbsoluteLba(uint allocationBlock)
+    {
+        var byteOffset = (ulong)allocationBlock * _allocationBlockSize;
+        return _hfsStartLba + (uint)(byteOffset / 2048);
+    }
+
+    private bool ParseCatalogFile(uint startBlock, uint blockCount)
+    {
+        var catalogExtents = new List<(uint startBlock, uint blockCount)> { (startBlock, blockCount) };
+
+        var regionData = new List<byte>();
+        foreach (var (extStartBlock, extBlockCount) in catalogExtents)
+        {
+            if (extStartBlock == 0 || extBlockCount == 0)
+                continue;
+
+            var byteSize = (ulong)extBlockCount * _allocationBlockSize;
+            var sectorCount = (uint)((byteSize + 2047) / 2048);
+            var startLba = BlockToAbsoluteLba(extStartBlock);
+
+            for (uint i = 0; i < sectorCount; i++)
+            {
+                var sector = new byte[2048];
+                if (!_reader.ReadSector(startLba + i, sector))
+                    return false;
+
+                regionData.AddRange(sector);
+            }
+        }
+
+        if (regionData.Count == 0)
+            return false;
+
+        var nodeData = regionData.ToArray();
+
+        var nodeDesc = ReadBtNodeDescriptor(nodeData, 0);
+        if (nodeDesc.Kind != KBtHeaderNode)
+            return false;
+
+        var headerRecOff = (int)(_allocationBlockSize >= 2048
+            ? _allocationBlockSize - 2
+            : BeU16(nodeData, (int)_allocationBlockSize - 2));
+
+        if (headerRecOff < 0 || headerRecOff + 30 > nodeData.Length)
+        {
+            headerRecOff = BeU16(nodeData, (int)_allocationBlockSize - 2);
+            if (headerRecOff + 30 > nodeData.Length)
+                return false;
+        }
+
+        if (headerRecOff == 0 && _allocationBlockSize < 2048)
+        {
+            headerRecOff = BeU16(nodeData, 512 - 2);
+            if (headerRecOff == 0 || headerRecOff + 30 > nodeData.Length)
+            {
+                headerRecOff = BeU16(nodeData, 1024 - 2);
+            }
+        }
+
+        if (headerRecOff <= 0 || headerRecOff + 30 > nodeData.Length)
+        {
+            for (var scan = 0; scan < nodeData.Length - 32; scan += 2)
+            {
+                var nsz = BeU16(nodeData, scan + 18);
+                if (nsz is 512 or 1024 or 2048)
+                {
+                    var ttl = BeU32(nodeData, scan + 22);
+                    if (ttl is > 0 and < 10000)
+                    {
+                        headerRecOff = scan;
+                        break;
+                    }
+                }
+            }
+
+            if (headerRecOff <= 0)
+                return false;
+        }
+
+        var headerRec = ReadBtHeaderRec(nodeData, headerRecOff);
+        var nodeSizeBtree = headerRec.NodeSize;
+
+        if (nodeSizeBtree == 0 || nodeSizeBtree > nodeData.Length)
+            return false;
+
+        var currentLeaf = headerRec.FirstLeafNode;
+
+        var visited = new HashSet<uint>();
+        for (var safety = 0; safety < 100000 && currentLeaf != 0; safety++)
+        {
+            if (!visited.Add(currentLeaf))
+                break;
+
+            var leafOffset = (int)((ulong)currentLeaf * nodeSizeBtree);
+            if (leafOffset + nodeSizeBtree > nodeData.Length)
+                break;
+
+            var leafDesc = ReadBtNodeDescriptor(nodeData, leafOffset);
+
+            if (leafDesc.Kind == KBtLeafNode)
+            {
+                ProcessLeafNode(nodeData, leafOffset, leafDesc.NumRecords, nodeSizeBtree);
+            }
+
+            currentLeaf = leafDesc.FLink;
+        }
+
+        return true;
+    }
+
+    private void ProcessLeafNode(byte[] nodeData, int nodeOffset, ushort numRecords, ushort nodeSize)
+    {
+        if (numRecords == 0)
+            return;
+
+        var recordOffsets = new ushort[numRecords];
+        for (var i = 0; i < numRecords; i++)
+        {
+            var tableOffset = nodeSize - 2 * (i + 1);
+            recordOffsets[i] = BeU16(nodeData, nodeOffset + tableOffset);
+        }
+
+        foreach (var off in recordOffsets.OrderBy(o => o))
+        {
+            if (off + 7 > nodeSize)
+                continue;
+
+            var keyLength = nodeData[nodeOffset + off];
+            if (keyLength < 7)
+                continue;
+
+            var parentId = BeU32(nodeData, nodeOffset + off + 2);
+            var nameLength = nodeData[nodeOffset + off + 6];
+
+            if (nameLength > 31 || off + 7 + nameLength + 2 > nodeSize)
+                continue;
+
+            var name = nameLength > 0
+                ? Encoding.ASCII.GetString(nodeData, nodeOffset + off + 7, nameLength)
+                : string.Empty;
+
+            var dataOff = nodeOffset + off + 7 + nameLength;
+            if ((nameLength & 1) == 0)
+            {
+                dataOff++;
+            }
+
+            if (dataOff + 2 > nodeOffset + nodeSize)
+                continue;
+
+            var recordType = BeU16(nodeData, dataOff);
+
+            switch (recordType)
+            {
+                case KHfsFolderRecord:
+                {
+                    if (dataOff + 70 > nodeOffset + nodeSize)
+                        continue;
+
+                    var folder = ReadFolderRecord(nodeData, dataOff);
+                    folder.ParentId = parentId;
+                    folder.Name = name;
+                    _entries.Add(new HfsCatalogEntry
+                    {
+                        Name = name,
+                        ParentId = parentId,
+                        RecordType = HfsRecordType.Folder,
+                        Folder = folder
+                    });
+                    _folders[folder.FolderId] = folder;
+                    break;
+                }
+                case KHfsFileRecord:
+                {
+                    if (dataOff + 102 > nodeOffset + nodeSize)
+                        continue;
+
+                    var file = ReadFileRecord(nodeData, dataOff);
+                    _entries.Add(new HfsCatalogEntry
+                    {
+                        Name = name,
+                        ParentId = parentId,
+                        RecordType = HfsRecordType.File,
+                        File = file
+                    });
+                    break;
+                }
+                case KHfsFolderThreadRecord:
+                case KHfsFileThreadRecord:
+                {
+                    var threadParentId = BeU32(nodeData, dataOff + 8);
+                    _entries.Add(new HfsCatalogEntry
+                    {
+                        Name = name,
+                        ParentId = threadParentId,
+                        RecordType = recordType == KHfsFolderThreadRecord
+                            ? HfsRecordType.FolderThread
+                            : HfsRecordType.FileThread
+                    });
+                    break;
+                }
+            }
+        }
+    }
+
+    private static HfsFolderRecord ReadFolderRecord(byte[] data, int offset)
+    {
+        return new HfsFolderRecord
+        {
+            RecordType = BeU16(data, offset),
+            Flags = BeU16(data, offset + 2),
+            Valence = BeU16(data, offset + 4),
+            FolderId = BeU32(data, offset + 6),
+            CreateDate = BeU32(data, offset + 10),
+            ModifyDate = BeU32(data, offset + 14),
+            BackupDate = BeU32(data, offset + 18)
+        };
+    }
+
+    private static HfsFileRecord ReadFileRecord(byte[] data, int offset)
+    {
+        var rec = new HfsFileRecord
+        {
+            RecordType = BeU16(data, offset),
+            Flags = data[offset + 2],
+            FileType = data[offset + 3],
+            FileId = BeU32(data, offset + 20),
+            DataLogicalSize = BeS32(data, offset + 26),
+            DataPhysicalSize = BeS32(data, offset + 30),
+            ResourceLogicalSize = BeS32(data, offset + 36),
+            ResourcePhysicalSize = BeS32(data, offset + 40),
+            CreateDate = BeU32(data, offset + 44),
+            ModifyDate = BeU32(data, offset + 48),
+            BackupDate = BeU32(data, offset + 52),
+            ClumpSize = BeU16(data, offset + 68)
+        };
+
+        for (var i = 0; i < 3; i++)
+        {
+            var extOff = offset + 70 + i * 4;
+            rec.DataExtents[i] = (BeU16(data, extOff), BeU16(data, extOff + 2));
+        }
+
+        for (var i = 0; i < 3; i++)
+        {
+            var extOff = offset + 82 + i * 4;
+            rec.RsrcExtents[i] = (BeU16(data, extOff), BeU16(data, extOff + 2));
+        }
+
+        return rec;
+    }
+
+    private void BuildTree(FsNode rootNode)
+    {
+        rootNode.Name = "/";
+        rootNode.IsDirectory = true;
+        rootNode.Lba = _hfsStartLba;
+        rootNode.NodeType = FsNodeType.Directory;
+
+        var seen = new HashSet<string>();
+        for (var i = _entries.Count - 1; i >= 0; i--)
+        {
+            var e = _entries[i];
+            var key = $"{e.RecordType}:{e.ParentId}:{e.Name}";
+            if (!seen.Add(key))
+                _entries.RemoveAt(i);
+        }
+
+        BuildDirectory(rootNode, KHfsRootFolderId);
+    }
+
+    private void BuildDirectory(FsNode dirNode, uint folderId)
+    {
+        var children = _entries
+            .Where(e => e.ParentId == folderId)
+            .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var entry in children)
+        {
+            switch (entry.RecordType)
+            {
+                case HfsRecordType.Folder when entry.Folder != null:
+                {
+                    var child = new FsNode
+                    {
+                        Name = entry.Name,
+                        IsDirectory = true,
+                        Lba = _hfsStartLba,
+                        NodeType = FsNodeType.Directory,
+                        ModifiedTime = MacTimeToDateTime(entry.Folder.ModifyDate),
+                        CreatedTime = MacTimeToDateTime(entry.Folder.CreateDate)
+                    };
+                    child.Extents.Add(new FsExtent { Lba = child.Lba, Size = 0 });
+                    BuildDirectory(child, entry.Folder.FolderId);
+                    dirNode.Children.Add(child);
+                    break;
+                }
+                case HfsRecordType.File when entry.File != null:
+                {
+                    var file = entry.File;
+                    var dataSize = file.DataLogicalSize;
+                    var rsrcSize = file.ResourceLogicalSize;
+
+                    if (dataSize > 0)
+                    {
+                        var child = CreateFileNode(entry.Name, file.DataExtents, (ulong)dataSize,
+                            file.ModifyDate, file.CreateDate);
+                        dirNode.Children.Add(child);
+                    }
+                    else if (rsrcSize > 0)
+                    {
+                        var child = CreateFileNode(entry.Name, file.RsrcExtents, (ulong)rsrcSize,
+                            file.ModifyDate, file.CreateDate);
+                        dirNode.Children.Add(child);
+                    }
+                    else
+                    {
+                        var child = new FsNode
+                        {
+                            Name = entry.Name,
+                            IsDirectory = false,
+                            Size = 0,
+                            Lba = _hfsStartLba,
+                            NodeType = FsNodeType.File,
+                            ModifiedTime = MacTimeToDateTime(file.ModifyDate),
+                            CreatedTime = MacTimeToDateTime(file.CreateDate)
+                        };
+                        dirNode.Children.Add(child);
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    private FsNode CreateFileNode(string name,
+        (ushort startBlock, ushort blockCount)[] extents,
+        ulong logicalSize, uint modifyDate, uint createDate)
+    {
+        var child = new FsNode
+        {
+            Name = name,
+            IsDirectory = false,
+            Size = logicalSize,
+            NodeType = FsNodeType.File,
+            ModifiedTime = MacTimeToDateTime(modifyDate),
+            CreatedTime = MacTimeToDateTime(createDate)
+        };
+
+        var remaining = (long)logicalSize;
+        foreach (var (startBlock, blockCount) in extents)
+        {
+            if (startBlock == 0 || blockCount == 0)
+                continue;
+
+            var lba = BlockToAbsoluteLba(startBlock);
+            var extentByteSize = (ulong)blockCount * _allocationBlockSize;
+            var extentSize = Math.Min((ulong)remaining, extentByteSize);
+
+            child.Extents.Add(new FsExtent { Lba = lba, Size = extentSize });
+            remaining -= (long)extentSize;
+
+            if (remaining <= 0)
+                break;
+        }
+
+        if (child.Extents.Count > 0)
+        {
+            child.Lba = child.Extents[0].Lba;
+        }
+        else
+        {
+            child.Lba = _hfsStartLba;
+            child.Size = 0;
+        }
+
+        return child;
+    }
+
+    private static BtNodeDescriptor ReadBtNodeDescriptor(byte[] data, int offset)
+    {
+        return new BtNodeDescriptor
+        {
+            FLink = BeU32(data, offset),
+            BLink = BeU32(data, offset + 4),
+            Kind = (sbyte)data[offset + 8],
+            Height = data[offset + 9],
+            NumRecords = BeU16(data, offset + 10)
+        };
+    }
+
+    private static BtHeaderRec ReadBtHeaderRec(byte[] data, int offset)
+    {
+        return new BtHeaderRec
+        {
+            TreeDepth = BeU16(data, offset),
+            RootNode = BeU32(data, offset + 2),
+            LeafRecords = BeU32(data, offset + 6),
+            FirstLeafNode = BeU32(data, offset + 10),
+            LastLeafNode = BeU32(data, offset + 14),
+            NodeSize = BeU16(data, offset + 18),
+            MaxKeyLength = BeU16(data, offset + 20),
+            TotalNodes = BeU32(data, offset + 22),
+            FreeNodes = BeU32(data, offset + 26)
+        };
+    }
+
+    private byte[]? ReadSectors(uint lba, int count)
+    {
+        var result = new byte[count * 2048];
+        for (var i = 0; i < count; i++)
+        {
+            if (!_reader.ReadSector(lba + (uint)i, result, i * 2048))
+                return null;
+        }
+
+        return result;
+    }
+
+    private static DateTime? MacTimeToDateTime(uint macTime)
+    {
+        if (macTime == 0)
+            return null;
+
+        const long macEpochOffset = 2082844800;
+        var unixTime = macTime - macEpochOffset;
+
+        if (unixTime < 0)
+            return null;
+
+        try
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(unixTime).UtcDateTime;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static uint BeU32(byte[] data, int offset)
+    {
+        return (uint)((data[offset] << 24) | (data[offset + 1] << 16)
+            | (data[offset + 2] << 8) | data[offset + 3]);
+    }
+
+    private static ushort BeU16(byte[] data, int offset)
+    {
+        return (ushort)((data[offset] << 8) | data[offset + 1]);
+    }
+
+    private static int BeS32(byte[] data, int offset)
+    {
+        return (data[offset] << 24) | (data[offset + 1] << 16)
+            | (data[offset + 2] << 8) | data[offset + 3];
+    }
+
+    private const sbyte KBtLeafNode = -1;
+    private const sbyte KBtHeaderNode = 1;
+
+    private const ushort KHfsFolderRecord = 0x100;
+    private const ushort KHfsFileRecord = 0x200;
+    private const ushort KHfsFolderThreadRecord = 0x300;
+    private const ushort KHfsFileThreadRecord = 0x400;
+
+    private const uint KHfsRootFolderId = 2;
+
+    private struct BtNodeDescriptor
+    {
+        public uint FLink;
+        public uint BLink;
+        public sbyte Kind;
+        public byte Height;
+        public ushort NumRecords;
+    }
+
+    private struct BtHeaderRec
+    {
+        public ushort TreeDepth;
+        public uint RootNode;
+        public uint LeafRecords;
+        public uint FirstLeafNode;
+        public uint LastLeafNode;
+        public ushort NodeSize;
+        public ushort MaxKeyLength;
+        public uint TotalNodes;
+        public uint FreeNodes;
+    }
+
+    private enum HfsRecordType { Folder,
+        File,
+        FolderThread,
+        FileThread }
+
+    private sealed class HfsCatalogEntry
+    {
+        public string Name { get; set; } = string.Empty;
+        public uint ParentId { get; set; }
+        public HfsRecordType RecordType { get; set; }
+        public HfsFolderRecord? Folder { get; set; }
+        public HfsFileRecord? File { get; set; }
+    }
+
+    private sealed class HfsFolderRecord
+    {
+        public ushort RecordType;
+        public ushort Flags;
+        public ushort Valence;
+        public uint FolderId;
+        public uint ParentId;
+        public string Name { get; set; } = string.Empty;
+        public uint CreateDate;
+        public uint ModifyDate;
+        public uint BackupDate;
+    }
+
+    private sealed class HfsFileRecord
+    {
+        public ushort RecordType;
+        public byte Flags;
+        public byte FileType;
+        public uint FileId;
+        public int DataLogicalSize;
+        public int DataPhysicalSize;
+        public int ResourceLogicalSize;
+        public int ResourcePhysicalSize;
+        public uint CreateDate;
+        public uint ModifyDate;
+        public uint BackupDate;
+        public ushort ClumpSize;
+        public readonly (ushort startBlock, ushort blockCount)[] DataExtents = new (ushort, ushort)[3];
+        public readonly (ushort startBlock, ushort blockCount)[] RsrcExtents = new (ushort, ushort)[3];
+    }
+}

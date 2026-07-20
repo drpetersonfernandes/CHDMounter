@@ -39,6 +39,7 @@ public static class ParserFactory
             ConsoleType.Xbox => new XboxParser(reader),
             ConsoleType.Xbox360 => new Xbox360Parser(reader),
             ConsoleType.Pico => new PicoParser(reader),
+            ConsoleType.Pippin => new PippinParser(reader),
             _ => null
         };
     }
@@ -52,8 +53,9 @@ public static class ParserFactory
         return
         [
             new ConsoleInfo(ConsoleType.ThreeDo, "3DO"),
-            new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CD / CDTV"),
+            new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CD"),
             new ConsoleInfo(ConsoleType.AmigaCd32, "Amiga CD32"),
+            new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CDTV"),
             new ConsoleInfo(ConsoleType.CDi, "CD-i"),
             new ConsoleInfo(ConsoleType.Dreamcast, "Dreamcast"),
             new ConsoleInfo(ConsoleType.SegaGenesisCd, "Genesis CD"),
@@ -63,6 +65,7 @@ public static class ParserFactory
             new ConsoleInfo(ConsoleType.PcEngineCd, "PC Engine CD"),
             new ConsoleInfo(ConsoleType.PcFx, "PC-FX"),
             new ConsoleInfo(ConsoleType.Pico, "Pico"),
+            new ConsoleInfo(ConsoleType.Pippin, "Pippin"),
             new ConsoleInfo(ConsoleType.PlayStation, "PlayStation (Auto)"),
             new ConsoleInfo(ConsoleType.Ps1, "PS1"),
             new ConsoleInfo(ConsoleType.Ps2, "PS2"),

@@ -62,5 +62,7 @@ public enum ConsoleType
     /// <summary>Microsoft Xbox 360 format.</summary>
     Xbox360,
     /// <summary>Sega Pico format.</summary>
-    Pico
+    Pico,
+    /// <summary>Apple Bandai Pippin format.</summary>
+    Pippin
 }

@@ -264,6 +264,55 @@ public class PicoParser : Iso9660Wrapper
     }
 }
 
+/// <summary>
+/// Parses Apple Bandai Pippin disc images using HFS (Macintosh Hierarchical File System).
+/// </summary>
+public class PippinParser : IConsoleParser
+{
+    private readonly SectorReader _reader;
+    private HfsParser? _hfsParser;
+    public bool ForceMode { get; set; }
+
+    public PippinParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
+
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.Pippin;
+    }
+
+    public string GetConsoleName()
+    {
+        return "Pippin";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
+
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
+    {
+        _hfsParser ??= new HfsParser(_reader);
+
+        if (_hfsParser.Parse(rootNode, track))
+            return true;
+
+        var isoParser = new Iso9660Parser(_reader);
+        return isoParser.Parse(rootNode, track);
+    }
+
+    private TrackInfo FindDataTrack()
+    {
+        foreach (var t in _reader.Tracks)
+            if (t.IsDataTrack) return t;
+
+        return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+    }
+}
+
 public abstract class Iso9660Wrapper : IConsoleParser
 {
     /// <summary>
