@@ -3,50 +3,28 @@ using System.Text;
 namespace VideoGameFileSystemParser.Parsers.Systems;
 
 /// <summary>
-/// NEC PC-FX specific ISO9660 parser.
-/// This is a DEDICATED parser for PC-FX images, mirroring the C++ PcFxIsoParser.
-/// Changes to this parser will NOT affect other consoles.
-/// </summary>
-/// <summary>
-/// Dedicated NEC PC-FX ISO 9660 parser, handling byte-offset VD signatures within raw sectors.
+/// Dedicated NEC PC-FX ISO 9660 parser.
+/// Handles byte-offset VD signatures within raw sectors and uses tolerant
+/// continue-on-error directory record parsing for discs with unusual layouts.
 /// </summary>
 public class PcFxIsoParser
 {
     private readonly SectorReader _reader;
+    private readonly HashSet<uint> _visitedDirs = [];
     private bool _isHighSierra;
     private bool _isJoliet;
     private int _lbaOffset;
 
-    /// <summary>
-/// Initializes a new instance of the PcFxIsoParser class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
     public PcFxIsoParser(SectorReader reader)
     {
         _reader = reader;
     }
 
-    /// <summary>
-/// Sets the LBA offset applied to all sector reads.
-/// </summary>
-/// <param name="offset">The LBA offset value.</param>
     public void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
     }
 
-    /// <summary>
-    /// Parses the filesystem starting from the Primary Volume Descriptor.
-    /// Scans sectors 16, 17, 16+150, 17+150 for the VD.
-    /// Handles byte-offset VD signatures within sectors (safety net for
-    /// raw-sector images where the header wasn't fully stripped).
-    /// </summary>
-    /// <summary>
-/// Parses the ISO 9660 file system for PC-FX discs.
-/// </summary>
-/// <param name="track">Optional track.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
@@ -59,18 +37,29 @@ public class PcFxIsoParser
         _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
+        _visitedDirs.Clear();
 
-        var trackStartLba = track?.StartLba ?? 0;
+        var effectiveTrackStart = track?.StartLba ?? 0;
         var sectorData = new byte[2048];
 
-        uint[] vdOffsets = [16, 17, 166, 167];
+        var vdOffsets = new List<uint> { 16, 17 };
+        if (track is { Pregap: > 0 })
+        {
+            vdOffsets.Add(track.Pregap + 16);
+            vdOffsets.Add(track.Pregap + 17);
+        }
+        else
+        {
+            vdOffsets.Add(166);
+            vdOffsets.Add(167);
+        }
         var foundPvd = false;
         byte[]? bestVdData = null;
         var pvdOffsetInSector = 0;
 
         foreach (var offset in vdOffsets)
         {
-            if (_reader.ReadSector(trackStartLba + offset, sectorData))
+            if (_reader.ReadSector(effectiveTrackStart + offset, sectorData))
             {
                 var vdType = CheckVdInSector(sectorData, out var currentOffsetInSector);
                 if (vdType > 0)
@@ -85,6 +74,50 @@ public class PcFxIsoParser
             }
         }
 
+        if (!foundPvd && effectiveTrackStart != 0)
+        {
+            _reader.SetTrack(null);
+            foreach (var offset in vdOffsets)
+            {
+                if (_reader.ReadSector(offset, sectorData))
+                {
+                    var vdType = CheckVdInSector(sectorData, out var currentOffsetInSector);
+                    if (vdType > 0)
+                    {
+                        effectiveTrackStart = 0;
+                        _reader.SetTrack(null);
+                        _isHighSierra = vdType == 2 || (vdType == 3 && CheckMagic(sectorData, currentOffsetInSector + 9, "CDROM"));
+                        _isJoliet = !_isHighSierra && sectorData[currentOffsetInSector] == 2;
+                        foundPvd = true;
+                        bestVdData = (byte[])sectorData.Clone();
+                        pvdOffsetInSector = currentOffsetInSector;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!foundPvd)
+        {
+            var scanLimit = track is { Frames: > 0 } ? Math.Min(track.Frames, 2000u) : 2000u;
+            for (uint i = 0; i < scanLimit; i++)
+            {
+                if (_reader.ReadSector(effectiveTrackStart + i, sectorData))
+                {
+                    var vdType = CheckVdInSector(sectorData, out var currentOffsetInSector);
+                    if (vdType > 0)
+                    {
+                        _isHighSierra = vdType == 2 || (vdType == 3 && CheckMagic(sectorData, currentOffsetInSector + 9, "CDROM"));
+                        _isJoliet = !_isHighSierra && sectorData[currentOffsetInSector] == 2;
+                        foundPvd = true;
+                        bestVdData = (byte[])sectorData.Clone();
+                        pvdOffsetInSector = currentOffsetInSector;
+                        break;
+                    }
+                }
+            }
+        }
+
         if (!foundPvd)
             return false;
 
@@ -92,13 +125,71 @@ public class PcFxIsoParser
         var rootRelLba = LeU32(bestVdData!, rootRecOff + 2);
         var rootSize = LeU32(bestVdData!, rootRecOff + 10);
 
+        var baseLba = ResolveDirectoryBase(effectiveTrackStart, rootRelLba, track);
+
         rootNode.Name = "/";
         rootNode.IsDirectory = true;
-        rootNode.Lba = trackStartLba + rootRelLba;
+        rootNode.Lba = unchecked(baseLba + rootRelLba);
         rootNode.Size = rootSize;
         rootNode.Extents.Add(new FsExtent { Lba = rootNode.Lba, Size = rootSize });
 
-        return ParseDirectory(rootNode, trackStartLba);
+        return ParseDirectory(rootNode, baseLba);
+    }
+
+    private uint ResolveDirectoryBase(uint trackStart, uint rootRelLba, TrackInfo? track)
+    {
+        uint[] candidates = [trackStart, 150, 0];
+
+        foreach (var candidate in candidates)
+        {
+            if (IsRootDirectorySector(candidate + rootRelLba, rootRelLba, true))
+                return candidate;
+        }
+
+        if (track != null)
+        {
+            var scanLimit = Math.Min(track.Frames, 512u);
+            for (uint k = 0; k < scanLimit; k++)
+            {
+                var lba = trackStart + k;
+                if (IsRootDirectorySector(lba, rootRelLba, true))
+                    return unchecked(lba - rootRelLba);
+            }
+        }
+
+        foreach (var candidate in candidates)
+        {
+            if (IsRootDirectorySector(candidate + rootRelLba, rootRelLba, false))
+                return candidate;
+        }
+
+        return trackStart;
+    }
+
+    private bool IsRootDirectorySector(uint lba, uint expectedExtent, bool strict)
+    {
+        var sec = new byte[2048];
+        if (!_reader.ReadSector(lba, sec))
+            return false;
+
+        var recLen = sec[0];
+        if (recLen < 34)
+            return false;
+
+        var nameLenOff = _isHighSierra ? 31 : 32;
+        var nameOff = _isHighSierra ? 32 : 33;
+        if (sec[nameLenOff] != 1 || sec[nameOff] != 0x00)
+            return false;
+
+        var flagsOff = _isHighSierra ? 24 : 25;
+        if ((sec[flagsOff] & 0x02) == 0)
+            return false;
+
+        if (!strict)
+            return true;
+
+        var selfExtent = LeU32(sec, 2) + sec[1];
+        return selfExtent == expectedExtent;
     }
 
     /// <summary>
@@ -123,8 +214,11 @@ public class PcFxIsoParser
 
         for (var i = 0; i < data.Length - 16; i++)
         {
-            if (CheckMagic(data, i + 1, "CD001") || CheckMagic(data, i + 9, "CDROM")) { foundOffset = i;
-                return 3; }
+            if (CheckMagic(data, i + 1, "CD001") || CheckMagic(data, i + 9, "CDROM"))
+            {
+                foundOffset = i;
+                return 3;
+            }
         }
 
         return 0;
@@ -132,11 +226,14 @@ public class PcFxIsoParser
 
     /// <summary>
     /// Parses a directory sector chain. Uses continue (not break) for invalid
-    /// records, matching the C++ PcFxIsoParser behavior. This is more tolerant
+    /// records, matching the C++ DiscImageCreator behavior. This is more tolerant
     /// of discs with unusual record layouts.
     /// </summary>
-    private bool ParseDirectory(FsNode dirNode, uint trackStart)
+    private bool ParseDirectory(FsNode dirNode, uint baseLba)
     {
+        if (!_visitedDirs.Add(dirNode.Lba))
+            return true;
+
         var sectorsToRead = (uint)((dirNode.Size + 2047) / 2048);
         var sectorData = new byte[2048];
 
@@ -163,6 +260,7 @@ public class PcFxIsoParser
                     continue;
                 }
 
+                var xattrLen = sectorData[pos + 1];
                 var relLba = LeU32(sectorData, (int)(pos + 2));
                 var extentSize = (ulong)LeU32(sectorData, (int)(pos + 10));
 
@@ -190,7 +288,7 @@ public class PcFxIsoParser
 
                 if (name != "." && name != "..")
                 {
-                    var absoluteLba = trackStart + relLba;
+                    var absoluteLba = baseLba + relLba + xattrLen;
                     var last = dirNode.Children.Count > 0 ? dirNode.Children[^1] : null;
 
                     if (last != null && isMultiExtent && !last.IsDirectory && last.Name == name)
@@ -213,7 +311,7 @@ public class PcFxIsoParser
                         child.Extents.Add(new FsExtent { Lba = child.Lba, Size = child.Size });
 
                         if (child.IsDirectory)
-                            ParseDirectory(child, trackStart);
+                            ParseDirectory(child, baseLba);
 
                         dirNode.Children.Add(child);
                     }
@@ -284,8 +382,11 @@ public class PcFxIsoParser
         var allZero = true;
         for (var i = 0; i < 7; i++)
         {
-            if (d[off + i] != 0) { allZero = false;
-                break; }
+            if (d[off + i] != 0)
+            {
+                allZero = false;
+                break;
+            }
         }
 
         if (allZero) return null;
@@ -320,6 +421,7 @@ public class PcFxIsoParser
         {
             if (data[offset + i] != magic[i]) return false;
         }
+
         return true;
     }
 

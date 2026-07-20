@@ -755,8 +755,7 @@ public class SectorReader
             }
 
             var isStoredPregap = track is { Pregap: > 0 } &&
-                                 track.Metadata.Contains("PGTYPE:V", StringComparison.OrdinalIgnoreCase) &&
-                                 !track.Metadata.Contains("PGTYPE:VAUDIO", StringComparison.OrdinalIgnoreCase);
+                                 !track.Metadata.Contains("PGTYPE:V", StringComparison.OrdinalIgnoreCase);
             if (isStoredPregap)
             {
                 currentFileFrame += track.Pregap;

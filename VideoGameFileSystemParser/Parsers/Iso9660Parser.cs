@@ -12,6 +12,7 @@ public class Iso9660Parser
 
     private readonly SectorReader _reader;
     private readonly HashSet<uint> _visitedDirs = [];
+    private readonly bool _scanWithinSector;
     private bool _isHighSierra;
     private bool _isJoliet;
     private bool _isXa;
@@ -23,9 +24,13 @@ public class Iso9660Parser
 /// Initializes a new instance of the Iso9660Parser class.
 /// </summary>
 /// <param name="reader">The SectorReader to read sectors from.</param>
-    public Iso9660Parser(SectorReader reader)
+/// <param name="scanWithinSector">If true, scans entire sectors byte-offset for VD signatures
+/// (handles raw-sector images where CD sync headers weren't fully stripped,
+/// e.g. some PC-FX and other CD-ROM dumps).</param>
+    public Iso9660Parser(SectorReader reader, bool scanWithinSector = false)
     {
         _reader = reader;
+        _scanWithinSector = scanWithinSector;
     }
 
     /// <summary>
@@ -62,35 +67,26 @@ public class Iso9660Parser
 
         var effectiveTrackStart = track?.StartLba ?? 0;
 
-        uint[] vdOffsets = [16, 17, 166, 167]; // 16+150, 17+150
+        var vdOffsets = new List<uint> { 16, 17 };
+        if (track is { Pregap: > 0 })
+        {
+            vdOffsets.Add(track.Pregap + 16);
+            vdOffsets.Add(track.Pregap + 17);
+        }
+        else
+        {
+            vdOffsets.Add(166);
+            vdOffsets.Add(167);
+        }
+
         var foundPvd = false;
         byte[]? bestVdData = null;
         var sectorData = new byte[2048];
 
         foreach (var offset in vdOffsets)
         {
-            if (_reader.ReadSector(effectiveTrackStart + offset, sectorData) && sectorData.Length >= 16)
-            {
-                var type = sectorData[0];
-                var isIso = CheckMagic(sectorData, 1, "CD001");
-                var isHs = CheckMagic(sectorData, 9, "CDROM");
-
-                if (isIso || isHs)
-                {
-                    if (type == 2 && isIso && IsJolietSvd(sectorData)) {
-                        _isHighSierra = false;
-                        _isJoliet = true;
-                        foundPvd = true;
-                        bestVdData = (byte[])sectorData.Clone();
-                        break; }
-
-                    if (!foundPvd && (type == 1 || isHs)) {
-                        _isHighSierra = isHs;
-                        _isJoliet = false;
-                        foundPvd = true;
-                        bestVdData = (byte[])sectorData.Clone(); }
-                }
-            }
+            if (ScanSectorForVd(effectiveTrackStart + offset, sectorData, ref foundPvd, ref _isHighSierra, ref _isJoliet, ref bestVdData!))
+                break;
         }
 
         if (!foundPvd && effectiveTrackStart != 0)
@@ -98,30 +94,11 @@ public class Iso9660Parser
             _reader.SetTrack(null);
             foreach (var offset in vdOffsets)
             {
-                if (_reader.ReadSector(offset, sectorData) && sectorData.Length >= 16)
+                if (ScanSectorForVd(offset, sectorData, ref foundPvd, ref _isHighSierra, ref _isJoliet, ref bestVdData!))
                 {
-                    var type = sectorData[0];
-                    var isIso = CheckMagic(sectorData, 1, "CD001");
-                    var isHs = CheckMagic(sectorData, 9, "CDROM");
-                    if (isIso || isHs)
-                    {
-                        if (type == 2 && isIso && IsJolietSvd(sectorData)) {
-                            effectiveTrackStart = 0;
-                            _reader.SetTrack(null);
-                            _isHighSierra = false;
-                            _isJoliet = true;
-                            foundPvd = true;
-                            bestVdData = (byte[])sectorData.Clone();
-                            break; }
-
-                        if (!foundPvd && (type == 1 || isHs)) {
-                            effectiveTrackStart = 0;
-                            _reader.SetTrack(null);
-                            _isHighSierra = isHs;
-                            _isJoliet = false;
-                            foundPvd = true;
-                            bestVdData = (byte[])sectorData.Clone(); }
-                    }
+                    effectiveTrackStart = 0;
+                    _reader.SetTrack(null);
+                    break;
                 }
             }
         }
@@ -133,16 +110,14 @@ public class Iso9660Parser
             {
                 if (_reader.ReadSector(effectiveTrackStart + i, sectorData) && sectorData.Length >= 16)
                 {
-                    var type = sectorData[0];
-                    var isIso = CheckMagic(sectorData, 1, "CD001");
-                    var isHs = CheckMagic(sectorData, 9, "CDROM");
-                    if ((type == 1 && (isIso || isHs)) || (type == 2 && isIso && IsJolietSvd(sectorData)) || isHs)
+                    if (TryFindVdInSector(sectorData, out var isHs, out var isJoliet))
                     {
-                        _isHighSierra = isHs && type != 2;
-                        _isJoliet = type == 2 && isIso;
+                        _isHighSierra = isHs;
+                        _isJoliet = isJoliet;
                         foundPvd = true;
                         bestVdData = (byte[])sectorData.Clone();
-                        break; }
+                        break;
+                    }
                 }
             }
         }
@@ -202,6 +177,91 @@ public class Iso9660Parser
         }
 
         return trackStart;
+    }
+
+    private bool ScanSectorForVd(uint lba, byte[] sectorData, ref bool found, ref bool isHs, ref bool isJol, ref byte[] best)
+    {
+        if (!_reader.ReadSector(lba, sectorData) || sectorData.Length < 16)
+            return false;
+
+        if (TryFindVdInSector(sectorData, out var hs, out var jol))
+        {
+            isHs = hs;
+            isJol = jol;
+            found = true;
+            best = (byte[])sectorData.Clone();
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryFindVdInSector(byte[] data, out bool isHs, out bool isJoliet)
+    {
+        isHs = false;
+        isJoliet = false;
+
+        // standard positions
+        if (CheckMagic(data, 1, "CD001"))
+        {
+            var type = data[0];
+            switch (type)
+            {
+                case 2 when IsJolietSvd(data):
+                    isJoliet = true;
+                    return true;
+                case 1:
+                    return true;
+            }
+        }
+
+        if (CheckMagic(data, 9, "CDROM"))
+        { isHs = true;
+            return true; }
+
+        // byte-offset scanning (handles raw-sector images with un-stripped sync headers)
+        if (!_scanWithinSector)
+            return false;
+
+        for (var i = 0; i < data.Length - 16; i++)
+        {
+            if (CheckMagicOffset(data, i, "CD001", 1))
+            {
+                var type = data[i];
+                switch (type)
+                {
+                    case 2 when IsJolietSvdAt(data, i):
+                        isJoliet = true;
+                        return true;
+                    case 1:
+                        return true;
+                }
+            }
+
+            if (CheckMagicOffset(data, i, "CDROM", 9))
+            { isHs = true;
+                return true; }
+        }
+
+        return false;
+    }
+
+    private static bool CheckMagicOffset(byte[] data, int baseOff, string magic, int magicOffset)
+    {
+        var off = baseOff + magicOffset;
+        if (off + magic.Length > data.Length) return false;
+
+        for (var i = 0; i < magic.Length; i++)
+        {
+            if (data[off + i] != magic[i]) return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsJolietSvdAt(byte[] d, int baseOff)
+    {
+        return d[baseOff + 88] == 0x25 && d[baseOff + 89] == 0x2F && d[baseOff + 90] is 0x40 or 0x43 or 0x45;
     }
 
     private bool IsRootDirectorySector(uint lba, uint expectedExtent, bool strict)

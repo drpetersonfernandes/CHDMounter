@@ -109,11 +109,20 @@ public class UdfParser
             return false;
 
         if (!ResolveLba(fsdLbn, fsdPart, out var fsdLba)) return false;
-        if (!_reader.ReadSector(fsdLba, sector)) return false;
-        if (!ValidTag(sector, 0)) return false;
 
-        var fsdTagId = LeU16(sector, 0);
-        if (fsdTagId != 256) return false;
+        var foundFsd = false;
+        Span<uint> fsdCandidates = [fsdLba, fsdLba + 1];
+        foreach (var candidate in fsdCandidates)
+        {
+            if (!_reader.ReadSector(candidate, sector)) continue;
+            if (!ValidTag(sector, 0)) continue;
+            if (LeU16(sector, 0) != 256) continue;
+
+            foundFsd = true;
+            break;
+        }
+
+        if (!foundFsd) return false;
 
         rootNode.Name = "/";
         rootNode.IsDirectory = true;

@@ -125,10 +125,10 @@ public class X68000IntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                if (!container.MountAndParse(ConsoleType.GenericIso9660))
+                if (!container.MountAndParse(ConsoleType.X68000))
                 {
-                    output.WriteLine("SKIP: MountAndParse failed (likely invalid CHD)");
-                    return true;
+                    output.WriteLine($"MountAndParse FAILED for: {path}");
+                    Assert.Fail($"MountAndParse failed for: {path}");
                 }
 
                 var all = CollectEntries(container, "\\").ToList();
@@ -163,10 +163,10 @@ public class X68000IntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                if (!container.MountAndParse(ConsoleType.GenericIso9660))
+                if (!container.MountAndParse(ConsoleType.X68000))
                 {
-                    output.WriteLine("SKIP: MountAndParse failed (likely invalid CHD)");
-                    return true;
+                    output.WriteLine($"MountAndParse FAILED for: {path}");
+                    Assert.Fail($"MountAndParse failed for: {path}");
                 }
 
                 foreach (var e in container.ListDirectory("\\"))

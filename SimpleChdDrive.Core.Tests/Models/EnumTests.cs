@@ -28,7 +28,7 @@ public class ConsoleTypeTests
     public void ConsoleTypeCountGreaterThan20()
     {
         var count = Enum.GetValues<ConsoleType>().Length;
-        Assert.True(count >= 21);
+        Assert.True(count >= 22);
     }
 }
 

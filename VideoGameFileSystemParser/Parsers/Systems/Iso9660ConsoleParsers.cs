@@ -177,6 +177,54 @@ public class AmigaCdParser : Iso9660Wrapper
 }
 
 /// <summary>
+/// Parses Sharp X68000 disc images using ISO 9660, falling back to UDF if ISO 9660 fails.
+/// </summary>
+public class X68000Parser : IConsoleParser
+{
+    private readonly SectorReader _reader;
+
+    public X68000Parser(SectorReader reader)
+    {
+        _reader = reader;
+    }
+
+    public bool ForceMode { get; set; }
+
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.X68000;
+    }
+
+    public string GetConsoleName()
+    {
+        return "X68000";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
+
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
+    {
+        var isoParser = new Iso9660Parser(_reader);
+        if (isoParser.Parse(rootNode, track))
+            return true;
+
+        var udfParser = new UdfParser(_reader);
+        return udfParser.Parse(rootNode, track);
+    }
+
+    private TrackInfo FindDataTrack()
+    {
+        foreach (var t in _reader.Tracks)
+            if (t.IsDataTrack) return t;
+
+        return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+    }
+}
+
+/// <summary>
 /// Parses Fujitsu FM Towns disc images using ISO 9660.
 /// </summary>
 public class FmTownsParser : Iso9660Wrapper
@@ -193,6 +241,26 @@ public class FmTownsParser : Iso9660Wrapper
     public override string GetConsoleName()
     {
         return "FM Towns";
+    }
+}
+
+/// <summary>
+/// Parses Sega Pico disc images using ISO 9660.
+/// </summary>
+public class PicoParser : Iso9660Wrapper
+{
+    public PicoParser(SectorReader reader) : base(reader)
+    {
+    }
+
+    public override ConsoleType GetConsoleType()
+    {
+        return ConsoleType.Pico;
+    }
+
+    public override string GetConsoleName()
+    {
+        return "Sega Pico";
     }
 }
 

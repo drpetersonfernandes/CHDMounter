@@ -208,6 +208,8 @@ public partial class MainWindow
             23 => ConsoleType.ThreeDo,
             24 => ConsoleType.Xbox,
             25 => ConsoleType.Xbox360,
+            26 => ConsoleType.X68000,
+            27 => ConsoleType.Pico,
             _ => null
         };
     }
@@ -229,6 +231,8 @@ public partial class MainWindow
             "cueiso" => ConsoleType.GenericCueIso,
             "cuebinwav" or "cuewav" => ConsoleType.GenericCueBinWav,
             "cueisowav" => ConsoleType.GenericCueIsoWav,
+            "x68000" or "x68k" => ConsoleType.X68000,
+            "pico" => ConsoleType.Pico,
             _ => ConsoleType.Unknown
         };
     }

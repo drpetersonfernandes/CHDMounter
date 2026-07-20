@@ -273,3 +273,50 @@ public class GenericIso9660Parser : IConsoleParser
         return _reader.Tracks.FirstOrDefault();
     }
 }
+
+/// <summary>
+/// Parses VM Labs Nuon DVD-ROM disc images using UDF, falling back to ISO 9660 if UDF fails.
+/// </summary>
+public class NuonParser : IConsoleParser
+{
+    private readonly SectorReader _reader;
+    public bool ForceMode { get; set; }
+
+    public NuonParser(SectorReader reader)
+    {
+        _reader = reader;
+    }
+
+    public ConsoleType GetConsoleType()
+    {
+        return ConsoleType.Nuon;
+    }
+
+    public string GetConsoleName()
+    {
+        return "Nuon";
+    }
+
+    public bool Parse(FsNode rootNode)
+    {
+        return ParseTrack(rootNode, FindDataTrack());
+    }
+
+    public bool ParseTrack(FsNode rootNode, TrackInfo track)
+    {
+        var udfParser = new UdfParser(_reader);
+        if (udfParser.Parse(rootNode, track))
+            return true;
+
+        var isoParser = new Iso9660Parser(_reader);
+        return isoParser.Parse(rootNode, track);
+    }
+
+    private TrackInfo FindDataTrack()
+    {
+        foreach (var t in _reader.Tracks)
+            if (t.IsDataTrack) return t;
+
+        return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
+    }
+}

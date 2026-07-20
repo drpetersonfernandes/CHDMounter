@@ -8,7 +8,7 @@ public class ParserFactoryTests
     public void GetAllSupportedConsolesReturnsAll21Plus()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
-        Assert.True(consoles.Count >= 25);
+        Assert.True(consoles.Count >= 27);
     }
 
     [Fact]
@@ -20,6 +20,7 @@ public class ParserFactoryTests
         Assert.Contains(consoles, static c => c.Type == ConsoleType.Dreamcast);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.CDi);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.ThreeDo);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.X68000);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericIso9660);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericCueBin2352Default);
     }

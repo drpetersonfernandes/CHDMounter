@@ -29,6 +29,8 @@ public enum ConsoleType
     GenericIso9660,
     /// <summary>Raw sector passthrough (no file system parsing).</summary>
     GenericIsoRaw,
+    /// <summary>VM Labs Nuon DVD format.</summary>
+    Nuon,
     /// <summary>SNK NeoGeo CD format.</summary>
     NeoGeoCd,
     /// <summary>NEC PC Engine CD format.</summary>
@@ -51,10 +53,14 @@ public enum ConsoleType
     SegaGenesisCd,
     /// <summary>3DO Interactive Multiplayer format.</summary>
     ThreeDo,
+    /// <summary>Sharp X68000 format.</summary>
+    X68000,
     /// <summary>Unknown or unset console type.</summary>
     Unknown,
     /// <summary>Microsoft Xbox format.</summary>
     Xbox,
     /// <summary>Microsoft Xbox 360 format.</summary>
-    Xbox360
+    Xbox360,
+    /// <summary>Sega Pico format.</summary>
+    Pico
 }
