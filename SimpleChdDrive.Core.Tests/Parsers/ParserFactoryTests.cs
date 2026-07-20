@@ -8,7 +8,7 @@ public class ParserFactoryTests
     public void GetAllSupportedConsolesReturnsAll21Plus()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
-        Assert.True(consoles.Count >= 24);
+        Assert.True(consoles.Count >= 25);
     }
 
     [Fact]

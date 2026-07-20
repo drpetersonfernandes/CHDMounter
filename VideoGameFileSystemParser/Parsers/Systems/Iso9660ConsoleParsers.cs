@@ -176,6 +176,26 @@ public class AmigaCdParser : Iso9660Wrapper
     }
 }
 
+/// <summary>
+/// Parses Fujitsu FM Towns disc images using ISO 9660.
+/// </summary>
+public class FmTownsParser : Iso9660Wrapper
+{
+    public FmTownsParser(SectorReader reader) : base(reader)
+    {
+    }
+
+    public override ConsoleType GetConsoleType()
+    {
+        return ConsoleType.FmTowns;
+    }
+
+    public override string GetConsoleName()
+    {
+        return "FM Towns";
+    }
+}
+
 public abstract class Iso9660Wrapper : IConsoleParser
 {
     /// <summary>

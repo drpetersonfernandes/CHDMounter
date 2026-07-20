@@ -95,6 +95,7 @@ public class Iso9660Parser
 
         if (!foundPvd && effectiveTrackStart != 0)
         {
+            _reader.SetTrack(null);
             foreach (var offset in vdOffsets)
             {
                 if (_reader.ReadSector(offset, sectorData) && sectorData.Length >= 16)

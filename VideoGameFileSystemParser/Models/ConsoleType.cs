@@ -13,6 +13,8 @@ public enum ConsoleType
     CDi,
     /// <summary>Sega Dreamcast GD-ROM format.</summary>
     Dreamcast,
+    /// <summary>Fujitsu FM Towns format.</summary>
+    FmTowns,
     /// <summary>Generic CUE/BIN image with 2352-byte sectors (default).</summary>
     GenericCueBin2352Default,
     /// <summary>Generic CUE/BIN image with 2048-byte sectors.</summary>

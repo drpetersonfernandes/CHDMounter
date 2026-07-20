@@ -843,28 +843,41 @@ public class SectorReader
         var hunkBuf = new byte[chd.HunkBytes];
         foreach (var track in tracks)
         {
-            var frame = track.ChdOffset;
-            var hunkNum = frame / sectorsPerHunk;
-            var sectorInHunk = frame % sectorsPerHunk;
+            var startFrame = track.ChdOffset;
+            var scanLimit = Math.Min(sectorsPerHunk, 32u);
 
-            if (chd.ReadHunk(hunkNum, hunkBuf) != ChdError.Chderrnone)
-                continue;
+            var found = false;
+            for (uint scan = 0; scan < scanLimit; scan++)
+            {
+                var frame = startFrame + scan;
+                var hunkNum = frame / sectorsPerHunk;
+                var sectorInHunk = frame % sectorsPerHunk;
 
-            var offset = (int)(sectorInHunk * unitBytes);
-            if (offset + 16 > hunkBuf.Length) continue;
+                if (chd.ReadHunk(hunkNum, hunkBuf) != ChdError.Chderrnone)
+                    continue;
 
-            if (hunkBuf[offset] != 0x00 || hunkBuf[offset + 1] != 0xFF)
-                continue;
+                var offset = (int)(sectorInHunk * unitBytes);
+                if (offset + 16 > hunkBuf.Length) continue;
 
-            var minute = BcdToByte(hunkBuf[offset + 12]);
-            var second = BcdToByte(hunkBuf[offset + 13]);
-            var frame2 = BcdToByte(hunkBuf[offset + 14]);
-            if (minute > 90 || second > 59 || frame2 > 74) continue;
+                if (hunkBuf[offset] != 0x00 || hunkBuf[offset + 1] != 0xFF)
+                    continue;
 
-            var aba = (uint)((minute * 60 + second) * 75 + frame2);
-            var lba = aba >= 150 ? aba - 150 : 0;
+                var minute = BcdToByte(hunkBuf[offset + 12]);
+                var second = BcdToByte(hunkBuf[offset + 13]);
+                var frameVal = BcdToByte(hunkBuf[offset + 14]);
+                if (minute > 90 || second > 59 || frameVal > 74) continue;
 
-            track.StartLba = lba;
+                var aba = (uint)((minute * 60 + second) * 75 + frameVal);
+                var lba = aba >= 150 ? aba - 150 : 0;
+                track.StartLba = unchecked(lba - scan);
+                found = true;
+                break;
+            }
+
+            if (!found)
+            {
+                track.StartLba = 0;
+            }
         }
     }
 

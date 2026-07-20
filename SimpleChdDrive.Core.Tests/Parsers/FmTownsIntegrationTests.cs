@@ -68,6 +68,44 @@ public class FmTownsIntegrationTests
     }
 
     [Fact]
+    public void FmTownsParserParsesFmTownsDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(FmTownsParserParsesFmTownsDisc), paths, (path, output) =>
+        {
+            var err = ChdFile.Open(path, out var chd);
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
+
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
+
+                var root = new FsNode();
+                var parser = new FmTownsParser(reader);
+
+                var ok = parser.Parse(root);
+                output.WriteLine($"FmTownsParser: {(ok ? "OK" : "FAILED")}");
+
+                Assert.True(ok, "FmTownsParser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
+                Assert.True(files > 1, $"Suspiciously few files parsed: {files}");
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+
+            return true;
+        });
+    }
+    [Fact]
     public void GenericIso9660ParserParsesFmTownsDisc()
     {
         var paths = GetPaths();
@@ -115,7 +153,7 @@ public class FmTownsIntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                Assert.True(container.MountAndParse(ConsoleType.GenericIso9660), "MountAndParse failed");
+                Assert.True(container.MountAndParse(ConsoleType.FmTowns), "MountAndParse failed");
 
                 var all = CollectEntries(container, "\\").ToList();
                 var fileEntries = all.Where(static e => !e.IsDirectory).ToList();
@@ -149,7 +187,7 @@ public class FmTownsIntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                Assert.True(container.MountAndParse(ConsoleType.GenericIso9660), "MountAndParse failed");
+                Assert.True(container.MountAndParse(ConsoleType.FmTowns), "MountAndParse failed");
 
                 foreach (var e in container.ListDirectory("\\"))
                 {
