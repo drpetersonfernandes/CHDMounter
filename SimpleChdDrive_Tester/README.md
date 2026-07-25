@@ -14,7 +14,7 @@ WPF desktop application for **batch testing and benchmarking** CHD disc image pa
 
 ## Supported Consoles
 
-Same 20+ console file systems as the main SimpleChdDrive application — see the [main project](https://github.com/drpetersonfernandes/SimpleChdDrive) for the full list.
+All 31 console file systems supported — see the [main project](https://github.com/drpetersonfernandes/SimpleChdDrive) for the full list.
 
 ## Usage
 
@@ -38,7 +38,7 @@ Same 20+ console file systems as the main SimpleChdDrive application — see the
 - **WPF-UI** 4.3.0 — Modern WPF theming
 - **QuestPDF** 2026.7.1 — PDF report generation
 - **Serilog** — Structured logging
-- **VideoGameFileSystemParser** — CHD file system parsing library (via SimpleChdDrive.Core)
+- **SimpleChdDrive.Core** — Shared services and interfaces (includes VideoGameFileSystemParser)
 
 ## License
 

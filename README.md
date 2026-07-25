@@ -4,7 +4,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-blue)](https://www.microsoft.com/windows)
 [![Arch](https://img.shields.io/badge/arch-x64%20%7C%20ARM64-lightgrey)](#)
 
-Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives on Windows. Supports 22 filesystem types across consoles and PC optical media.
+Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives on Windows. Supports 31 console types and 8 filesystem formats across consoles and PC optical media.
 
 <p align="center">
   <img src=".github/screenshot.png" alt="Screenshot" width="700">
@@ -15,13 +15,16 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 ## Features
 
 - **Mount CHD files as virtual drives** using [Dokan](https://github.com/dokan-dev/dokany) or [WinFsp](https://winfsp.dev/)
-- **22 filesystem types** — ISO 9660, UDF, XDVDFS (Xbox), OperaFS (3DO), CD-i Green Book, and more
-- **Virtual CUE/BIN export** — presents CD images as `.cue` + `.bin` files for emulators and burning tools
+- **31 console types** — ISO 9660, UDF, XDVDFS (Xbox), OperaFS (3DO), CD-i Green Book, HFS/HFS+ (Pippin), and more
+- **Virtual CUE/BIN/ISO/WAV export** — 5 disc image export modes for emulators and burning tools
 - **SingleFile ISO passthrough** — single `image.iso` file for emulators that expect raw ISO (xemu, RPCS3)
 - **Read-only** — never modifies your CHD files
 - **Automatic filesystem detection by track header** — no manual setup needed for most discs
 - **Command-line interface** for scripting and frontend integration
-- **WPF dark theme UI** with console type dropdown, real-time log output
+- **WPF dark theme UI** with console type dropdown, real-time log output, settings dialog
+- **Settings with DPAPI encryption** — persisted across sessions
+- **Screenshot capture** (F8) — saves foreground window to PNG
+- **Update checker** — polls GitHub releases for new versions
 - **Serilog** structured logging to file and debug output
 - **Single-file self-contained publish** — distribute as one `.exe`
 - **x64 and ARM64** support
@@ -37,22 +40,33 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 | PS3                       | `ps3`                              | UDF → ISO 9660 fallback   | Multi-extent large file support              |
 | PS3 (Single File)         | GUI only                           | Virtual ISO passthrough   | Single `image.iso` for RPCS3                 |
 | PSP                       | `psp`                              | ISO 9660                  | UMD image support                            |
+| PlayStation (Auto)        | `psauto`, `psdetect`               | ISO 9660                  | Auto-detect PS1/PS2/PS3/PSP                  |
 | Xbox                      | `xbox`                             | XDVDFS                    | Binary tree directory structure              |
 | Xbox 360                  | `xbox360`, `x360`                  | XDVDFS                    | XGD2/XGD3 offset detection                   |
 | Xbox (Single File)        | GUI only                           | Virtual ISO passthrough   | Single `image.iso` for xemu                  |
 | Dreamcast                 | `dreamcast`, `dc`                  | ISO 9660                  | GD-ROM offset search (-45000, -150, 0, etc.) |
-| 3DO                       | `3do`                              | OperaFS                   | Block-based directory chain                  |
+| 3DO                       | `3do`                              | OperaFS                   | Block-based directory chain, ISO 9660 fallback |
 | CD-i                      | `cdi`, `cd-i`                      | Green Book                | Interleaved stream support, Path Table        |
 | Saturn                    | `saturn`                           | ISO 9660                  |                                              |
 | NeoGeo CD                 | `neogeo`, `ngcd`                   | ISO 9660                  |                                              |
-| PC Engine CD              | `pcengine`, `pce`, `tgcd`          | ISO 9660                  |                                              |
+| PC Engine CD              | `pcengine`, `pce`, `tgcd`          | ISO 9660                  | Boot signature scan, fallback raw track files |
 | Sega Genesis / Mega CD    | `segagenesis`, `megacd`, `segacd`  | ISO 9660                  |                                              |
-| PC-FX                     | `pcfx`                             | ISO 9660                  |                                              |
-| Amiga CD32                | `amigacd32`, `amiga`               | ISO 9660                  |                                              |
-| Amiga CD                  | `amigacd`                          | ISO 9660                  |                                              |
-| Generic ISO 9660          | `iso9660`, `generic`, `iso`        | ISO 9660 / High Sierra    | Joliet/UTF-16BE filename support             |
+| PC-FX                     | `pcfx`                             | PC-FX ISO                 | Dedicated byte-offset VD scanner             |
+| Amiga CD32                | `amigacd32`, `cd32`                | ISO 9660                  |                                              |
+| Amiga CD                  | `amigacd`, `amiga`                 | ISO 9660                  | Also handles Amiga CDTV                      |
+| FM Towns                  | `fmtowns`, `fmt`                   | ISO 9660                  |                                              |
+| X68000                    | `x68000`, `x68k`                   | ISO 9660 → UDF fallback   |                                              |
+| PC-98                     | GUI only                           | ISO 9660                  |                                              |
+| Nuon                      | GUI only                           | UDF → ISO 9660 fallback   | VM Labs Nuon DVD                             |
+| Pico                      | `pico`                             | ISO 9660                  | Sega Pico                                    |
+| Pippin                    | GUI only                           | HFS → HFS+ → UDF → ISO   | Apple Bandai Pippin                          |
+| Generic ISO 9660          | `iso9660`, `generic`, `iso`        | ISO 9660 / High Sierra    | Joliet/UTF-16BE, SUSP/Rock Ridge             |
+| Generic Raw               | GUI only                           | Raw sectors               | Entire CHD as single `image.iso`             |
 | CUE/BIN (Raw)             | `cuebin`, `cue`                    | Virtual                   | Raw 2352-byte sectors                        |
-| CUE/BIN (Cooked)          | GUI only                           | Virtual                   | 2048-byte sectors                            |
+| CUE/BIN (Cooked)          | `cuebin2048`, `cue2048`            | Virtual                   | 2048-byte sectors                            |
+| CUE/ISO                   | `cueiso`                           | Virtual                   | CUE sheet + ISO at 2048 bytes/sector         |
+| CUE/BIN/WAV               | `cuebinwav`, `cuewav`              | Virtual                   | CUE + BIN + WAV audio tracks                 |
+| CUE/ISO/WAV               | `cueisowav`                        | Virtual                   | CUE + ISO + WAV audio tracks                 |
 
 ---
 
@@ -116,41 +130,93 @@ If `<console_type>` is omitted in GUI mode, a dialog appears asking you to choos
 
 ```
 SimpleChdDrive.sln
-├── SimpleChdDrive.Core/               Shared library
-│   ├── CHD/                            MAME CHD reading (CHDSharpLib)
-│   │   ├── CHDFile.cs                  Public API — open, read hunks/bytes
-│   │   ├── CHDHeaders.cs               Header parsers for CHD V1-V5
-│   │   ├── CHDReaders.cs               Decompressor delegates (zlib, LZMA, FLAC, Huffman, Zstd)
-│   │   ├── Flac/                       CUETools FLAC decoder
-│   │   ├── LZMA/                       7-Zip SDK LZMA decoder
-│   │   └── Utils/                      BigEndian, CRC, Huffman, cdRom ECC
-│   ├── Parsers/                        Filesystem parsers (ported from C++ CHDMounter)
-│   │   ├── Iso9660Parser.cs            ISO 9660 / High Sierra / Joliet
-│   │   ├── DreamcastIsoParser.cs       GD-ROM specific ISO parser
-│   │   ├── XdvdfsParser.cs             Xbox XDVDFS binary-tree parser
-│   │   ├── ThreeDoParser.cs            3DO OperaFS block-based parser
-│   │   ├── CDiFsParser.cs              CD-i Green Book with interleaving
-│   │   ├── UdfParser.cs                UDF 1.02-2.60 (PS3/DVD/Blu-ray)
-│   │   ├── SectorReader.cs             LBA→CHD frame mapper + sector header detection
-│   │   ├── ChdContainer.cs             File-tree→VFS bridge + virtual CUE/BIN
-│   │   ├── ParserFactory.cs            ConsoleType → parser dispatch
-│   │   └── Systems/                    21 console wrapper classes
-│   ├── Services/                       DI container, logging, settings, mount interface
-│   ├── Logging/                        Serilog setup, diagnostic logger, error handler
-│   ├── Views/                          Shared UI (ConsoleSelectionWindow, AboutWindow)
-│   └── AppTheme.xaml                   Dark theme ResourceDictionary
+├── VideoGameFileSystemParser/             Standalone parser library (NuGet, cross-platform)
+│   ├── Interfaces/
+│   │   └── IConsoleParser.cs              Contract for console-specific parsers
+│   ├── Models/
+│   │   ├── ConsoleType.cs                 Enum: 31 console types
+│   │   ├── ConsoleInfo.cs                 record(ConsoleType, Name)
+│   │   ├── FileEntry.cs                   Flat file/directory entry
+│   │   ├── FsNode.cs                      Tree node with LBA, extents, symlinks, POSIX attrs
+│   │   └── TrackInfo.cs                   CHD track metadata
+│   └── Parsers/
+│       ├── Iso9660Parser.cs               ISO 9660 / High Sierra / Joliet / SUSP / Rock Ridge
+│       ├── UdfParser.cs                   UDF 1.02-2.60 (PS3/DVD/Blu-ray/Nuon)
+│       ├── XdvdfsParser.cs                Xbox XDVDFS binary-tree parser
+│       ├── ThreeDoParser.cs               3DO OperaFS block-based parser
+│       ├── CDiFsParser.cs                 CD-i Green Book with interleaving
+│       ├── HfsParser.cs                   Apple HFS/HFS+ catalog B-tree parser
+│       ├── PcFxIsoParser.cs               PC-FX dedicated byte-offset VD scanner
+│       ├── ChdContainer.cs                High-level API + virtual CUE/BIN/ISO/WAV export
+│       ├── SectorReader.cs                LBA→CHD frame mapper + sector header detection
+│       ├── ParserFactory.cs               ConsoleType → parser dispatch
+│       └── Systems/                       25 console wrapper classes
+│           ├── PlayStationParsers.cs       PS1, PS2, PS3, PS Auto-Detect
+│           ├── XboxParsers.cs             Xbox, Xbox 360
+│           ├── DreamcastAndOthers.cs      Dreamcast, CDi, 3DO, GenericIsoRaw, Nuon, Pippin
+│           ├── Iso9660ConsoleParsers.cs   PSP, Saturn, NeoGeo, Amiga, FM Towns, X68000, PC-98, Pico...
+│           ├── PcEngineCdParser.cs        PC Engine CD / TurboGrafx-CD
+│           └── PcFxIsoParser.cs           NEC PC-FX
 │
-├── SimpleChdDrive/                     WPF EXE — Dokan
-│   ├── ChdFs.cs                        IDokanOperations VFS implementation
-│   ├── Services/MountService.cs        Dokan mount/unmount lifecycle
-│   ├── App.xaml / App.xaml.cs          Entry point, service registration, args
-│   └── MainWindow.xaml / .cs           UI with menu, log, status bar
+├── SimpleChdDrive.Core/                   Shared library (WPF, services, views)
+│   ├── Interfaces/
+│   │   ├── ILoggingService.cs             Log collection with UI binding
+│   │   ├── IMountService.cs               Mount/unmount contract
+│   │   ├── ISettingsService.cs            Settings persistence
+│   │   └── IScreenshotService.cs          Screenshot capture
+│   ├── Services/
+│   │   ├── LoggingService.cs              WPF-dispatched ObservableCollection<LogEntry>
+│   │   ├── ServiceProvider.cs             ConcurrentDictionary DI container
+│   │   ├── SettingsService.cs             DPAPI-encrypted JSON settings
+│   │   ├── ConsoleTypeHelper.cs           CLI arg → ConsoleType mapping
+│   │   ├── DriveHelper.cs                 Auto-select drive letter M-Q
+│   │   ├── UpdateChecker.cs               GitHub releases version check
+│   │   ├── BugReportClient.cs             Error/warning reporting queue
+│   │   ├── StatsClient.cs                 Anonymous usage telemetry
+│   │   └── ScreenshotService.cs           Win32 foreground window capture
+│   ├── Logging/
+│   │   ├── AppLogger.cs                   Serilog configuration
+│   │   ├── DiagnosticLogger.cs            Temp-file logger with 7-day cleanup
+│   │   ├── ErrorLogger.cs                 Global unhandled exception handlers
+│   │   ├── BugReportSink.cs               Serilog sink → BugReportClient
+│   │   └── LogTextWriter.cs               Console → ILoggingService redirect
+│   ├── Views/
+│   │   ├── MainWindowBase.cs              Shared base class for Dokan/WinFsp UIs
+│   │   ├── ConsoleSelectionWindow.xaml    Console type selection dialog
+│   │   ├── SettingsWindow.xaml            Settings dialog
+│   │   └── AboutWindow.xaml               About dialog
+│   └── Themes/
+│       └── DarkTheme.xaml                 WPF-UI dark theme ResourceDictionary
 │
-└── SimpleChdDrive_WinFsp/              WPF EXE — WinFsp
-    ├── ChdFs.cs                        FileSystemBase VFS implementation
-    ├── Services/MountService.cs        WinFsp mount/unmount lifecycle
-    ├── App.xaml / App.xaml.cs          Entry point (includes WinFsp PATH fix)
-    └── MainWindow.xaml / .cs           Same UI as Dokan variant
+├── SimpleChdDrive/                        WPF EXE — Dokan
+│   ├── ChdFs.cs                           IDokanOperations VFS implementation
+│   ├── Services/MountService.cs           Dokan mount/unmount lifecycle
+│   ├── App.xaml / App.xaml.cs             Entry point, service registration, args
+│   └── MainWindow.xaml / .cs              UI (inherits MainWindowBase)
+│
+├── SimpleChdDrive_WinFsp/                 WPF EXE — WinFsp
+│   ├── ChdFs.cs                           FileSystemBase VFS implementation
+│   ├── Services/MountService.cs           WinFsp mount/unmount, cross-integrity admin
+│   ├── App.xaml / App.xaml.cs             Entry point (includes WinFsp PATH fix)
+│   └── MainWindow.xaml / .cs              UI (inherits MainWindowBase)
+│
+├── SimpleChdDrive_Tester/                 WPF EXE — Batch testing
+│   ├── Services/
+│   │   ├── TestRunnerService.cs           Batch CHD parsing with progress events
+│   │   └── PdfExportService.cs            QuestPDF report generation
+│   ├── Models/
+│   │   ├── TestResult.cs                  Per-file parse result record
+│   │   └── TestSummary.cs                 Aggregated statistics
+│   └── MainWindow.xaml / .cs              Test UI with PDF export
+│
+├── SimpleChdDrive.Core.Tests/             xUnit integration and unit tests
+│   ├── Parsers/                           Parser integration tests (20+ consoles)
+│   ├── Services/                          Service unit tests
+│   ├── Logging/                           Logging infrastructure tests
+│   └── Models/                            Model and enum tests
+│
+└── ChdDiagnoster/                         Standalone console diagnostic tool
+    └── Program.cs                         HFS parsing diagnostics
 ```
 
 ---
@@ -188,7 +254,7 @@ dotnet publish SimpleChdDrive\SimpleChdDrive.csproj -c Release -r win-arm64 --se
 
 ### CHD Reading
 
-CHD (Compressed Hunks of Data) is MAME's lossless compression format for CD/DVD/HDD images. SimpleChdDrive embeds a port of MAME's `libchdr` as CHDSharpLib, supporting all five CHD versions (V1-V5) and all compression codecs:
+CHD (Compressed Hunks of Data) is MAME's lossless compression format for CD/DVD/HDD images. SimpleChdDrive uses [CHDSharp](https://github.com/drpetersonfernandes/CHDSharp) to read all five CHD versions (V1-V5) and all compression codecs:
 
 - **General**: zlib (deflate), LZMA, FLAC (headerless, 16-bit stereo), dynamic Huffman, Zstd
 - **CD-sector**: CDZL (zlib), CDLZ (LZMA), CDFL (FLAC), CDZS (Zstd) — with ECC regeneration
@@ -215,6 +281,9 @@ Each parser reads raw 2048-byte sectors and reconstructs the directory tree in a
 | OperaFS (3DO)     | `01 5A 5A 5A 5A 5A 01`        | 0x48+      | Flags:0, BlockSize:4, Name:32, Avatars:64      |
 | CD-i (Green Book) | `CD-I ` / `CD-RTOS` / `CD001`  | 34+ bytes  | Extended attrs with file_number for interleaving |
 | UDF               | AVDP at sector 256, Tag ID=2   | variable   | ShortAd:8, LongAd:16 extent descriptors        |
+| HFS/HFS+          | `BD` (MDB) / `H+` (volume header) | variable  | Catalog B-tree with CNID-based hierarchy        |
+
+The ISO 9660 parser supports SUSP/Rock Ridge POSIX attributes (symlinks, Unix permissions, timestamps) and Joliet UTF-16BE filenames.
 
 ### VFS Operations
 
@@ -223,9 +292,10 @@ The `ChdContainer` bridges the parsed `FsNode` tree to the Dokan/WinFsp VFS laye
 - **Dokan**: `ChdFs` implements `IDokanOperations` — `CreateFile` resolves paths, `ReadFile` maps file offsets to sector reads, `FindFiles` lists directories, `GetVolumeInformation` reports "CHDFS" read-only volume.
 - **WinFsp**: `ChdFs` extends `FileSystemBase` — `Open` resolves paths and returns `FileEntry` as both file node and descriptor, `Read` copies sector data into native memory via `Marshal.Copy`, `ReadDirectoryEntry` enumerates children with `.` and `..`.
 
-For CUE/BIN mode, the container generates virtual `.cue` and `.bin` entries dynamically:
+For CUE/BIN/ISO/WAV modes, the container generates virtual entries dynamically:
 - The `.cue` file contains standard `FILE`, `TRACK`, and `INDEX` descriptors built from CHD track metadata.
-- The `.bin` file maps reads to raw sector data (2352 or 2048 bytes per sector) using the locked track context for correct LBA calculation.
+- The `.bin`/`.iso` file maps reads to raw sector data (2352 or 2048 bytes per sector).
+- `.wav` files are generated per audio track with standard WAV headers.
 
 For SingleFile mode, the container serves the entire decompressed CHD image as a single `image.iso` file via `CHDFile.Read()`.
 
@@ -235,12 +305,14 @@ For SingleFile mode, the container serves the entire decompressed CHD image as a
 
 | Package              | Version    | Purpose                                   |
 |----------------------|------------|-------------------------------------------|
+| `CHDSharp`           | 1.2.0      | MAME CHD format reader                    |
 | `DokanNet`           | 2.3.0.3    | Dokan virtual filesystem driver bindings   |
 | `winfsp.net`         | 2.2.26194  | WinFsp virtual filesystem driver bindings  |
+| `WPF-UI`             | 4.3.0      | Modern WPF theming (Fluent/Win11 style)    |
 | `Serilog`            | 4.4.0      | Structured logging                         |
 | `Serilog.Sinks.File` | 7.0.0      | File-based log output                      |
 | `Serilog.Sinks.Debug`| 3.0.0      | Visual Studio debug output logging         |
-| `ZstdSharp.Port`     | 0.8.8      | Zstandard compression (CHD codec)          |
+| `QuestPDF`           | 2026.7.1   | PDF report generation (Tester only)        |
 
 ---
 
