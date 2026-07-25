@@ -225,6 +225,26 @@ public class X68000Parser : IConsoleParser
 }
 
 /// <summary>
+/// Parses NEC PC-98 disc images using ISO 9660.
+/// </summary>
+public class Pc98Parser : Iso9660Wrapper
+{
+    public Pc98Parser(SectorReader reader) : base(reader)
+    {
+    }
+
+    public override ConsoleType GetConsoleType()
+    {
+        return ConsoleType.Pc98;
+    }
+
+    public override string GetConsoleName()
+    {
+        return "PC-98";
+    }
+}
+
+/// <summary>
 /// Parses Fujitsu FM Towns disc images using ISO 9660.
 /// </summary>
 public class FmTownsParser : Iso9660Wrapper

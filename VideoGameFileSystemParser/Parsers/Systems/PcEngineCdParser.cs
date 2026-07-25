@@ -10,6 +10,7 @@ public class PcEngineCdParser : IConsoleParser
 {
     private const string Signature = "PC Engine CD-ROM SYSTEM";
     private const string GamesExpressSignature = "GAMES EXPRESS CD CARD";
+    private const string PcEngineString = "PC ENGINE";
     private const uint ZeroScanLimit = 600;
 
     private readonly SectorReader _reader;
@@ -227,7 +228,11 @@ public class PcEngineCdParser : IConsoleParser
             return true;
 
         var gamesExpress = Encoding.ASCII.GetString(sector, 0, Math.Min(sector.Length, 128));
-        return gamesExpress.Contains(GamesExpressSignature, StringComparison.Ordinal);
+        if (gamesExpress.Contains(GamesExpressSignature, StringComparison.Ordinal))
+            return true;
+
+        var sectorText = Encoding.ASCII.GetString(sector, 0, sector.Length);
+        return sectorText.Contains(PcEngineString, StringComparison.OrdinalIgnoreCase);
     }
 
     private bool TryParseIso9660(FsNode rootNode, TrackInfo track, uint dataStart)

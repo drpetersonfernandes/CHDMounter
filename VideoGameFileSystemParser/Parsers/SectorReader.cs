@@ -754,12 +754,14 @@ public class SectorReader
                 currentLogicalLba += track.Pregap;
             }
 
-            var isStoredPregap = track is { Pregap: > 0 } &&
-                                 !track.Metadata.Contains("PGTYPE:V", StringComparison.OrdinalIgnoreCase);
+            var isStoredPregap = track.Pregap > 0;
             if (isStoredPregap)
             {
                 currentFileFrame += track.Pregap;
             }
+
+            track.StartLba = currentLogicalLba;
+            track.ChdOffset = currentFileFrame;
 
             currentLogicalLba += track.Frames;
             var padded = (track.Frames + 3) / 4 * 4;

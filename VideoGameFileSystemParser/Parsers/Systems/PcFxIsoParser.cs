@@ -39,16 +39,11 @@ public class PcFxIsoParser
         _isJoliet = false;
         _visitedDirs.Clear();
 
-        var effectiveTrackStart = track?.StartLba ?? 0;
+        var effectiveTrackStart = (track?.StartLba ?? 0) + (track?.Pregap ?? 0);
         var sectorData = new byte[2048];
 
         var vdOffsets = new List<uint> { 16, 17 };
-        if (track is { Pregap: > 0 })
-        {
-            vdOffsets.Add(track.Pregap + 16);
-            vdOffsets.Add(track.Pregap + 17);
-        }
-        else
+        if (effectiveTrackStart != (track?.StartLba ?? 0))
         {
             vdOffsets.Add(166);
             vdOffsets.Add(167);
@@ -99,7 +94,7 @@ public class PcFxIsoParser
 
         if (!foundPvd)
         {
-            var scanLimit = track is { Frames: > 0 } ? Math.Min(track.Frames, 2000u) : 2000u;
+            var scanLimit = track is { Frames: > 0 } ? Math.Min(track.Frames, 5000u) : 5000u;
             for (uint i = 0; i < scanLimit; i++)
             {
                 if (_reader.ReadSector(effectiveTrackStart + i, sectorData))

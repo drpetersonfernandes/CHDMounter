@@ -22,6 +22,50 @@ public class Pc98IntegrationTests
     }
 
     [Fact]
+    public void Pc98ConsoleParserParsesDisc()
+    {
+        var paths = GetPaths();
+        SequentialTestRunner.Run(_output, nameof(Pc98ConsoleParserParsesDisc), paths, (path, output) =>
+        {
+            var err = ChdFile.Open(path, out var chd);
+            if (err != ChdError.Chderrnone)
+            {
+                output.WriteLine($"SKIP: ChdFile.Open failed with {err}");
+                return true;
+            }
+
+            Assert.NotNull(chd);
+
+            try
+            {
+                var reader = new SectorReader(chd, chd.UnitBytes);
+                output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
+
+                var root = new FsNode();
+                var parser = new Pc98Parser(reader);
+
+                var ok = parser.Parse(root);
+                output.WriteLine($"Pc98Parser: {(ok ? "OK" : "FAILED")}");
+
+                Assert.True(ok, "Pc98Parser could not parse the disc");
+
+                int files = 0, dirs = 0;
+                ulong maxSize = 0;
+                Walk(root, ref files, ref dirs, ref maxSize);
+                output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
+
+                Assert.True(files > 1, $"Suspiciously few files parsed: {files}");
+            }
+            finally
+            {
+                chd.Dispose();
+            }
+
+            return true;
+        });
+    }
+
+    [Fact]
     public void Iso9660ParserParsesPc98Disc()
     {
         var paths = GetPaths();
@@ -125,7 +169,7 @@ public class Pc98IntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                if (!container.MountAndParse(ConsoleType.GenericIso9660))
+                if (!container.MountAndParse(ConsoleType.Pc98))
                 {
                     output.WriteLine("SKIP: MountAndParse failed (likely invalid CHD)");
                     return true;
@@ -163,7 +207,7 @@ public class Pc98IntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                if (!container.MountAndParse(ConsoleType.GenericIso9660))
+                if (!container.MountAndParse(ConsoleType.Pc98))
                 {
                     output.WriteLine("SKIP: MountAndParse failed (likely invalid CHD)");
                     return true;

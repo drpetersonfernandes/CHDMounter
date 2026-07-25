@@ -65,15 +65,10 @@ public class Iso9660Parser
         _suspSkip = 0;
         _visitedDirs.Clear();
 
-        var effectiveTrackStart = track?.StartLba ?? 0;
+        var effectiveTrackStart = (track?.StartLba ?? 0) + (track?.Pregap ?? 0);
 
         var vdOffsets = new List<uint> { 16, 17 };
-        if (track is { Pregap: > 0 })
-        {
-            vdOffsets.Add(track.Pregap + 16);
-            vdOffsets.Add(track.Pregap + 17);
-        }
-        else
+        if (effectiveTrackStart != (track?.StartLba ?? 0))
         {
             vdOffsets.Add(166);
             vdOffsets.Add(167);
@@ -105,7 +100,7 @@ public class Iso9660Parser
 
         if (!foundPvd)
         {
-            var scanLimit = track is { Frames: > 0 } ? Math.Min(track.Frames, 2000u) : 2000u;
+            var scanLimit = track is { Frames: > 0 } ? Math.Min(track.Frames, 5000u) : 5000u;
             for (uint i = 0; i < scanLimit; i++)
             {
                 if (_reader.ReadSector(effectiveTrackStart + i, sectorData) && sectorData.Length >= 16)
@@ -318,7 +313,15 @@ public class Iso9660Parser
                 if (recordLen == 0) break;
 
                 if (pos + recordLen > 2048 || recordLen < 34)
-                    break;
+                {
+                    pos += recordLen;
+                    if ((pos & 1) != 0)
+                    {
+                        pos++;
+                    }
+
+                    continue;
+                }
 
                 var xattrLen = sectorData[pos + 1];
                 var relLba = LeU32(sectorData, (int)(pos + 2));
@@ -334,7 +337,15 @@ public class Iso9660Parser
                 var nameOff = _isHighSierra ? 32 : 33;
 
                 if (nameOff + nameLen > recordLen || pos + nameOff + nameLen > 2048)
-                    break;
+                {
+                    pos += recordLen;
+                    if ((pos & 1) != 0)
+                    {
+                        pos++;
+                    }
+
+                    continue;
+                }
 
                 var name = DecodeName(sectorData, (int)pos + nameOff, nameLen);
 

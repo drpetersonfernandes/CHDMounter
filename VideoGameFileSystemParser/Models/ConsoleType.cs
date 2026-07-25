@@ -37,6 +37,8 @@ public enum ConsoleType
     PcEngineCd,
     /// <summary>NEC PC-FX format.</summary>
     PcFx,
+    /// <summary>NEC PC-98 format.</summary>
+    Pc98,
     /// <summary>PlayStation auto-detection mode.</summary>
     PlayStation,
     /// <summary>Sony PlayStation 1 format.</summary>
