@@ -55,7 +55,7 @@ public partial class App
             loggingService.Log("Run without args to open the UI and select filesystem type.");
             loggingService.Log("");
 
-            ErrorLoggerStatic.InitializeGlobalExceptionHandlers();
+            ErrorLogger.InitializeGlobalExceptionHandlers();
 
             StatsClient.SendStats();
             UpdateChecker.CheckForUpdates();
@@ -64,7 +64,7 @@ public partial class App
         {
             try
             {
-                ErrorLoggerStatic.LogErrorSync(ex, "Critical error during application startup");
+                ErrorLogger.LogErrorSync(ex, "Critical error during application startup");
             }
             catch
             {
@@ -98,28 +98,28 @@ public partial class App
         {
             try
             {
-                _logTextWriter?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter", true);
-            }
-
-            try
-            {
                 ServiceProvider.DisposeAllServices();
             }
             catch (Exception ex)
             {
-                ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose services", true);
+                ErrorLogger.ReportSilentException(ex, "App.OnExit: Failed to dispose services", true);
             }
 
             if (_originalConsoleOut != null) Console.SetOut(_originalConsoleOut);
             if (_originalConsoleError != null) Console.SetError(_originalConsoleError);
+
+            try
+            {
+                _logTextWriter?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter", true);
+            }
         }
         catch (Exception ex)
         {
-            ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Error during exit cleanup", true);
+            ErrorLogger.ReportSilentException(ex, "App.OnExit: Error during exit cleanup", true);
         }
 
         try

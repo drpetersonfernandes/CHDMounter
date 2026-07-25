@@ -20,7 +20,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Menu Grid.Row="0" Margin="0">
+        <Menu Grid.Row="0" Margin="0" ToolTip="Application menu bar">
             <MenuItem Header="File" ToolTip="File operations">
                 <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application" />
             </MenuItem>
@@ -32,7 +32,8 @@
         </Menu>
 
         <Border x:Name="UpdateBanner" Grid.Row="1" Background="{StaticResource AccentSecondaryBrush}"
-                Visibility="Collapsed" Padding="10,6">
+                Visibility="Collapsed" Padding="10,6"
+                ToolTip="Notification banner for available application updates">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -40,14 +41,17 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" x:Name="UpdateBannerText" Foreground="White" FontSize="12"
-                           VerticalAlignment="Center" />
+                           VerticalAlignment="Center"
+                           ToolTip="Description of the available update" />
                 <Button Grid.Column="1" x:Name="UpdateBannerButton" Content="Download" Width="80" Height="24"
                         Margin="10,0,0,0" Click="UpdateBannerButton_Click"
                         Foreground="White" Background="Transparent" BorderBrush="White" BorderThickness="1"
-                        FontSize="11" Cursor="Hand" />
+                        FontSize="11" Cursor="Hand"
+                        ToolTip="Download the latest version" />
                 <Button Grid.Column="2" Content="X" Width="24" Height="24" Margin="4,0,0,0"
                         Background="Transparent" Foreground="White" BorderThickness="0"
-                        FontWeight="Bold" Click="UpdateDismiss_Click" Cursor="Hand" />
+                        FontWeight="Bold" Click="UpdateDismiss_Click" Cursor="Hand"
+                        ToolTip="Dismiss this update notification" />
             </Grid>
         </Border>
 
@@ -98,7 +102,8 @@
         <!-- Results Summary Panel (collapsed until tests run) -->
         <Border Grid.Row="3" x:Name="SummaryPanel" Background="{StaticResource BgSecondaryBrush}"
                 BorderBrush="{StaticResource BorderPrimaryBrush}" BorderThickness="0,0,0,1"
-                Padding="12,10" Visibility="Collapsed">
+                Padding="12,10" Visibility="Collapsed"
+                ToolTip="Summary of test results">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -109,18 +114,21 @@
 
                 <TextBlock Grid.Column="0" x:Name="SummaryText" VerticalAlignment="Center"
                            FontSize="14" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextPrimaryBrush}" />
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           ToolTip="Overall test result summary" />
 
                 <Border Grid.Column="1" x:Name="SuccessBadge" Background="{StaticResource SuccessBrush}"
                         CornerRadius="4" Padding="10,3" Margin="16,0,0,0" VerticalAlignment="Center"
                         ToolTip="Number of successful tests">
-                    <TextBlock x:Name="SuccessCountText" Foreground="White" FontWeight="SemiBold" FontSize="13" />
+                    <TextBlock x:Name="SuccessCountText" Foreground="White" FontWeight="SemiBold" FontSize="13"
+                               ToolTip="Count of tests that passed" />
                 </Border>
 
                 <Border Grid.Column="1" x:Name="FailBadge" Background="{StaticResource ErrorBrush}"
                         CornerRadius="4" Padding="10,3" Margin="6,0,0,0" VerticalAlignment="Center"
                         ToolTip="Number of failed tests">
-                    <TextBlock x:Name="FailCountText" Foreground="White" FontWeight="SemiBold" FontSize="13" />
+                    <TextBlock x:Name="FailCountText" Foreground="White" FontWeight="SemiBold" FontSize="13"
+                               ToolTip="Count of tests that failed" />
                 </Border>
 
                 <Button Grid.Column="3" x:Name="ExportPdfButton" Content="Export PDF"
@@ -130,7 +138,8 @@
         </Border>
 
         <!-- Log Area -->
-        <Border Grid.Row="4" Margin="0">
+        <Border Grid.Row="4" Margin="0"
+                ToolTip="Container for the test output log">
             <RichTextBox x:Name="LogTextBox" IsReadOnly="True"
                          Background="{StaticResource BgPrimaryBrush}"
                          Foreground="{StaticResource TextSecondaryBrush}"
@@ -151,16 +160,17 @@
         <!-- Status Bar -->
         <Border Grid.Row="5" Background="{StaticResource BgSecondaryBrush}"
                 BorderBrush="{StaticResource BorderPrimaryBrush}" BorderThickness="0,1,0,0"
-                Padding="12,4">
+                Padding="12,4"
+                ToolTip="Status bar showing application state and elapsed time">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StatusBar Grid.Column="0" Background="Transparent" Foreground="{StaticResource TextMutedBrush}">
+                <StatusBar Grid.Column="0" Background="Transparent" Foreground="{StaticResource TextMutedBrush}" ToolTip="Current application status">
                     <StatusBarItem>
-                        <TextBlock x:Name="StatusText" Text="Ready" />
+                        <TextBlock x:Name="StatusText" Text="Ready" ToolTip="Displays the current status of the application" />
                     </StatusBarItem>
                 </StatusBar>
 

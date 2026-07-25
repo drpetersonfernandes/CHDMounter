@@ -5,17 +5,19 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses Sony PSP disc images using ISO 9660 on the first data track.
 /// </summary>
-public class PspParser : Iso9660Wrapper
+internal class PspParser : Iso9660Wrapper
 {
-    public PspParser(SectorReader reader) : base(reader)
+    internal PspParser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.Psp;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "PSP";
@@ -25,34 +27,33 @@ public class PspParser : Iso9660Wrapper
 /// <summary>
 /// Parses NEC PC-FX disc images using the dedicated PcFxIsoParser.
 /// </summary>
-public class PcFxParser : IConsoleParser
+internal class PcFxParser : IConsoleParser
 {
     private readonly SectorReader _reader;
     private readonly PcFxIsoParser _isoParser;
 
-    public PcFxParser(SectorReader reader)
+    internal PcFxParser(SectorReader reader)
     {
         _reader = reader;
         _isoParser = new PcFxIsoParser(reader);
     }
 
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.PcFx;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "PC-FX";
     }
 
-    /// <summary>
-/// Parses the first data track found in the reader using ISO 9660.
-/// </summary>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         foreach (var t in _reader.Tracks)
@@ -64,12 +65,7 @@ public class PcFxParser : IConsoleParser
         return _isoParser.Parse(rootNode);
     }
 
-    /// <summary>
-/// Parses the specified track using ISO 9660.
-/// </summary>
-/// <param name="track">The track to parse.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         return _isoParser.Parse(rootNode, track);
@@ -79,17 +75,19 @@ public class PcFxParser : IConsoleParser
 /// <summary>
 /// Parses Sega Genesis CD / Mega CD disc images using ISO 9660.
 /// </summary>
-public class SegaGenesisCdParser : Iso9660Wrapper
+internal class SegaGenesisCdParser : Iso9660Wrapper
 {
-    public SegaGenesisCdParser(SectorReader reader) : base(reader)
+    internal SegaGenesisCdParser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.SegaGenesisCd;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "Sega Genesis CD";
@@ -99,17 +97,19 @@ public class SegaGenesisCdParser : Iso9660Wrapper
 /// <summary>
 /// Parses Sega Saturn disc images using ISO 9660.
 /// </summary>
-public class SegaSaturnParser : Iso9660Wrapper
+internal class SegaSaturnParser : Iso9660Wrapper
 {
-    public SegaSaturnParser(SectorReader reader) : base(reader)
+    internal SegaSaturnParser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.Saturn;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "Saturn";
@@ -119,17 +119,19 @@ public class SegaSaturnParser : Iso9660Wrapper
 /// <summary>
 /// Parses SNK NeoGeo CD disc images using ISO 9660.
 /// </summary>
-public class NeoGeoCdParser : Iso9660Wrapper
+internal class NeoGeoCdParser : Iso9660Wrapper
 {
-    public NeoGeoCdParser(SectorReader reader) : base(reader)
+    internal NeoGeoCdParser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.NeoGeoCd;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "NeoGeo CD";
@@ -139,17 +141,19 @@ public class NeoGeoCdParser : Iso9660Wrapper
 /// <summary>
 /// Parses Commodore Amiga CD32 disc images using ISO 9660.
 /// </summary>
-public class AmigaCd32Parser : Iso9660Wrapper
+internal class AmigaCd32Parser : Iso9660Wrapper
 {
-    public AmigaCd32Parser(SectorReader reader) : base(reader)
+    internal AmigaCd32Parser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.AmigaCd32;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "Amiga CD32";
@@ -159,17 +163,19 @@ public class AmigaCd32Parser : Iso9660Wrapper
 /// <summary>
 /// Parses Commodore Amiga CD disc images using ISO 9660.
 /// </summary>
-public class AmigaCdParser : Iso9660Wrapper
+internal class AmigaCdParser : Iso9660Wrapper
 {
-    public AmigaCdParser(SectorReader reader) : base(reader)
+    internal AmigaCdParser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.AmigaCd;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "Amiga CD";
@@ -183,28 +189,33 @@ internal class X68000Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
-    public X68000Parser(SectorReader reader)
+    internal X68000Parser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.X68000;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "X68000";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         return ParseTrack(rootNode, FindDataTrack());
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var isoParser = new Iso9660Parser(_reader);
@@ -228,17 +239,19 @@ internal class X68000Parser : IConsoleParser
 /// <summary>
 /// Parses NEC PC-98 disc images using ISO 9660.
 /// </summary>
-public class Pc98Parser : Iso9660Wrapper
+internal class Pc98Parser : Iso9660Wrapper
 {
-    public Pc98Parser(SectorReader reader) : base(reader)
+    internal Pc98Parser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.Pc98;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "PC-98";
@@ -248,17 +261,19 @@ public class Pc98Parser : Iso9660Wrapper
 /// <summary>
 /// Parses Fujitsu FM Towns disc images using ISO 9660.
 /// </summary>
-public class FmTownsParser : Iso9660Wrapper
+internal class FmTownsParser : Iso9660Wrapper
 {
-    public FmTownsParser(SectorReader reader) : base(reader)
+    internal FmTownsParser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.FmTowns;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "FM Towns";
@@ -268,17 +283,19 @@ public class FmTownsParser : Iso9660Wrapper
 /// <summary>
 /// Parses Sega Pico disc images using ISO 9660.
 /// </summary>
-public class PicoParser : Iso9660Wrapper
+internal class PicoParser : Iso9660Wrapper
 {
-    public PicoParser(SectorReader reader) : base(reader)
+    internal PicoParser(SectorReader reader) : base(reader)
     {
     }
 
+    /// <inheritdoc />
     public override ConsoleType GetConsoleType()
     {
         return ConsoleType.Pico;
     }
 
+    /// <inheritdoc />
     public override string GetConsoleName()
     {
         return "Sega Pico";
@@ -289,27 +306,32 @@ public class PicoParser : Iso9660Wrapper
 /// Parses Apple Bandai Pippin disc images using HFS (Macintosh Hierarchical File System),
 /// falling back to HFS+, UDF, and ISO 9660 if HFS parsing fails.
 /// </summary>
-public class PippinParser : IConsoleParser
+internal class PippinParser : IConsoleParser
 {
     private readonly SectorReader _reader;
     private HfsParser? _hfsParser;
+
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    public PippinParser(SectorReader reader)
+    internal PippinParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.Pippin;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "Pippin";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         foreach (var t in _reader.Tracks)
@@ -321,6 +343,7 @@ public class PippinParser : IConsoleParser
         return ParseTrack(rootNode, FindDataTrack());
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         _hfsParser ??= new HfsParser(_reader);
@@ -346,41 +369,42 @@ public class PippinParser : IConsoleParser
     }
 }
 
-public abstract class Iso9660Wrapper : IConsoleParser
+internal abstract class Iso9660Wrapper : IConsoleParser
 {
     /// <summary>
-/// The sector reader used by this parser.
-/// </summary>
-private SectorReader Reader { get; }
+    /// The sector reader used by this parser.
+    /// </summary>
+    private SectorReader Reader { get; }
 
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
     /// <summary>
-/// Initializes a new instance of the Iso9660Wrapper class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
+    /// Initializes a new instance of the Iso9660Wrapper class.
+    /// </summary>
+    /// <param name="reader">The SectorReader to read sectors from.</param>
     protected Iso9660Wrapper(SectorReader reader)
     {
         Reader = reader;
     }
 
     /// <summary>
-/// Returns the ConsoleType that this parser handles.
-/// </summary>
-/// <returns>The console type.</returns>
+    /// Returns the ConsoleType that this parser handles.
+    /// </summary>
+    /// <returns>The console type.</returns>
     public abstract ConsoleType GetConsoleType();
 
     /// <summary>
-/// Returns the human-readable console name.
-/// </summary>
-/// <returns>The display name.</returns>
+    /// Returns the human-readable console name.
+    /// </summary>
+    /// <returns>The display name.</returns>
     public abstract string GetConsoleName();
 
     /// <summary>
-/// Parses the first data track found in the reader using ISO 9660.
-/// </summary>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses the first data track found in the reader using ISO 9660.
+    /// </summary>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         var track = FindDataTrack();
@@ -391,11 +415,11 @@ private SectorReader Reader { get; }
     }
 
     /// <summary>
-/// Parses the specified track using ISO 9660.
-/// </summary>
-/// <param name="track">The track to parse.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses the specified track using ISO 9660.
+    /// </summary>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <param name="track">The track to parse.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new Iso9660Parser(Reader);
@@ -403,10 +427,10 @@ private SectorReader Reader { get; }
     }
 
     /// <summary>
-/// Finds the first data track in the reader.
-/// </summary>
-/// <returns>The first data TrackInfo, or null.</returns>
-private TrackInfo? FindDataTrack()
+    /// Finds the first data track in the reader.
+    /// </summary>
+    /// <returns>The first data TrackInfo, or null.</returns>
+    private TrackInfo? FindDataTrack()
     {
         foreach (var t in Reader.Tracks)
             if (t.IsDataTrack)

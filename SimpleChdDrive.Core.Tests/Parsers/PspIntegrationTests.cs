@@ -139,13 +139,16 @@ public class PspIntegrationTests
                 var umdData = container.FindFile(@"\UMD_DATA.BIN");
                 {
                     var buf = new byte[2048];
-                    var bytesRead = container.ReadFile(umdData, 0, buf, 0, buf.Length);
-                    var title = Encoding.ASCII.GetString(buf, 0, Math.Min(bytesRead, 128)).TrimEnd('\0');
-                    output.WriteLine($"UMD_DATA.BIN ({bytesRead} bytes): '{title}'");
+                    if (umdData != null)
+                    {
+                        var bytesRead = container.ReadFile(umdData, 0, buf, 0, buf.Length);
+                        var title = Encoding.ASCII.GetString(buf, 0, Math.Min(bytesRead, 128)).TrimEnd('\0');
+                        output.WriteLine($"UMD_DATA.BIN ({bytesRead} bytes): '{title}'");
+                    }
                 }
 
                 var paramSfo = container.FindFile(@"\PSP_GAME\PARAM.SFO");
-                output.WriteLine($"PSP_GAME\\PARAM.SFO: FOUND ({paramSfo.Size:N0} bytes)");
+                if (paramSfo != null) output.WriteLine($"PSP_GAME\\PARAM.SFO: FOUND ({paramSfo.Size:N0} bytes)");
             }
             finally
             {

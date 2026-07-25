@@ -18,21 +18,21 @@ internal class ThreeDoParser
     private const uint FlagLastEntryInBlock = 0x40000000;
 
     /// <summary>
-/// Initializes a new instance of the ThreeDoParser class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
-    public ThreeDoParser(SectorReader reader)
+    /// Initializes a new instance of the ThreeDoParser class.
+    /// </summary>
+    /// <param name="reader">The SectorReader to read sectors from.</param>
+    internal ThreeDoParser(SectorReader reader)
     {
         _reader = reader;
     }
 
     /// <summary>
-/// Parses the Opera file system and builds the directory tree.
-/// </summary>
-/// <param name="track">Optional track.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
-    public bool Parse(FsNode rootNode, TrackInfo? track = null)
+    /// Parses the Opera file system and builds the directory tree.
+    /// </summary>
+    /// <param name="track">Optional track.</param>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
+    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
         if (track != null)

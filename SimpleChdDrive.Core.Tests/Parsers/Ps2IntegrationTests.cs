@@ -137,9 +137,12 @@ public class Ps2IntegrationTests
                 var systemCnf = container.FindFile(@"\SYSTEM.CNF");
                 {
                     var buf = new byte[256];
-                    var bytesRead = container.ReadFile(systemCnf, 0, buf, 0, buf.Length);
-                    var text = Encoding.ASCII.GetString(buf, 0, bytesRead);
-                    output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "").Replace("\n", " / ")}");
+                    if (systemCnf != null)
+                    {
+                        var bytesRead = container.ReadFile(systemCnf, 0, buf, 0, buf.Length);
+                        var text = Encoding.ASCII.GetString(buf, 0, bytesRead);
+                        output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "").Replace("\n", " / ")}");
+                    }
                 }
                 return true;
             }

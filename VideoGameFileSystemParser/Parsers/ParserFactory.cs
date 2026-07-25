@@ -16,7 +16,7 @@ public static class ParserFactory
     {
         return type switch
         {
-            ConsoleType.AmigaCd => new AmigaCdParser(reader),
+            ConsoleType.AmigaCd or ConsoleType.AmigaCdtv => new AmigaCdParser(reader),
             ConsoleType.AmigaCd32 => new AmigaCd32Parser(reader),
             ConsoleType.CDi => new CDiParser(reader),
             ConsoleType.Dreamcast => new DreamcastParser(reader),
@@ -56,7 +56,7 @@ public static class ParserFactory
             new ConsoleInfo(ConsoleType.ThreeDo, "3DO"),
             new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CD"),
             new ConsoleInfo(ConsoleType.AmigaCd32, "Amiga CD32"),
-            new ConsoleInfo(ConsoleType.AmigaCd, "Amiga CDTV"),
+            new ConsoleInfo(ConsoleType.AmigaCdtv, "Amiga CDTV"),
             new ConsoleInfo(ConsoleType.CDi, "CD-i"),
             new ConsoleInfo(ConsoleType.Dreamcast, "Dreamcast"),
             new ConsoleInfo(ConsoleType.SegaGenesisCd, "Genesis CD"),

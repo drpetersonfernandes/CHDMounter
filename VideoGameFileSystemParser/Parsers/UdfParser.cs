@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses UDF (Universal Disk Format) file systems. Supports metadata partitions, allocation descriptors, embedded data, and symlinks.
 /// </summary>
-public class UdfParser
+internal class UdfParser
 {
     private const int MaxDirectoryBytes = 64 * 1024 * 1024;
     private const int MaxDirectoryDepth = 64;
@@ -36,20 +36,20 @@ public class UdfParser
     }
 
     /// <summary>
-/// Initializes a new instance of the UdfParser class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
-    public UdfParser(SectorReader reader)
+    /// Initializes a new instance of the UdfParser class.
+    /// </summary>
+    /// <param name="reader">The SectorReader to read sectors from.</param>
+    internal UdfParser(SectorReader reader)
     {
         _reader = reader;
     }
 
     /// <summary>
-/// Parses the UDF file system, locating the AVDP and building the directory tree.
-/// </summary>
-/// <param name="track">Optional track.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses the UDF file system, locating the AVDP and building the directory tree.
+    /// </summary>
+    /// <param name="track">Optional track.</param>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         if (track is { Frames: > 0 })
@@ -139,7 +139,7 @@ public class UdfParser
         vdsLoc = 0;
         vdsLen = 0;
 
-        var totalSectors = _reader.UnitBytes > 0 ? _reader.TotalBytes / _reader.UnitBytes : 0;
+        var totalSectors = _reader.UnitBytes > 0 ? (uint)(_reader.TotalBytes / _reader.UnitBytes) : 0u;
         Span<uint> candidates = [256, totalSectors >= 257 ? totalSectors - 257 : 0, totalSectors > 0 ? totalSectors - 1 : 0];
 
         foreach (var lba in candidates)
@@ -174,34 +174,34 @@ public class UdfParser
                     maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = LeU16(lvd, off + 4) });
                     break;
                 case 2 when mapLen >= 64:
-                {
-                    var id = Encoding.ASCII.GetString(lvd, off + 5, 23).TrimEnd('\0', ' ');
-                    var partNum = LeU16(lvd, off + 38);
-
-                    switch (id)
                     {
-                        case "*UDF Metadata Partition":
-                            maps.Add(new PartitionMapRef
-                            {
-                                Kind = MapKind.Metadata,
-                                PartitionNumber = partNum,
-                                MetadataFileLoc = LeU32(lvd, off + 40),
-                                MetadataMirrorLoc = LeU32(lvd, off + 44)
-                            });
-                            break;
-                        case "*UDF Virtual Partition":
-                            maps.Add(new PartitionMapRef { Kind = MapKind.Virtual, PartitionNumber = partNum });
-                            break;
-                        case "*UDF Sparable Partition":
-                            maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = partNum });
-                            break;
-                        default:
-                            maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
-                            break;
-                    }
+                        var id = Encoding.ASCII.GetString(lvd, off + 5, 23).TrimEnd('\0', ' ');
+                        var partNum = LeU16(lvd, off + 38);
 
-                    break;
-                }
+                        switch (id)
+                        {
+                            case "*UDF Metadata Partition":
+                                maps.Add(new PartitionMapRef
+                                {
+                                    Kind = MapKind.Metadata,
+                                    PartitionNumber = partNum,
+                                    MetadataFileLoc = LeU32(lvd, off + 40),
+                                    MetadataMirrorLoc = LeU32(lvd, off + 44)
+                                });
+                                break;
+                            case "*UDF Virtual Partition":
+                                maps.Add(new PartitionMapRef { Kind = MapKind.Virtual, PartitionNumber = partNum });
+                                break;
+                            case "*UDF Sparable Partition":
+                                maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = partNum });
+                                break;
+                            default:
+                                maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
+                                break;
+                        }
+
+                        break;
+                    }
                 default:
                     maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
                     break;
@@ -282,22 +282,22 @@ public class UdfParser
                 return true;
 
             case MapKind.Metadata:
-            {
-                var remaining = lbn;
-                foreach (var ext in _metaExtents)
                 {
-                    var blocks = (uint)((ext.Size + _blockSize - 1) / _blockSize);
-                    if (remaining < blocks)
+                    var remaining = lbn;
+                    foreach (var ext in _metaExtents)
                     {
-                        lba = ext.Lba + remaining;
-                        return true;
+                        var blocks = (uint)((ext.Size + _blockSize - 1) / _blockSize);
+                        if (remaining < blocks)
+                        {
+                            lba = ext.Lba + remaining;
+                            return true;
+                        }
+
+                        remaining -= blocks;
                     }
 
-                    remaining -= blocks;
+                    return false;
                 }
-
-                return false;
-            }
 
             default:
                 return false;
@@ -349,57 +349,57 @@ public class UdfParser
         {
             // Short ADs: block numbers are relative to the partition the FE is recorded in
             case 0:
-            {
-                for (var off = 0; off + 8 <= allocDesc.Length; off += 8)
                 {
-                    var len = LeU32(allocDesc, off);
-                    var loc = LeU32(allocDesc, off + 4);
-                    var extType = len >> 30;
-                    len &= 0x3FFFFFFF;
-                    if (len == 0 || extType != 0) continue;
-                    if (!ResolveLba(loc, partRef, out var extLba)) continue;
-
-                    node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
-                    if (node.Lba == 0)
+                    for (var off = 0; off + 8 <= allocDesc.Length; off += 8)
                     {
-                        node.Lba = extLba;
-                    }
-                }
+                        var len = LeU32(allocDesc, off);
+                        var loc = LeU32(allocDesc, off + 4);
+                        var extType = len >> 30;
+                        len &= 0x3FFFFFFF;
+                        if (len == 0 || extType != 0) continue;
+                        if (!ResolveLba(loc, partRef, out var extLba)) continue;
 
-                break;
-            }
+                        node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
+                        if (node.Lba == 0)
+                        {
+                            node.Lba = extLba;
+                        }
+                    }
+
+                    break;
+                }
             // Long ADs: carry an explicit partition reference number
             case 1:
-            {
-                for (var off = 0; off + 16 <= allocDesc.Length; off += 16)
                 {
-                    var len = LeU32(allocDesc, off);
-                    var loc = LeU32(allocDesc, off + 4);
-                    var part = LeU16(allocDesc, off + 8);
-                    var extType = len >> 30;
-                    len &= 0x3FFFFFFF;
-                    if (len == 0 || extType != 0) continue;
-                    if (!ResolveLba(loc, part, out var extLba)) continue;
-
-                    node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
-                    if (node.Lba == 0)
+                    for (var off = 0; off + 16 <= allocDesc.Length; off += 16)
                     {
-                        node.Lba = extLba;
-                    }
-                }
+                        var len = LeU32(allocDesc, off);
+                        var loc = LeU32(allocDesc, off + 4);
+                        var part = LeU16(allocDesc, off + 8);
+                        var extType = len >> 30;
+                        len &= 0x3FFFFFFF;
+                        if (len == 0 || extType != 0) continue;
+                        if (!ResolveLba(loc, part, out var extLba)) continue;
 
-                break;
-            }
+                        node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
+                        if (node.Lba == 0)
+                        {
+                            node.Lba = extLba;
+                        }
+                    }
+
+                    break;
+                }
             // Embedded/inline data: file content lives inside the File Entry itself
             case 3:
-            {
-                if (node.Size > 2048 - adOffset) return false;
+                {
+                    if (node.Size > 2048 - adOffset) return false;
 
-                node.IsEmbedded = true;
-                node.Lba = feLba;
-                node.EmbeddedOffset = adOffset;
-                break;
-            }
+                    node.IsEmbedded = true;
+                    node.Lba = feLba;
+                    node.EmbeddedOffset = adOffset;
+                    break;
+                }
             default:
                 return !node.IsDirectory;
         }
@@ -528,11 +528,11 @@ public class UdfParser
             case 8:
                 return Encoding.Latin1.GetString(data, offset + 1, length - 1).TrimEnd('\0');
             case 16:
-            {
-                var name = Encoding.BigEndianUnicode.GetString(data, offset + 1, (length - 1) & ~1);
-                var nul = name.IndexOf('\0');
-                return nul >= 0 ? name[..nul] : name;
-            }
+                {
+                    var name = Encoding.BigEndianUnicode.GetString(data, offset + 1, (length - 1) & ~1);
+                    var nul = name.IndexOf('\0');
+                    return nul >= 0 ? name[..nul] : name;
+                }
             default:
                 return "";
         }

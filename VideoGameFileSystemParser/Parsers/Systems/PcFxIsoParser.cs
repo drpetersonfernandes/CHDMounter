@@ -15,12 +15,12 @@ internal class PcFxIsoParser
     private bool _isJoliet;
     private int _lbaOffset;
 
-    public PcFxIsoParser(SectorReader reader)
+    internal PcFxIsoParser(SectorReader reader)
     {
         _reader = reader;
     }
 
-    public void SetLbaOffset(int offset)
+    internal void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
     }

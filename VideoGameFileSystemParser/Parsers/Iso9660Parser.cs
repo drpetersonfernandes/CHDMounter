@@ -21,34 +21,34 @@ internal class Iso9660Parser
     private int _lbaOffset;
 
     /// <summary>
-/// Initializes a new instance of the Iso9660Parser class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
-/// <param name="scanWithinSector">If true, scans entire sectors byte-offset for VD signatures
-/// (handles raw-sector images where CD sync headers weren't fully stripped,
-/// e.g. some PC-FX and other CD-ROM dumps).</param>
-    public Iso9660Parser(SectorReader reader, bool scanWithinSector = false)
+    /// Initializes a new instance of the Iso9660Parser class.
+    /// </summary>
+    /// <param name="reader">The SectorReader to read sectors from.</param>
+    /// <param name="scanWithinSector">If true, scans entire sectors byte-offset for VD signatures
+    /// (handles raw-sector images where CD sync headers weren't fully stripped,
+    /// e.g. some PC-FX and other CD-ROM dumps).</param>
+    internal Iso9660Parser(SectorReader reader, bool scanWithinSector = false)
     {
         _reader = reader;
         _scanWithinSector = scanWithinSector;
     }
 
     /// <summary>
-/// Sets the LBA offset applied to all sector reads.
-/// </summary>
-/// <param name="offset">The LBA offset value.</param>
-    public void SetLbaOffset(int offset)
+    /// Sets the LBA offset applied to all sector reads.
+    /// </summary>
+    /// <param name="offset">The LBA offset value.</param>
+    internal void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
     }
 
     /// <summary>
-/// Parses the ISO 9660 file system, locating the PVD and building the directory tree.
-/// </summary>
-/// <param name="track">Optional track to restrict parsing to.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
-    public bool Parse(FsNode rootNode, TrackInfo? track = null)
+    /// Parses the ISO 9660 file system, locating the PVD and building the directory tree.
+    /// </summary>
+    /// <param name="track">Optional track to restrict parsing to.</param>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
+    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
 
@@ -290,12 +290,12 @@ internal class Iso9660Parser
     }
 
     /// <summary>
-/// Parses a directory sector chain recursively.
-/// </summary>
-/// <param name="dirNode">The directory node to populate.</param>
-/// <param name="trackStart">The LBA of the containing track.</param>
-/// <returns>true if parsing succeeded.</returns>
-    public bool ParseDirectory(FsNode dirNode, uint trackStart)
+    /// Parses a directory sector chain recursively.
+    /// </summary>
+    /// <param name="dirNode">The directory node to populate.</param>
+    /// <param name="trackStart">The LBA of the containing track.</param>
+    /// <returns>true if parsing succeeded.</returns>
+    internal bool ParseDirectory(FsNode dirNode, uint trackStart)
     {
         if (!_visitedDirs.Add(dirNode.Lba))
             return true;
@@ -434,7 +434,11 @@ internal class Iso9660Parser
                         {
                             var child = new FsNode
                             {
-                                Name = name, Lba = absoluteLba, Size = extentSize, IsDirectory = isDir, IsMultiExtent = isMulti,
+                                Name = name,
+                                Lba = absoluteLba,
+                                Size = extentSize,
+                                IsDirectory = isDir,
+                                IsMultiExtent = isMulti,
                                 FileNumber = xaFileNumber,
                                 IsInterleaved = xaInterleaved && _reader.UnitBytes >= 2352,
                                 ModifiedTime = ParseRecordTime(sectorData, (int)pos + 18)

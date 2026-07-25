@@ -4,10 +4,14 @@ using System.Text;
 using VideoGameFileSystemParser.Models;
 using VideoGameFileSystemParser.Parsers;
 
-string[] paths = [
-    @"G:\MAME\MAME Software List CHDs\pippin\gadget\gadget.chd",
-    @"G:\MAME\MAME Software List CHDs\pippin\compton\compton.chd"
-];
+if (args.Length == 0)
+{
+    Console.WriteLine("Usage: ChdDiagnoster <chd_file> [chd_file2] ...");
+    Console.WriteLine("Diagnoses CHD disc images and reports filesystem information.");
+    return;
+}
+
+string[] paths = args;
 
 foreach (var chdPath in paths)
 {

@@ -6,25 +6,25 @@ namespace SimpleChdDrive.Core.Tests.Parsers;
 
 internal static class SequentialTestRunner
 {
-    public const int DefaultMaxFilesPerCollection = 10;
-    public const int DefaultMaxDegreeOfParallelism = 3;
+    internal const int DefaultMaxFilesPerCollection = 10;
+    internal const int DefaultMaxDegreeOfParallelism = 3;
 
-    public static List<string> CollectPaths(params string[] directories)
+    internal static List<string> CollectPaths(params string[] directories)
     {
         return CollectPaths(DefaultMaxFilesPerCollection, directories);
     }
 
-    public static List<string> CollectPaths(IEnumerable<string> directories)
+    internal static List<string> CollectPaths(IEnumerable<string> directories)
     {
         return CollectPaths(DefaultMaxFilesPerCollection, directories);
     }
 
-    public static List<string> CollectPaths(int maxFiles, params string[] directories)
+    internal static List<string> CollectPaths(int maxFiles, params string[] directories)
     {
         return CollectPaths(maxFiles, (IEnumerable<string>)directories);
     }
 
-    public static List<string> CollectPaths(int maxFiles, IEnumerable<string> directories)
+    internal static List<string> CollectPaths(int maxFiles, IEnumerable<string> directories)
     {
         var paths = new List<string>();
         foreach (var dir in directories)
@@ -40,7 +40,7 @@ internal static class SequentialTestRunner
         return paths;
     }
 
-    public static void Run(ITestOutputHelper output, string testName, List<string> chdPaths,
+    internal static void Run(ITestOutputHelper output, string testName, List<string> chdPaths,
         Func<string, ITestOutputHelper, bool> testFunc)
     {
         var failures = new ConcurrentBag<(string path, string error)>();

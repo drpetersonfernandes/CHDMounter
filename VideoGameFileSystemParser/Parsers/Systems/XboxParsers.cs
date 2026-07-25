@@ -10,53 +10,53 @@ internal class XboxParser : IConsoleParser
     private readonly SectorReader _reader;
 
     /// <summary>
-/// Gets or sets whether to force parsing even when verification fails.
-/// </summary>
+    /// Gets or sets whether to force parsing even when verification fails.
+    /// </summary>
     public bool ForceMode { get; set; }
 
     /// <summary>
-/// Initializes a new instance of the XboxParser class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
-    public XboxParser(SectorReader reader)
+    /// Initializes a new instance of the XboxParser class.
+    /// </summary>
+    /// <param name="reader">The SectorReader to read sectors from.</param>
+    internal XboxParser(SectorReader reader)
     {
         _reader = reader;
     }
 
     /// <summary>
-/// Returns the ConsoleType that this parser handles.
-/// </summary>
-/// <returns>ConsoleType.Xbox</returns>
+    /// Returns the ConsoleType that this parser handles.
+    /// </summary>
+    /// <returns>ConsoleType.Xbox</returns>
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.Xbox;
     }
 
     /// <summary>
-/// Returns the human-readable console name.
-/// </summary>
-/// <returns>"Xbox"</returns>
+    /// Returns the human-readable console name.
+    /// </summary>
+    /// <returns>"Xbox"</returns>
     public string GetConsoleName()
     {
         return "Xbox";
     }
 
     /// <summary>
-/// Parses the first data track using the XDVDFS parser.
-/// </summary>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses the first data track using the XDVDFS parser.
+    /// </summary>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         return ParseTrack(rootNode, FindDataTrack());
     }
 
     /// <summary>
-/// Parses a specific track using the XDVDFS parser.
-/// </summary>
-/// <param name="track">The track to parse.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses a specific track using the XDVDFS parser.
+    /// </summary>
+    /// <param name="track">The track to parse.</param>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new XdvdfsParser(_reader);
@@ -82,49 +82,49 @@ internal class Xbox360Parser : IConsoleParser
     private readonly SectorReader _reader;
 
     /// <summary>
-/// Gets or sets whether to force parsing even when verification fails.
-/// </summary>
+    /// Gets or sets whether to force parsing even when verification fails.
+    /// </summary>
     public bool ForceMode { get; set; }
 
-    public Xbox360Parser(SectorReader reader)
+    internal Xbox360Parser(SectorReader reader)
     {
         _reader = reader;
     }
 
     /// <summary>
-/// Returns the ConsoleType that this parser handles.
-/// </summary>
-/// <returns>ConsoleType.Xbox</returns>
+    /// Returns the ConsoleType that this parser handles.
+    /// </summary>
+    /// <returns>ConsoleType.Xbox</returns>
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.Xbox360;
     }
 
     /// <summary>
-/// Returns the human-readable console name.
-/// </summary>
-/// <returns>"Xbox"</returns>
+    /// Returns the human-readable console name.
+    /// </summary>
+    /// <returns>"Xbox"</returns>
     public string GetConsoleName()
     {
         return "Xbox 360";
     }
 
     /// <summary>
-/// Parses the first data track using the XDVDFS parser.
-/// </summary>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses the first data track using the XDVDFS parser.
+    /// </summary>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         return ParseTrack(rootNode, FindDataTrack());
     }
 
     /// <summary>
-/// Parses a specific track using the XDVDFS parser.
-/// </summary>
-/// <param name="track">The track to parse.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses a specific track using the XDVDFS parser.
+    /// </summary>
+    /// <param name="track">The track to parse.</param>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new XdvdfsParser(_reader);

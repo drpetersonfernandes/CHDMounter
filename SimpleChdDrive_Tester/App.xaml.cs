@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using Serilog;
+using SimpleChdDrive.Core.Logging;
 
 namespace Tester;
 
@@ -25,7 +26,8 @@ public partial class App
             .WriteTo.File(LogFilePath,
                 formatProvider: CultureInfo.InvariantCulture,
                 rollingInterval: RollingInterval.Infinite,
-                outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}");
+                outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.Sink(new BugReportSink());
 
         Logger = loggerConfig.CreateLogger();
         Log.Logger = Logger;

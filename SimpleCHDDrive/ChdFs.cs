@@ -8,7 +8,7 @@ using DokanFileAccess = DokanNet.FileAccess;
 
 namespace SimpleChdDrive;
 
-internal class ChdFs : IDokanOperations, IDisposable
+internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
     private readonly ILoggingService _loggingService;
@@ -22,12 +22,9 @@ internal class ChdFs : IDokanOperations, IDisposable
     public NtStatus CreateFile(string fileName, DokanFileAccess access, FileShare share, FileMode mode,
         FileOptions options, FileAttributes attributes, IDokanFileInfo info)
     {
-        if (fileName == "\\")
-        {
-            fileName = "\\";
-        }
-
         var entry = _container.FindFile(fileName);
+        if (entry is null)
+            return DokanResult.FileNotFound;
 
         if (entry.IsDirectory)
         {
@@ -62,9 +59,18 @@ internal class ChdFs : IDokanOperations, IDisposable
         if (info.IsDirectory)
             return DokanResult.AccessDenied;
 
-        if (info.Context is not FileEntry entry)
+        FileEntry entry;
+        if (info.Context is FileEntry ctxEntry)
         {
-            entry = _container.FindFile(fileName);
+            entry = ctxEntry;
+        }
+        else
+        {
+            var found = _container.FindFile(fileName);
+            if (found is null)
+                return DokanResult.FileNotFound;
+
+            entry = found;
         }
 
         bytesRead = _container.ReadFile(entry, (ulong)offset, buffer, 0, buffer.Length);
@@ -76,6 +82,8 @@ internal class ChdFs : IDokanOperations, IDisposable
         fileInfo = new FileInformation();
 
         var entry = _container.FindFile(fileName);
+        if (entry is null)
+            return DokanResult.FileNotFound;
 
         fileInfo.Attributes = entry.IsDirectory
             ? FileAttributes.Directory
@@ -96,7 +104,11 @@ internal class ChdFs : IDokanOperations, IDisposable
 
         if (entries.Count == 0)
         {
-            _container.FindFile(fileName);
+            if (_container.FindFile(fileName) is null)
+            {
+                files = Array.Empty<FileInformation>();
+                return DokanResult.FileNotFound;
+            }
         }
 
         var result = new List<FileInformation>
@@ -149,8 +161,9 @@ internal class ChdFs : IDokanOperations, IDisposable
                 "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$",
                 RegexOptions.IgnoreCase);
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"WildcardMatch error: {ex.Message}");
             return false;
         }
     }
@@ -263,6 +276,9 @@ internal class ChdFs : IDokanOperations, IDisposable
         try
         {
             var entry = _container.FindFile(fileName);
+            if (entry is null)
+                return DokanResult.FileNotFound;
+
             var isDir = entry.IsDirectory;
 
             var everyoneSid = new SecurityIdentifier("S-1-1-0");
@@ -286,8 +302,9 @@ internal class ChdFs : IDokanOperations, IDisposable
 
             return DokanResult.Success;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"GetFileSecurity error: {ex.Message}");
             return DokanResult.Error;
         }
     }
@@ -301,5 +318,11 @@ internal class ChdFs : IDokanOperations, IDisposable
     {
         _container.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _container.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

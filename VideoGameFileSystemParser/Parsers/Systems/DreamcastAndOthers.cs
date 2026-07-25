@@ -6,28 +6,33 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses Sega Dreamcast GD-ROM disc images. Prefers tracks containing the IP.BIN boot sector signature.
 /// </summary>
-public class DreamcastParser : IConsoleParser
+internal class DreamcastParser : IConsoleParser
 {
     private const string IpBinSignature = "SEGA SEGAKATANA ";
 
     private readonly SectorReader _reader;
+
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    public DreamcastParser(SectorReader reader)
+    internal DreamcastParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.Dreamcast;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "Dreamcast";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         var dataTracks = new List<TrackInfo>();
@@ -49,6 +54,7 @@ public class DreamcastParser : IConsoleParser
         return false;
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var temp = new FsNode();
@@ -88,28 +94,34 @@ public class DreamcastParser : IConsoleParser
 internal class CDiParser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    public CDiParser(SectorReader reader)
+    internal CDiParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.CDi;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "CD-i";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         return ParseTrack(rootNode, FindDataTrack());
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new CDiFsParser(_reader);
@@ -139,28 +151,34 @@ internal class CDiParser : IConsoleParser
 internal class ThreeDoConsoleParser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    public ThreeDoConsoleParser(SectorReader reader)
+    internal ThreeDoConsoleParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.ThreeDo;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "3DO";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         return ParseTrack(rootNode, FindDataTrack());
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new ThreeDoParser(_reader);
@@ -187,26 +205,31 @@ internal class ThreeDoConsoleParser : IConsoleParser
 /// <summary>
 /// Provides raw sector passthrough access, exposing the image as "image.iso".
 /// </summary>
-public class GenericIsoRawParser : IConsoleParser
+internal class GenericIsoRawParser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    public GenericIsoRawParser(SectorReader reader)
+    internal GenericIsoRawParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.GenericIsoRaw;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "Generic ISO Raw";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         rootNode.Name = "/";
@@ -223,6 +246,7 @@ public class GenericIsoRawParser : IConsoleParser
         return true;
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         return Parse(rootNode);
@@ -232,26 +256,31 @@ public class GenericIsoRawParser : IConsoleParser
 /// <summary>
 /// Generic ISO 9660 parser for standard data discs without console-specific handling.
 /// </summary>
-public class GenericIso9660Parser : IConsoleParser
+internal class GenericIso9660Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    public GenericIso9660Parser(SectorReader reader)
+    internal GenericIso9660Parser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.GenericIso9660;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "Generic ISO 9660";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         var track = FindDataTrack();
@@ -261,6 +290,7 @@ public class GenericIso9660Parser : IConsoleParser
         return ParseTrack(rootNode, track);
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var parser = new Iso9660Parser(_reader);
@@ -283,28 +313,34 @@ public class GenericIso9660Parser : IConsoleParser
 internal class NuonParser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
+    /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    public NuonParser(SectorReader reader)
+    internal NuonParser(SectorReader reader)
     {
         _reader = reader;
     }
 
+    /// <inheritdoc />
     public ConsoleType GetConsoleType()
     {
         return ConsoleType.Nuon;
     }
 
+    /// <inheritdoc />
     public string GetConsoleName()
     {
         return "Nuon";
     }
 
+    /// <inheritdoc />
     public bool Parse(FsNode rootNode)
     {
         return ParseTrack(rootNode, FindDataTrack());
     }
 
+    /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
         var udfParser = new UdfParser(_reader);

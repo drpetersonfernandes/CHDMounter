@@ -3,11 +3,26 @@ using SerilogLog = Serilog.Log;
 
 namespace SimpleChdDrive.Core.Logging;
 
+/// <summary>
+/// Provides diagnostic logging initialization, log file path management, and log cleanup functionality.
+/// </summary>
 public static class DiagnosticLogger
 {
+    /// <summary>
+    /// Gets the path to the current log file, or <c>null</c> if not initialized.
+    /// </summary>
     public static string? LogFilePath { get; private set; }
+
+    /// <summary>
+    /// Gets the application data folder path where log files are stored.
+    /// </summary>
     public static string AppDataLogFolder { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// Gets the application data folder path for the specified application name.
+    /// </summary>
+    /// <param name="appName">The application name used as a subfolder under LocalApplicationData.</param>
+    /// <returns>The full path to the application data folder.</returns>
     public static string GetAppDataFolder(string appName)
     {
         return Path.Combine(
@@ -15,6 +30,10 @@ public static class DiagnosticLogger
             appName);
     }
 
+    /// <summary>
+    /// Initializes the diagnostic logger, creating the log directory and configuring Serilog.
+    /// </summary>
+    /// <param name="appName">The application name used for the log folder path. Defaults to "SimpleChdDrive".</param>
     public static void Initialize(string appName = "SimpleChdDrive")
     {
         AppDataLogFolder = Path.Combine(GetAppDataFolder(appName), "logs");
@@ -23,6 +42,9 @@ public static class DiagnosticLogger
         AppLogger.Initialize(LogFilePath);
     }
 
+    /// <summary>
+    /// Deletes log files older than 7 days from the application data log folder.
+    /// </summary>
     public static void CleanupOldLogs()
     {
         try
@@ -52,12 +74,16 @@ public static class DiagnosticLogger
         }
     }
 
+    /// <summary>
+    /// Gets the application data log folder path for the current application.
+    /// </summary>
+    /// <returns>The full path to the log folder.</returns>
     public static string GetAppDataFolderForCurrentApp()
     {
         return AppDataLogFolder;
     }
 
-    public static void LogSection(string section)
+    internal static void LogSection(string section)
     {
         var line = new string('=', 60);
         Log(line);
@@ -65,7 +91,7 @@ public static class DiagnosticLogger
         Log(line);
     }
 
-    public static void Log(string message)
+    internal static void Log(string message)
     {
         Debug.WriteLine($"[DIAG] {message}");
         SerilogLog.Debug(message);

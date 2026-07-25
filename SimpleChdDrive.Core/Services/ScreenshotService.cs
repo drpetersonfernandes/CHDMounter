@@ -4,14 +4,17 @@ using System.Runtime.InteropServices;
 
 namespace SimpleChdDrive.Core.Services;
 
+/// <summary>
+/// Captures screenshots of the foreground window and saves them as PNG files.
+/// </summary>
 public class ScreenshotService : IScreenshotService
 {
     private readonly ILoggingService _loggingService;
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr GetForegroundWindow();
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetWindowRect(IntPtr hWnd, out Rect lpRect);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -23,11 +26,18 @@ public class ScreenshotService : IScreenshotService
         public int Bottom;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ScreenshotService"/> class.
+    /// </summary>
+    /// <param name="loggingService">The logging service for recording screenshot results.</param>
     public ScreenshotService(ILoggingService loggingService)
     {
         _loggingService = loggingService;
     }
 
+    /// <summary>
+    /// Takes a screenshot of the current foreground window and saves it to the local application data folder.
+    /// </summary>
     public void TakeScreenshot()
     {
         try

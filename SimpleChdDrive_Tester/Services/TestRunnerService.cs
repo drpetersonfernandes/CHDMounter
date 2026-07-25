@@ -195,6 +195,7 @@ internal sealed class TestRunnerService
             order++;
             size /= 1024;
         }
+
         return $"{size:0.##} {sizes[order]}";
     }
 }

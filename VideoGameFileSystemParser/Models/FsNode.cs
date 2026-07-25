@@ -58,20 +58,62 @@ public class FsNode
     /// The byte offset within the sector for embedded data.
     /// </summary>
     public uint EmbeddedOffset { get; set; }
+    /// <summary>
+    /// The last modification timestamp, if available from the file system.
+    /// </summary>
     public DateTime? ModifiedTime { get; set; }
+
+    /// <summary>
+    /// The creation timestamp, if available from the file system.
+    /// </summary>
     public DateTime? CreatedTime { get; set; }
+
+    /// <summary>
+    /// The last access timestamp, if available from the file system.
+    /// </summary>
     public DateTime? AccessedTime { get; set; }
+
+    /// <summary>
+    /// The POSIX file mode bits (permissions and type), if available.
+    /// </summary>
     public uint? UnixMode { get; set; }
+
+    /// <summary>
+    /// The POSIX user ID of the file owner, if available.
+    /// </summary>
     public uint? Uid { get; set; }
+
+    /// <summary>
+    /// The POSIX group ID of the file owner, if available.
+    /// </summary>
     public uint? Gid { get; set; }
+
+    /// <summary>
+    /// The inode number, if available from the file system.
+    /// </summary>
     public uint? Inode { get; set; }
+
+    /// <summary>
+    /// The number of hard links to this node, if available.
+    /// </summary>
     public uint? LinkCount { get; set; }
     /// <summary>
     /// The type of this node (file, directory, or symlink).
     /// </summary>
     public FsNodeType NodeType { get; set; } = FsNodeType.File;
+    /// <summary>
+    /// The target path of the symbolic link, if this node is a symlink.
+    /// </summary>
     public string? SymlinkTarget { get; set; }
+
+    /// <summary>
+    /// The list of contiguous data extents that make up this node's data.
+    /// </summary>
     public List<FsExtent> Extents { get; set; } = [];
+
+    /// <summary>
+    /// The child nodes of this directory node.
+    /// </summary>
     public List<FsNode> Children { get; set; } = [];
 }
 

@@ -49,6 +49,9 @@ public class FileEntry
     /// Whether the data is embedded within a file entry sector.
     /// </summary>
     public bool IsEmbedded { get; set; }
+    /// <summary>
+    /// The list of contiguous data extents that make up this file's data.
+    /// </summary>
     public List<FileExtent> Extents { get; set; } = [];
 }
 

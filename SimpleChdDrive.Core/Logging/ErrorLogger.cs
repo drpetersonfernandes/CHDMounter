@@ -2,9 +2,12 @@ using Serilog;
 
 namespace SimpleChdDrive.Core.Logging;
 
-public static class ErrorLoggerStatic
+/// <summary>
+/// Provides global exception handling and centralized error logging for unhandled exceptions.
+/// </summary>
+public static class ErrorLogger
 {
-    public static void InitializeGlobalExceptionHandlers()
+    internal static void InitializeGlobalExceptionHandlers()
     {
         AppDomain.CurrentDomain.UnhandledException += static (_, args) =>
         {
@@ -19,7 +22,7 @@ public static class ErrorLoggerStatic
         };
     }
 
-    public static void LogErrorSync(Exception ex, string context)
+    internal static void LogErrorSync(Exception ex, string context)
     {
         try
         {
@@ -33,7 +36,7 @@ public static class ErrorLoggerStatic
         }
     }
 
-    public static void ReportSilentException(Exception ex, string context, bool includeStackTrace)
+    internal static void ReportSilentException(Exception ex, string context, bool includeStackTrace)
     {
         try
         {

@@ -9,7 +9,7 @@ using VideoGameFileSystemParser.Parsers;
 namespace SimpleChdDrive_WinFsp.Services;
 #pragma warning restore CA1707
 
-internal class MountService : IMountService, IDisposable
+internal class MountService : IMountService
 {
     private readonly ILoggingService _loggingService;
     private FileSystemHost? _host;
@@ -19,7 +19,7 @@ internal class MountService : IMountService, IDisposable
     public bool IsMounted { get; private set; }
     public string MountPoint { get; private set; } = "";
 
-    public MountService(ILoggingService loggingService)
+    internal MountService(ILoggingService loggingService)
     {
         _loggingService = loggingService;
     }
@@ -125,6 +125,7 @@ internal class MountService : IMountService, IDisposable
         _host = null;
         _currentFs?.Dispose();
         _currentFs = null;
+        _container?.Dispose();
         _container = null;
         IsMounted = false;
         MountPoint = "";
@@ -180,5 +181,11 @@ internal class MountService : IMountService, IDisposable
     {
         Unmount();
         GC.SuppressFinalize(this);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
     }
 }

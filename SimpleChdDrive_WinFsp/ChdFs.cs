@@ -10,7 +10,7 @@ using FileInfo = Fsp.Interop.FileInfo;
 namespace SimpleChdDrive_WinFsp;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal sealed class ChdFs : FileSystemBase, IDisposable
+internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
 
@@ -61,6 +61,8 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
         NormalizedName = FileName;
 
         var entry = _container.FindFile(FileName);
+        if (entry is null)
+            return STATUS_OBJECT_NAME_NOT_FOUND;
 
         NormalizedName = entry.Name;
         FileNode = entry;
@@ -178,6 +180,12 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
         ref byte[] SecurityDescriptor)
     {
         var entry = _container.FindFile(FileName);
+        if (entry is null)
+        {
+            FileAttributes = 0;
+            return STATUS_OBJECT_NAME_NOT_FOUND;
+        }
+
         FileAttributes = (uint)(entry.IsDirectory
             ? System.IO.FileAttributes.Directory
             : System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReadOnly);
@@ -214,5 +222,11 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
     public void Dispose()
     {
         _container.Dispose();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _container.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

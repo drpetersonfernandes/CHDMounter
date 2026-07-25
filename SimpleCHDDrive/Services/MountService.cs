@@ -7,7 +7,7 @@ using VideoGameFileSystemParser.Parsers;
 
 namespace SimpleChdDrive.Services;
 
-internal class MountService : IMountService, IDisposable
+internal class MountService : IMountService
 {
     private readonly ILoggingService _loggingService;
     private DokanInstance? _dokanInstance;
@@ -83,8 +83,14 @@ internal class MountService : IMountService, IDisposable
         _loggingService.Log($"Unmounting {MountPoint}...");
         if (_dokanInstance != null)
         {
-            try { _dokanInstance.Dispose(); }
-            catch (Exception ex) { _loggingService.LogError($"Error during unmount: {ex.Message}"); }
+            try
+            {
+                _dokanInstance.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error during unmount: {ex.Message}");
+            }
         }
 
         _dokanInstance = null;
@@ -101,6 +107,12 @@ internal class MountService : IMountService, IDisposable
         Unmount();
         GC.SuppressFinalize(this);
     }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
+    }
 }
 
 internal class DokanPrefixedLogger : ILogger
@@ -108,7 +120,7 @@ internal class DokanPrefixedLogger : ILogger
     private readonly ILoggingService _loggingService;
     public bool DebugEnabled => false;
 
-    public DokanPrefixedLogger(ILoggingService loggingService)
+    internal DokanPrefixedLogger(ILoggingService loggingService)
     {
         _loggingService = loggingService;
     }

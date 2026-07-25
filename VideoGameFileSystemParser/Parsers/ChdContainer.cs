@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 using CHDSharp;
@@ -9,7 +10,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// Opens and manages a CHD disc image, providing file system access via console-specific parsers
 /// or virtual CUE/BIN export for raw image access.
 /// </summary>
-public class ChdContainer : IDisposable
+public class ChdContainer : IDisposable, IAsyncDisposable
 {
     private const uint SectorSize = 2048;
     private const uint InvalidHandle = uint.MaxValue;
@@ -22,6 +23,7 @@ public class ChdContainer : IDisposable
     private readonly object _poolLock = new();
     private bool _poolShutdown;
     private readonly string _chdPath;
+    private uint _rootHandle;
 
     private ChdFile? _primaryChd;
 
@@ -172,17 +174,17 @@ public class ChdContainer : IDisposable
     /// Builds the internal file entry table from a parsed <see cref="FsNode"/> tree.
     /// </summary>
     /// <param name="rootNode">The root node of the parsed file system tree.</param>
-    public void BuildFromFsNode(FsNode rootNode)
+    internal void BuildFromFsNode(FsNode rootNode)
     {
         _entries.Clear();
         _parentHandles.Clear();
         _entryMap.Clear();
 
         var rootEntry = new FileEntry { Name = "\\", FullPath = "\\", Lba = rootNode.Lba, Size = rootNode.Size, IsDirectory = true };
-        var rootHandle = RegisterEntry(rootEntry, InvalidHandle);
+        _rootHandle = RegisterEntry(rootEntry, InvalidHandle);
 
         foreach (var child in rootNode.Children)
-            AddFsNodeRecursive(child, rootHandle, "\\");
+            AddFsNodeRecursive(child, _rootHandle, "\\");
     }
 
     private void AddFsNodeRecursive(FsNode node, uint parentHandle, string parentPath)
@@ -191,9 +193,16 @@ public class ChdContainer : IDisposable
 
         var entry = new FileEntry
         {
-            Name = node.Name, FullPath = currentPath, Lba = node.Lba, Size = node.Size,
-            IsDirectory = node.IsDirectory, FileNumber = node.FileNumber, IsInterleaved = node.IsInterleaved,
-            IsRawPassthrough = node.IsRawPassthrough, IsEmbedded = node.IsEmbedded, Offset = node.EmbeddedOffset
+            Name = node.Name,
+            FullPath = currentPath,
+            Lba = node.Lba,
+            Size = node.Size,
+            IsDirectory = node.IsDirectory,
+            FileNumber = node.FileNumber,
+            IsInterleaved = node.IsInterleaved,
+            IsRawPassthrough = node.IsRawPassthrough,
+            IsEmbedded = node.IsEmbedded,
+            Offset = node.EmbeddedOffset
         };
 
         if (node.ModifiedTime.HasValue)
@@ -266,10 +275,39 @@ public class ChdContainer : IDisposable
     /// </summary>
     /// <param name="path">The full path to search for (e.g., "\GAME\DATA.BIN").</param>
     /// <returns>The matching <see cref="FileEntry"/>, or <c>null</c> if not found.</returns>
-    public FileEntry FindFile(string path)
+    public FileEntry? FindFile(string path)
     {
         var key = MakeEntryKey(path);
-        return _entryMap.TryGetValue(key, out var handle) ? _entries[(int)handle] : null!;
+        return _entryMap.TryGetValue(key, out var handle) ? _entries[(int)handle] : null;
+    }
+
+    /// <summary>
+    /// Attempts to find a file or directory entry by its full path.
+    /// </summary>
+    /// <param name="path">The full path to search for.</param>
+    /// <param name="entry">When successful, the matching <see cref="FileEntry"/>.</param>
+    /// <param name="error">When not found, a description of why (e.g., "not found" or "container disposed").</param>
+    /// <returns><c>true</c> if the entry was found; otherwise <c>false</c>.</returns>
+    public bool TryFindFile(string path, out FileEntry? entry, out string? error)
+    {
+        if (_poolShutdown)
+        {
+            entry = null;
+            error = "Container is disposed.";
+            return false;
+        }
+
+        var key = MakeEntryKey(path);
+        if (_entryMap.TryGetValue(key, out var handle))
+        {
+            entry = _entries[(int)handle];
+            error = null;
+            return true;
+        }
+
+        entry = null;
+        error = $"Path not found: {path}";
+        return false;
     }
 
     private static string MakeEntryKey(string path)
@@ -354,12 +392,13 @@ public class ChdContainer : IDisposable
 
         reader.SetTrack(null);
 
+        var sec = ArrayPool<byte>.Shared.Rent((int)SectorSize);
         try
         {
             var totalRead = 0;
             if (entry.IsEmbedded)
             {
-                var sec = new byte[SectorSize];
+                Array.Clear(sec, 0, (int)SectorSize);
                 if (!reader.ReadSector(entry.Lba, sec)) return 0;
 
                 var start = entry.Offset + offset;
@@ -395,7 +434,7 @@ public class ChdContainer : IDisposable
 
                     var secNum = baseLba + (uint)(offsetInExtent / SectorSize);
                     var secOff = (uint)(offsetInExtent % SectorSize);
-                    var sec = new byte[SectorSize];
+                    Array.Clear(sec, 0, (int)SectorSize);
                     if (!reader.ReadSector(secNum, sec)) break;
 
                     var chunk = Math.Min((int)(SectorSize - secOff), bytesToRead - totalRead);
@@ -414,7 +453,7 @@ public class ChdContainer : IDisposable
                     psec++;
                     if (fn != entry.FileNumber) continue;
 
-                    var sec = new byte[SectorSize];
+                    Array.Clear(sec, 0, (int)SectorSize);
                     if (!reader.ReadSector(psec - 1, sec)) break;
 
                     var toCopy = Math.Min((int)SectorSize, bytesToRead - totalRead);
@@ -427,6 +466,7 @@ public class ChdContainer : IDisposable
         }
         finally
         {
+            ArrayPool<byte>.Shared.Return(sec);
             ReleaseReader(reader);
         }
     }
@@ -578,7 +618,7 @@ public class ChdContainer : IDisposable
             Size = (ulong)_cueText.Length,
             IsDirectory = false
         };
-        RegisterEntry(cueEntry, 0);
+        RegisterEntry(cueEntry, _rootHandle);
 
         if (hasDataTracks)
         {
@@ -590,7 +630,7 @@ public class ChdContainer : IDisposable
                 Size = _cueBinSize,
                 IsDirectory = false
             };
-            RegisterEntry(dataEntry, 0);
+            RegisterEntry(dataEntry, _rootHandle);
         }
 
         if (isWavMode)
@@ -609,7 +649,7 @@ public class ChdContainer : IDisposable
                         Size = wavTotalSize,
                         IsDirectory = false
                     };
-                    RegisterEntry(wavEntry, 0);
+                    RegisterEntry(wavEntry, _rootHandle);
                 }
             }
         }
@@ -633,6 +673,8 @@ public class ChdContainer : IDisposable
     private static byte[] BuildWavHeader(ulong pcmDataSize)
     {
         var header = new byte[44];
+        if (pcmDataSize > uint.MaxValue - 36)
+            pcmDataSize = (ulong)(uint.MaxValue - 36);
         var riffSize = (uint)(36 + pcmDataSize);
 
         Encoding.ASCII.GetBytes("RIFF", 0, 4, header, 0);
@@ -805,7 +847,8 @@ public class ChdContainer : IDisposable
     {
         lock (_poolLock)
         {
-            if (_poolShutdown) return null!;
+            if (_poolShutdown)
+                throw new ObjectDisposedException(nameof(ChdContainer));
 
             if (_availableReaders.Count > 0)
             {
@@ -815,7 +858,16 @@ public class ChdContainer : IDisposable
             }
         }
 
-        return _readerPool.Count > 0 ? _readerPool[0] : null!;
+        if (_primaryChd == null)
+            throw new InvalidOperationException("CHD container is not opened.");
+
+        var newReader = new SectorReader(_primaryChd, UnitBytes);
+        lock (_poolLock)
+        {
+            _readerPool.Add(newReader);
+        }
+
+        return newReader;
     }
 
     private void ReleaseReader(SectorReader reader)
@@ -836,11 +888,22 @@ public class ChdContainer : IDisposable
             _poolShutdown = true;
         }
 
+        foreach (var reader in _readerPool)
+            reader.Dispose();
         _readerPool.Clear();
         _availableReaders.Clear();
         _cachedTracks = null;
         _primaryChd?.Dispose();
 
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Asynchronously disposes the container, releasing all readers and the underlying CHD file.
+    /// </summary>
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
     }
 }

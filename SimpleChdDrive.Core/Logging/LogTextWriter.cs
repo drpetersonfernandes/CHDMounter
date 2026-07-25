@@ -8,7 +8,7 @@ internal class LogTextWriter : TextWriter
 
     public override Encoding Encoding => Encoding.UTF8;
 
-    public LogTextWriter(TextWriter originalWriter)
+    internal LogTextWriter(TextWriter originalWriter)
     {
         _originalWriter = originalWriter;
     }
@@ -30,6 +30,14 @@ internal class LogTextWriter : TextWriter
         catch
         {
             // ignored
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _originalWriter.Flush();
         }
     }
 }

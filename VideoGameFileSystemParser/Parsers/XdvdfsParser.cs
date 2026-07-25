@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses the XDVDFS file system used on original Xbox and Xbox 360 discs.
 /// </summary>
-public class XdvdfsParser
+internal class XdvdfsParser
 {
     private readonly SectorReader _reader;
     private TrackInfo? _currentTrack;
@@ -27,18 +27,18 @@ public class XdvdfsParser
     }
 
     /// <summary>
-/// Initializes a new instance of the XdvdfsParser class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
-    public XdvdfsParser(SectorReader reader)
+    /// Initializes a new instance of the XdvdfsParser class.
+    /// </summary>
+    /// <param name="reader">The SectorReader to read sectors from.</param>
+    internal XdvdfsParser(SectorReader reader)
     {
         _reader = reader;
     }
 
     /// <summary>
-/// Sets the track for parsing and locks the reader to that track.
-/// </summary>
-/// <param name="track">The track to parse.</param>
+    /// Sets the track for parsing and locks the reader to that track.
+    /// </summary>
+    /// <param name="track">The track to parse.</param>
     public void SetTrack(TrackInfo track)
     {
         if (track is not { Frames: > 0 }) return;
@@ -48,9 +48,9 @@ public class XdvdfsParser
     }
 
     /// <summary>
-/// Sets the LBA offset applied to all sector reads.
-/// </summary>
-/// <param name="offset">The LBA offset value.</param>
+    /// Sets the LBA offset applied to all sector reads.
+    /// </summary>
+    /// <param name="offset">The LBA offset value.</param>
     public void SetLbaOffset(int offset)
     {
         _lbaOffset = offset;
@@ -59,10 +59,10 @@ public class XdvdfsParser
     private static readonly byte[] XdvdfsMagic = "MICROSOFT*XBOX*MEDIA"u8.ToArray();
 
     /// <summary>
-/// Parses the XDVDFS file system and builds the directory tree.
-/// </summary>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
+    /// Parses the XDVDFS file system and builds the directory tree.
+    /// </summary>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
     public bool Parse(FsNode rootNode)
     {
         _reader.Reset();
@@ -103,16 +103,17 @@ public class XdvdfsParser
 
         if (!found)
         {
+            var sectorData2 = new byte[2048];
             for (uint offset = 0; offset < 102400; offset++)
             {
                 if (offsets.Contains(offset)) continue;
 
-                if (_reader.ReadSector(offset, sectorData))
+                if (_reader.ReadSector(offset, sectorData2))
                 {
-                    if (CheckMagic(sectorData, 0, XdvdfsMagic) && CheckMagic(sectorData, 0x7EC, XdvdfsMagic))
+                    if (CheckMagic(sectorData2, 0, XdvdfsMagic) && CheckMagic(sectorData2, 0x7EC, XdvdfsMagic))
                     {
-                        rootDirSector = LeU32(sectorData, 20);
-                        rootDirExtentSize = LeU32(sectorData, 24);
+                        rootDirSector = LeU32(sectorData2, 20);
+                        rootDirExtentSize = LeU32(sectorData2, 24);
                         var baseCandidate = offset >= 32 ? offset - 32 : 0;
                         volumeOffsetSectors = baseCandidate;
                         found = true;
@@ -178,7 +179,8 @@ public class XdvdfsParser
             {
                 if (dirOffset == 0) return true;
 
-                var nextOffset = dirOffset + (2048 - dirOffset % 2048);
+                var remainder = dirOffset % 2048;
+                var nextOffset = remainder == 0 ? dirOffset + 2048 : dirOffset + (2048 - remainder);
                 if (nextOffset >= dirExtentSize) return true;
 
                 dirOffset = nextOffset;

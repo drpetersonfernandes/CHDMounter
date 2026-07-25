@@ -17,7 +17,7 @@ internal class HfsParser
         _reader = reader;
     }
 
-    public bool Parse(FsNode rootNode, TrackInfo? track = null)
+    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
 
@@ -358,8 +358,9 @@ internal class HfsParser
                     return false;
 
                 var copyLen = Math.Min(2048 - curOff, (int)(totalBytes - totalRead));
-                for (var j = 0; j < copyLen; j++)
-                    regionData.Add(sector[curOff + j]);
+                var segment = new byte[copyLen];
+                Array.Copy(sector, curOff, segment, 0, copyLen);
+                regionData.AddRange(segment);
                 totalRead += (ulong)copyLen;
             }
         }
@@ -459,55 +460,55 @@ internal class HfsParser
             switch (recordType)
             {
                 case KHfsFolderRecord:
-                {
-                    if (dataOff + 88 > nodeOffset + nodeSize)
-                        continue;
-
-                    var folder = ReadHfsPlusFolderRecord(nodeData, dataOff);
-                    folder.ParentId = parentId;
-                    folder.Name = name;
-                    _entries.Add(new HfsCatalogEntry
                     {
-                        Name = name,
-                        ParentId = parentId,
-                        RecordType = HfsRecordType.Folder,
-                        Folder = folder
-                    });
-                    _folders[folder.FolderId] = folder;
-                    break;
-                }
+                        if (dataOff + 88 > nodeOffset + nodeSize)
+                            continue;
+
+                        var folder = ReadHfsPlusFolderRecord(nodeData, dataOff);
+                        folder.ParentId = parentId;
+                        folder.Name = name;
+                        _entries.Add(new HfsCatalogEntry
+                        {
+                            Name = name,
+                            ParentId = parentId,
+                            RecordType = HfsRecordType.Folder,
+                            Folder = folder
+                        });
+                        _folders[folder.FolderId] = folder;
+                        break;
+                    }
                 case KHfsFileRecord:
-                {
-                    if (dataOff + 243 > nodeOffset + nodeSize)
-                        continue;
-
-                    var file = ReadHfsPlusFileRecord(nodeData, dataOff);
-                    _entries.Add(new HfsCatalogEntry
                     {
-                        Name = name,
-                        ParentId = parentId,
-                        RecordType = HfsRecordType.File,
-                        File = file
-                    });
-                    break;
-                }
+                        if (dataOff + 243 > nodeOffset + nodeSize)
+                            continue;
+
+                        var file = ReadHfsPlusFileRecord(nodeData, dataOff);
+                        _entries.Add(new HfsCatalogEntry
+                        {
+                            Name = name,
+                            ParentId = parentId,
+                            RecordType = HfsRecordType.File,
+                            File = file
+                        });
+                        break;
+                    }
                 case KHfsFolderThreadRecord:
                 case KHfsFileThreadRecord:
-                {
-                    if (dataOff + 10 > nodeOffset + nodeSize)
-                        continue;
-
-                    var threadParentId = BeU32(nodeData, dataOff + 8);
-                    _entries.Add(new HfsCatalogEntry
                     {
-                        Name = name,
-                        ParentId = threadParentId,
-                        RecordType = recordType == KHfsFolderThreadRecord
-                            ? HfsRecordType.FolderThread
-                            : HfsRecordType.FileThread
-                    });
-                    break;
-                }
+                        if (dataOff + 10 > nodeOffset + nodeSize)
+                            continue;
+
+                        var threadParentId = BeU32(nodeData, dataOff + 8);
+                        _entries.Add(new HfsCatalogEntry
+                        {
+                            Name = name,
+                            ParentId = threadParentId,
+                            RecordType = recordType == KHfsFolderThreadRecord
+                                ? HfsRecordType.FolderThread
+                                : HfsRecordType.FileThread
+                        });
+                        break;
+                    }
             }
         }
     }
@@ -650,7 +651,7 @@ internal class HfsParser
             nodeSize = headerRec.NodeSize;
         }
 
-        parseLeaves:
+    parseLeaves:
         if (nodeSize == 0 || nodeSize > nodeData.Length)
             return false;
 
@@ -724,52 +725,52 @@ internal class HfsParser
             switch (recordType)
             {
                 case KHfsFolderRecord:
-                {
-                    if (dataOff + 70 > nodeOffset + nodeSize)
-                        continue;
-
-                    var folder = ReadFolderRecord(nodeData, dataOff);
-                    folder.ParentId = parentId;
-                    folder.Name = name;
-                    _entries.Add(new HfsCatalogEntry
                     {
-                        Name = name,
-                        ParentId = parentId,
-                        RecordType = HfsRecordType.Folder,
-                        Folder = folder
-                    });
-                    _folders[folder.FolderId] = folder;
-                    break;
-                }
+                        if (dataOff + 70 > nodeOffset + nodeSize)
+                            continue;
+
+                        var folder = ReadFolderRecord(nodeData, dataOff);
+                        folder.ParentId = parentId;
+                        folder.Name = name;
+                        _entries.Add(new HfsCatalogEntry
+                        {
+                            Name = name,
+                            ParentId = parentId,
+                            RecordType = HfsRecordType.Folder,
+                            Folder = folder
+                        });
+                        _folders[folder.FolderId] = folder;
+                        break;
+                    }
                 case KHfsFileRecord:
-                {
-                    if (dataOff + 102 > nodeOffset + nodeSize)
-                        continue;
-
-                    var file = ReadFileRecord(nodeData, dataOff);
-                    _entries.Add(new HfsCatalogEntry
                     {
-                        Name = name,
-                        ParentId = parentId,
-                        RecordType = HfsRecordType.File,
-                        File = file
-                    });
-                    break;
-                }
+                        if (dataOff + 102 > nodeOffset + nodeSize)
+                            continue;
+
+                        var file = ReadFileRecord(nodeData, dataOff);
+                        _entries.Add(new HfsCatalogEntry
+                        {
+                            Name = name,
+                            ParentId = parentId,
+                            RecordType = HfsRecordType.File,
+                            File = file
+                        });
+                        break;
+                    }
                 case KHfsFolderThreadRecord:
                 case KHfsFileThreadRecord:
-                {
-                    var threadParentId = BeU32(nodeData, dataOff + 8);
-                    _entries.Add(new HfsCatalogEntry
                     {
-                        Name = name,
-                        ParentId = threadParentId,
-                        RecordType = recordType == KHfsFolderThreadRecord
-                            ? HfsRecordType.FolderThread
-                            : HfsRecordType.FileThread
-                    });
-                    break;
-                }
+                        var threadParentId = BeU32(nodeData, dataOff + 8);
+                        _entries.Add(new HfsCatalogEntry
+                        {
+                            Name = name,
+                            ParentId = threadParentId,
+                            RecordType = recordType == KHfsFolderThreadRecord
+                                ? HfsRecordType.FolderThread
+                                : HfsRecordType.FileThread
+                        });
+                        break;
+                    }
             }
         }
     }
@@ -852,56 +853,56 @@ internal class HfsParser
             switch (entry.RecordType)
             {
                 case HfsRecordType.Folder when entry.Folder != null:
-                {
-                    var child = new FsNode
-                    {
-                        Name = entry.Name,
-                        IsDirectory = true,
-                        Lba = _hfsStartLba,
-                        NodeType = FsNodeType.Directory,
-                        ModifiedTime = MacTimeToDateTime(entry.Folder.ModifyDate),
-                        CreatedTime = MacTimeToDateTime(entry.Folder.CreateDate)
-                    };
-                    child.Extents.Add(new FsExtent { Lba = child.Lba, Size = 0 });
-                    BuildDirectory(child, entry.Folder.FolderId);
-                    dirNode.Children.Add(child);
-                    break;
-                }
-                case HfsRecordType.File when entry.File != null:
-                {
-                    var file = entry.File;
-                    var dataSize = file.DataLogicalSize;
-                    var rsrcSize = file.ResourceLogicalSize;
-
-                    if (dataSize > 0)
-                    {
-                        var child = CreateFileNode(entry.Name, file.DataExtents, (ulong)dataSize,
-                            file.ModifyDate, file.CreateDate);
-                        dirNode.Children.Add(child);
-                    }
-                    else if (rsrcSize > 0)
-                    {
-                        var child = CreateFileNode(entry.Name, file.RsrcExtents, (ulong)rsrcSize,
-                            file.ModifyDate, file.CreateDate);
-                        dirNode.Children.Add(child);
-                    }
-                    else
                     {
                         var child = new FsNode
                         {
                             Name = entry.Name,
-                            IsDirectory = false,
-                            Size = 0,
+                            IsDirectory = true,
                             Lba = _hfsStartLba,
-                            NodeType = FsNodeType.File,
-                            ModifiedTime = MacTimeToDateTime(file.ModifyDate),
-                            CreatedTime = MacTimeToDateTime(file.CreateDate)
+                            NodeType = FsNodeType.Directory,
+                            ModifiedTime = MacTimeToDateTime(entry.Folder.ModifyDate),
+                            CreatedTime = MacTimeToDateTime(entry.Folder.CreateDate)
                         };
+                        child.Extents.Add(new FsExtent { Lba = child.Lba, Size = 0 });
+                        BuildDirectory(child, entry.Folder.FolderId);
                         dirNode.Children.Add(child);
+                        break;
                     }
+                case HfsRecordType.File when entry.File != null:
+                    {
+                        var file = entry.File;
+                        var dataSize = file.DataLogicalSize;
+                        var rsrcSize = file.ResourceLogicalSize;
 
-                    break;
-                }
+                        if (dataSize > 0)
+                        {
+                            var child = CreateFileNode(entry.Name, file.DataExtents, (ulong)dataSize,
+                                file.ModifyDate, file.CreateDate);
+                            dirNode.Children.Add(child);
+                        }
+                        else if (rsrcSize > 0)
+                        {
+                            var child = CreateFileNode(entry.Name, file.RsrcExtents, (ulong)rsrcSize,
+                                file.ModifyDate, file.CreateDate);
+                            dirNode.Children.Add(child);
+                        }
+                        else
+                        {
+                            var child = new FsNode
+                            {
+                                Name = entry.Name,
+                                IsDirectory = false,
+                                Size = 0,
+                                Lba = _hfsStartLba,
+                                NodeType = FsNodeType.File,
+                                ModifiedTime = MacTimeToDateTime(file.ModifyDate),
+                                CreatedTime = MacTimeToDateTime(file.CreateDate)
+                            };
+                            dirNode.Children.Add(child);
+                        }
+
+                        break;
+                    }
             }
         }
     }
@@ -1011,6 +1012,8 @@ internal class HfsParser
 
     private byte[]? ReadSectors(uint lba, int count)
     {
+        if (count > 1024)
+            return null;
         var result = new byte[count * 2048];
         for (var i = 0; i < count; i++)
         {

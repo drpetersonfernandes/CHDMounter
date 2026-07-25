@@ -5,10 +5,14 @@ namespace VideoGameFileSystemParser.Models;
 /// </summary>
 public enum ConsoleType
 {
+    /// <summary>Unknown or unset console type.</summary>
+    Unknown,
     /// <summary>Amiga CD format.</summary>
     AmigaCd,
     /// <summary>Amiga CD32 format.</summary>
     AmigaCd32,
+    /// <summary>Amiga CDTV format.</summary>
+    AmigaCdtv,
     /// <summary>Philips CD-i format.</summary>
     CDi,
     /// <summary>Sega Dreamcast GD-ROM format.</summary>
@@ -57,8 +61,6 @@ public enum ConsoleType
     ThreeDo,
     /// <summary>Sharp X68000 format.</summary>
     X68000,
-    /// <summary>Unknown or unset console type.</summary>
-    Unknown,
     /// <summary>Microsoft Xbox format.</summary>
     Xbox,
     /// <summary>Microsoft Xbox 360 format.</summary>

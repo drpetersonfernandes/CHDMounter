@@ -14,21 +14,21 @@ internal class CDiFsParser
     private const int CdiSystemAreaSize = 12;
 
     /// <summary>
-/// Initializes a new instance of the CDiFsParser class.
-/// </summary>
-/// <param name="reader">The SectorReader to read sectors from.</param>
-    public CDiFsParser(SectorReader reader)
+    /// Initializes a new instance of the CDiFsParser class.
+    /// </summary>
+    /// <param name="reader">The SectorReader to read sectors from.</param>
+    internal CDiFsParser(SectorReader reader)
     {
         _reader = reader;
     }
 
     /// <summary>
-/// Parses the CD-i file system and builds the directory tree.
-/// </summary>
-/// <param name="track">Optional track.</param>
-/// <param name="rootNode">The root FsNode to populate.</param>
-/// <returns>true if parsing succeeded.</returns>
-    public bool Parse(FsNode rootNode, TrackInfo? track = null)
+    /// Parses the CD-i file system and builds the directory tree.
+    /// </summary>
+    /// <param name="track">Optional track.</param>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <returns>true if parsing succeeded.</returns>
+    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         var sectorData = new byte[2048];
         var trackStart = track?.StartLba ?? 0u;
@@ -204,7 +204,6 @@ internal class CDiFsParser
                 var startLbn = BeU32(sector, (int)pos + 6);
                 var fileSize = BeU32(sector, (int)pos + 14);
                 var nameLen = sector[pos + 32];
-                _ = sector[pos + 25];
 
                 if (nameLen == 0)
                 {
@@ -248,8 +247,6 @@ internal class CDiFsParser
 
                 if (saOff + CdiSystemAreaSize <= pos + recordLen)
                 {
-                    _ = BeU16(sector, (uint)saOff);
-                    _ = BeU16(sector, (uint)(saOff + 2));
                     var attrs = BeU16(sector, (uint)(saOff + 4));
                     fileNumber = sector[saOff + 8];
 
@@ -260,70 +257,70 @@ internal class CDiFsParser
                 switch (isDir)
                 {
                     case true when pathTable.Count > 0:
-                    {
-                        var subDirs = GetSubdirsFromPathTable(dirCtx.PathTableIndex, pathTable, trackStart);
-                        if (subDirs.Count > 0)
                         {
-                            foreach (var sub in subDirs)
+                            var subDirs = GetSubdirsFromPathTable(dirCtx.PathTableIndex, pathTable, trackStart);
+                            if (subDirs.Count > 0)
                             {
-                                var child = new FsNode
+                                foreach (var sub in subDirs)
                                 {
-                                    Name = sub.Name,
-                                    Lba = sub.Lba,
-                                    Size = sub.Size,
-                                    IsDirectory = true,
-                                    FileNumber = 0
-                                };
+                                    var child = new FsNode
+                                    {
+                                        Name = sub.Name,
+                                        Lba = sub.Lba,
+                                        Size = sub.Size,
+                                        IsDirectory = true,
+                                        FileNumber = 0
+                                    };
 
-                                var childCtx = new CdiDirContext
-                                {
-                                    Lba = sub.Lba,
-                                    Size = sub.Size,
-                                    PathTableIndex = sub.PathTableIndex
-                                };
+                                    var childCtx = new CdiDirContext
+                                    {
+                                        Lba = sub.Lba,
+                                        Size = sub.Size,
+                                        PathTableIndex = sub.PathTableIndex
+                                    };
 
-                                ParseDirectory(child, childCtx, pathTable, trackStart);
-                                dirNode.Children.Add(child);
+                                    ParseDirectory(child, childCtx, pathTable, trackStart);
+                                    dirNode.Children.Add(child);
+                                }
                             }
-                        }
 
-                        break;
-                    }
+                            break;
+                        }
                     case false:
-                    {
-                        var child = new FsNode
                         {
-                            Name = name,
-                            Lba = trackStart + startLbn,
-                            Size = fileSize,
-                            IsDirectory = false,
-                            FileNumber = fileNumber,
-                            IsInterleaved = isInterleaved
-                        };
-                        dirNode.Children.Add(child);
-                        break;
-                    }
+                            var child = new FsNode
+                            {
+                                Name = name,
+                                Lba = trackStart + startLbn,
+                                Size = fileSize,
+                                IsDirectory = false,
+                                FileNumber = fileNumber,
+                                IsInterleaved = isInterleaved
+                            };
+                            dirNode.Children.Add(child);
+                            break;
+                        }
                     default:
-                    {
-                        var child = new FsNode
                         {
-                            Name = name,
-                            Lba = trackStart + startLbn,
-                            Size = fileSize,
-                            IsDirectory = true,
-                            FileNumber = fileNumber,
-                            IsInterleaved = isInterleaved
-                        };
-                        var childCtx = new CdiDirContext
-                        {
-                            Lba = child.Lba,
-                            Size = fileSize,
-                            PathTableIndex = dirCtx.PathTableIndex
-                        };
-                        ParseDirectory(child, childCtx, pathTable, trackStart);
-                        dirNode.Children.Add(child);
-                        break;
-                    }
+                            var child = new FsNode
+                            {
+                                Name = name,
+                                Lba = trackStart + startLbn,
+                                Size = fileSize,
+                                IsDirectory = true,
+                                FileNumber = fileNumber,
+                                IsInterleaved = isInterleaved
+                            };
+                            var childCtx = new CdiDirContext
+                            {
+                                Lba = child.Lba,
+                                Size = fileSize,
+                                PathTableIndex = dirCtx.PathTableIndex
+                            };
+                            ParseDirectory(child, childCtx, pathTable, trackStart);
+                            dirNode.Children.Add(child);
+                            break;
+                        }
                 }
 
                 pos += recordLen;

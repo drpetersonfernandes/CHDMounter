@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -10,26 +10,38 @@
         <RootNamespace>VideoGameFileSystemParser</RootNamespace>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
-        <AssemblyVersion>1.0.0</AssemblyVersion>
-        <FileVersion>1.0.0</FileVersion>
         <Company>PureLogicCode.com</Company>
         <Description>Video game file system parsing library for console disc images. Supports ISO 9660, UDF, XDVDFS, OperaFS, CD-i, and other formats through CHD, ISO and raw sector readers.</Description>
         <PackageId>VideoGameFileSystemParser</PackageId>
         <PackageTags>chd;mame;iso9660;udf;xdvdfs;operafs;cdi;ps1;ps2;ps3;psp;xbox;dreamcast;retro;videogame;disc;filesystem</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/purelogiccode/CSharp_SimpleChdDrive</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+        <Deterministic>true</Deterministic>
+        <EnablePackageValidation>true</EnablePackageValidation>
     </PropertyGroup>
 
     <ItemGroup>
-    <InternalsVisibleTo Include="SimpleChdDrive" />
-    <InternalsVisibleTo Include="SimpleChdDrive_WinFsp" />
-    <InternalsVisibleTo Include="SimpleChdDrive.Core.Tests" />
-    <InternalsVisibleTo Include="Tester" />
-    <InternalsVisibleTo Include="ChdDiagnoster" />
+        <InternalsVisibleTo Include="SimpleChdDrive" />
+        <InternalsVisibleTo Include="SimpleChdDrive_WinFsp" />
+        <InternalsVisibleTo Include="SimpleChdDrive.Core.Tests" />
+        <InternalsVisibleTo Include="Tester" />
+        <InternalsVisibleTo Include="ChdDiagnoster" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="CHDSharp" Version="1.2.0" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.301" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>

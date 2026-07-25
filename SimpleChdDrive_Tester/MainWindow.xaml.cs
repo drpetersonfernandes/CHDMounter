@@ -75,8 +75,14 @@ public partial class MainWindow
     {
         if (sender is FrameworkElement { Tag: string url })
         {
-            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-            catch { /* ignored */ }
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch
+            {
+                /* ignored */
+            }
         }
     }
 

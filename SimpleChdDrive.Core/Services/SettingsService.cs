@@ -4,12 +4,22 @@ using System.Text.Json;
 
 namespace SimpleChdDrive.Core.Services;
 
+/// <summary>
+/// Manages loading and saving of application settings using DPAPI encryption.
+/// </summary>
 public class SettingsService : ISettingsService
 {
     private readonly string _settingsFilePath;
 
+    /// <summary>
+    /// Gets the current application settings.
+    /// </summary>
     public AppSettings Settings { get; private set; } = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SettingsService"/> class and loads settings from disk.
+    /// </summary>
+    /// <param name="appName">The application name used to determine the settings folder path.</param>
     public SettingsService(string appName)
     {
         var folder = Path.Combine(
@@ -37,6 +47,9 @@ public class SettingsService : ISettingsService
         }
     }
 
+    /// <summary>
+    /// Saves the current settings to disk with DPAPI encryption.
+    /// </summary>
     public void Save()
     {
         try

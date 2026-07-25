@@ -55,6 +55,15 @@ internal static class ChdPathCatalog
         ];
     }
 
+    public static class Pc98
+    {
+        public static string[] Paths =>
+        [
+            @"F:\NEC PC-98",
+            @"G:\MAME\MAME Software List CHDs\pc98_cd"
+        ];
+    }
+
     public static class PcEngineCd
     {
         public static string[] Paths =>
@@ -70,15 +79,6 @@ internal static class ChdPathCatalog
         [
             @"G:\MAME\MAME Software List CHDs\pcfx",
             @"G:\NEC PC-FX"
-        ];
-    }
-
-    public static class Pc98
-    {
-        public static string[] Paths =>
-        [
-            @"F:\NEC PC-98",
-            @"G:\MAME\MAME Software List CHDs\pc98_cd"
         ];
     }
 
@@ -117,21 +117,21 @@ internal static class ChdPathCatalog
         ];
     }
 
-    public static class SegaGenesisCd
-    {
-        public static string[] Paths =>
-        [
-            @"G:\MAME\MAME Software List CHDs\megacd",
-            @"I:\Sega Genesis CD"
-        ];
-    }
-
     public static class SegaSaturn
     {
         public static string[] Paths =>
         [
             @"G:\MAME\MAME Software List CHDs\saturn",
             @"I:\Sega Saturn"
+        ];
+    }
+
+    public static class SegaGenesisCd
+    {
+        public static string[] Paths =>
+        [
+            @"G:\MAME\MAME Software List CHDs\megacd",
+            @"I:\Sega Genesis CD"
         ];
     }
 
@@ -142,6 +142,14 @@ internal static class ChdPathCatalog
             @"J:\Panasonic 3DO",
             @"G:\MAME\MAME Software List CHDs\3do",
             @"G:\MAME\MAME Software List CHDs\3do_m2"
+        ];
+    }
+
+    public static class X68000
+    {
+        public static string[] Paths =>
+        [
+            @"F:\Sharp X68000"
         ];
     }
 
@@ -158,14 +166,6 @@ internal static class ChdPathCatalog
         public static string[] Paths =>
         [
             @"X:\Microsoft Xbox 360"
-        ];
-    }
-
-    public static class X68000
-    {
-        public static string[] Paths =>
-        [
-            @"F:\Sharp X68000"
         ];
     }
 }

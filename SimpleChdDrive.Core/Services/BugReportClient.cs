@@ -5,6 +5,9 @@ using System.Text.Json;
 
 namespace SimpleChdDrive.Core.Services;
 
+/// <summary>
+/// Sends bug reports and warnings to a remote API endpoint with rate-limited queuing.
+/// </summary>
 public static class BugReportClient
 {
     private const string BaseUrl = "https://www.purelogiccode.com/bugreport/api/send-bug-report";
@@ -13,7 +16,7 @@ public static class BugReportClient
     private static readonly ConcurrentQueue<Func<Task>> PendingReports = new();
     private static int _isProcessing;
 
-    public static void SendException(Exception ex, string context)
+    internal static void SendException(Exception ex, string context)
     {
         var envDetails = BuildEnvironmentDetails();
         var errorDetails = $"{context}: {ex.Message}";
@@ -33,7 +36,7 @@ public static class BugReportClient
         Enqueue(message, ex.StackTrace ?? "");
     }
 
-    public static void SendWarning(string message)
+    internal static void SendWarning(string message)
     {
         var envDetails = BuildEnvironmentDetails();
 
@@ -51,7 +54,7 @@ public static class BugReportClient
         Enqueue(formatted, "");
     }
 
-    public static void SendError(string message, string? stackTrace)
+    internal static void SendError(string message, string? stackTrace)
     {
         var envDetails = BuildEnvironmentDetails();
         var exceptionDetails = string.IsNullOrEmpty(stackTrace)
@@ -87,7 +90,10 @@ public static class BugReportClient
         {
             while (PendingReports.TryDequeue(out var sendAction))
             {
-                try { await sendAction(); }
+                try
+                {
+                    await sendAction();
+                }
                 catch
                 {
                     // ignored
@@ -167,14 +173,26 @@ public static class BugReportClient
 
     private static string GetAppName()
     {
-        try { return Assembly.GetEntryAssembly()?.GetName().Name ?? "SimpleChdDrive"; }
-        catch { return "SimpleChdDrive"; }
+        try
+        {
+            return Assembly.GetEntryAssembly()?.GetName().Name ?? "SimpleChdDrive";
+        }
+        catch
+        {
+            return "SimpleChdDrive";
+        }
     }
 
     private static string GetVersion()
     {
-        try { return Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0"; }
-        catch { return "1.0.0"; }
+        try
+        {
+            return Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
+        }
+        catch
+        {
+            return "1.0.0";
+        }
     }
 
     private static string Truncate(string value, int maxLength)

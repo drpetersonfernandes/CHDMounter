@@ -3,6 +3,9 @@ using System.Text.Json;
 
 namespace SimpleChdDrive.Core.Services;
 
+/// <summary>
+/// Checks for application updates by querying the GitHub releases API.
+/// </summary>
 public static class UpdateChecker
 {
     private const string GitHubApiUrl = "https://api.github.com/repos/drpetersonfernandes/SimpleChdDrive/releases/latest";
@@ -10,6 +13,9 @@ public static class UpdateChecker
     private static readonly HttpClient Client = new();
     private static int _started;
 
+    /// <summary>
+    /// Gets the result of the last update check, or <c>null</c> if no check has completed.
+    /// </summary>
     public static UpdateCheckResult? Result { get; private set; }
 
     static UpdateChecker()
@@ -18,6 +24,9 @@ public static class UpdateChecker
         Client.Timeout = TimeSpan.FromSeconds(15);
     }
 
+    /// <summary>
+    /// Initiates an asynchronous update check. Only the first call per process lifetime takes effect.
+    /// </summary>
     public static void CheckForUpdates()
     {
         if (Interlocked.CompareExchange(ref _started, 1, 0) != 0)
@@ -50,7 +59,7 @@ public static class UpdateChecker
                 foreach (var asset in assets.EnumerateArray())
                 {
                     var name = asset.GetProperty("name").GetString()?.ToLowerInvariant() ?? "";
-                    if (name.Contains(appName, StringComparison.OrdinalIgnoreCase))
+                    if (name.Contains(appName))
                     {
                         downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? releaseUrl;
                         break;
@@ -81,8 +90,14 @@ public static class UpdateChecker
 
     private static string GetCurrentVersion()
     {
-        try { return Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0"; }
-        catch { return "1.0.0"; }
+        try
+        {
+            return Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
+        }
+        catch
+        {
+            return "1.0.0";
+        }
     }
 
     private static bool IsNewer(string latest, string current)

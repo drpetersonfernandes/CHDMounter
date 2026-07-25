@@ -4,6 +4,9 @@ using System.Text.Json;
 
 namespace SimpleChdDrive.Core.Services;
 
+/// <summary>
+/// Sends anonymous application usage statistics to a remote analytics endpoint.
+/// </summary>
 public static class StatsClient
 {
     private const string BaseUrl = "https://www.purelogiccode.com/ApplicationStats/stats";
@@ -11,6 +14,9 @@ public static class StatsClient
     private static readonly HttpClient Client = new();
     private static int _sent;
 
+    /// <summary>
+    /// Sends application statistics once per process lifetime. Subsequent calls are ignored.
+    /// </summary>
     public static void SendStats()
     {
         if (Interlocked.CompareExchange(ref _sent, 1, 0) != 0)
@@ -55,13 +61,25 @@ public static class StatsClient
 
     private static string GetAppId()
     {
-        try { return (Assembly.GetEntryAssembly()?.GetName().Name ?? "SimpleChdDrive").ToLowerInvariant(); }
-        catch { return "SimpleChdDrive"; }
+        try
+        {
+            return (Assembly.GetEntryAssembly()?.GetName().Name ?? "SimpleChdDrive").ToLowerInvariant();
+        }
+        catch
+        {
+            return "SimpleChdDrive";
+        }
     }
 
     private static string GetVersion()
     {
-        try { return Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0"; }
-        catch { return "1.0.0"; }
+        try
+        {
+            return Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
+        }
+        catch
+        {
+            return "1.0.0";
+        }
     }
 }

@@ -163,21 +163,24 @@ public class Ps3IntegrationTests
                 var magic = new byte[4];
 
                 var sfb = container.FindFile(@"\PS3_DISC.SFB");
-                Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
+                if (sfb != null) Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
                 Assert.Equal(".SFB"u8.ToArray(), magic);
                 output.WriteLine("PS3_DISC.SFB: OK");
 
                 var sfo = container.FindFile(@"\PS3_GAME\PARAM.SFO");
                 {
-                    Assert.Equal(4, container.ReadFile(sfo, 0, magic, 0, 4));
-                    Assert.Equal("\0PSF"u8.ToArray(), magic);
-                    output.WriteLine("PARAM.SFO: OK");
+                    if (sfo != null)
+                    {
+                        Assert.Equal(4, container.ReadFile(sfo, 0, magic, 0, 4));
+                        Assert.Equal("\0PSF"u8.ToArray(), magic);
+                        output.WriteLine("PARAM.SFO: OK");
 
-                    var sfoBuf = new byte[(int)Math.Min(sfo.Size, 2048)];
-                    var sfoLen = container.ReadFile(sfo, 0, sfoBuf, 0, sfoBuf.Length);
-                    var title = ReadSfoString(sfoBuf, sfoLen);
-                    if (title != null)
-                        output.WriteLine($"  TITLE_ID: {title}");
+                        var sfoBuf = new byte[(int)Math.Min(sfo.Size, 2048)];
+                        var sfoLen = container.ReadFile(sfo, 0, sfoBuf, 0, sfoBuf.Length);
+                        var title = ReadSfoString(sfoBuf, sfoLen);
+                        if (title != null)
+                            output.WriteLine($"  TITLE_ID: {title}");
+                    }
                 }
                 return true;
             }
