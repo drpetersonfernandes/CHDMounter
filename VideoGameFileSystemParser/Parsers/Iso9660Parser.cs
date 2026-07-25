@@ -18,7 +18,6 @@ internal class Iso9660Parser
     private bool _isXa;
     private bool _suspActive;
     private byte _suspSkip;
-    private int _lbaOffset;
 
     /// <summary>
     /// Initializes a new instance of the Iso9660Parser class.
@@ -31,15 +30,6 @@ internal class Iso9660Parser
     {
         _reader = reader;
         _scanWithinSector = scanWithinSector;
-    }
-
-    /// <summary>
-    /// Sets the LBA offset applied to all sector reads.
-    /// </summary>
-    /// <param name="offset">The LBA offset value.</param>
-    internal void SetLbaOffset(int offset)
-    {
-        _lbaOffset = offset;
     }
 
     /// <summary>
@@ -57,7 +47,6 @@ internal class Iso9660Parser
         else
             _reader.SetTrack(null);
 
-        _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
         _isXa = false;
@@ -522,7 +511,6 @@ internal class Iso9660Parser
         public string? SymlinkTarget;
         public DateTime? CreatedTime;
         public DateTime? AccessedTime;
-        public DateTime? AttributeTime;
     }
 
     private void DetectSusp(uint rootLba)
@@ -649,15 +637,6 @@ internal class Iso9660Parser
                     if ((tfFlags & 0x04) != 0 && stampOff + (idx + 1) * stampSize <= off + entryLen)
                     {
                         /* ModifiedTime set from ISO record; TF value skipped */
-                    }
-
-                    idx += (tfFlags & 0x04) != 0 ? 1 : 0;
-
-                    if ((tfFlags & 0x08) != 0 && stampOff + (idx + 1) * stampSize <= off + entryLen)
-                    {
-                        info.AttributeTime = isLongForm
-                            ? ParseLongTimestamp(buf, stampOff + idx * stampSize)
-                            : ParseRecordTime(buf, stampOff + idx * stampSize);
                     }
                 }
                 // SL: Symbolic Link

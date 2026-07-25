@@ -1,8 +1,6 @@
-using SimpleChdDrive.Core.Views;
-
 namespace SimpleChdDrive_WinFsp;
 
-public partial class MainWindow : MainWindowBase
+public partial class MainWindow
 {
     public MainWindow()
     {
@@ -10,5 +8,8 @@ public partial class MainWindow : MainWindowBase
         InitializeMainWindow();
     }
 
-    protected override string[] GetStartupArgs() => App.StartupArgs;
+    protected override string[] GetStartupArgs()
+    {
+        return App.StartupArgs;
+    }
 }

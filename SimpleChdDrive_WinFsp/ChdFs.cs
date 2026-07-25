@@ -13,15 +13,12 @@ namespace SimpleChdDrive_WinFsp;
 internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
-
-    // ReSharper disable once NotAccessedField.Local
-    private readonly ILoggingService _loggingService;
     private readonly bool _persistentAcls;
 
+    // ReSharper disable once UnusedParameter.Local
     public ChdFs(ChdContainer container, ILoggingService loggingService, bool persistentAcls = false)
     {
         _container = container;
-        _loggingService = loggingService;
         _persistentAcls = persistentAcls;
     }
 

@@ -57,7 +57,7 @@ internal sealed class TestRunnerService
 
             try
             {
-                using var container = new ChdContainer(chdPath);
+                await using var container = new ChdContainer(chdPath);
 
                 var success = await Task.Run(() => container.MountAndParse(consoleInfo.Type), ct);
                 sw.Stop();

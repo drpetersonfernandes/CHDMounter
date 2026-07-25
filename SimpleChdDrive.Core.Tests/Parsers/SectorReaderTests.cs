@@ -72,7 +72,7 @@ public class SectorReaderTests
         var scramble = SectorReader.GetSectorScramble();
         Assert.Equal(0, scramble[0]);
         Assert.Equal(0, scramble[1]);
-        Assert.True(scramble[0..12].ToArray().All(b => b == 0));
+        Assert.True(scramble[..12].ToArray().All(b => b == 0));
     }
 
     [Fact]

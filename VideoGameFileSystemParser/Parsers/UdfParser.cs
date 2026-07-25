@@ -17,8 +17,6 @@ internal class UdfParser
     private PartitionMapRef[] _maps = [];
     private readonly List<FsExtent> _metaExtents = [];
 
-    private static readonly ushort[] CrcTable = BuildCrcTable();
-
     private enum MapKind
     {
         Physical,
@@ -174,34 +172,34 @@ internal class UdfParser
                     maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = LeU16(lvd, off + 4) });
                     break;
                 case 2 when mapLen >= 64:
+                {
+                    var id = Encoding.ASCII.GetString(lvd, off + 5, 23).TrimEnd('\0', ' ');
+                    var partNum = LeU16(lvd, off + 38);
+
+                    switch (id)
                     {
-                        var id = Encoding.ASCII.GetString(lvd, off + 5, 23).TrimEnd('\0', ' ');
-                        var partNum = LeU16(lvd, off + 38);
-
-                        switch (id)
-                        {
-                            case "*UDF Metadata Partition":
-                                maps.Add(new PartitionMapRef
-                                {
-                                    Kind = MapKind.Metadata,
-                                    PartitionNumber = partNum,
-                                    MetadataFileLoc = LeU32(lvd, off + 40),
-                                    MetadataMirrorLoc = LeU32(lvd, off + 44)
-                                });
-                                break;
-                            case "*UDF Virtual Partition":
-                                maps.Add(new PartitionMapRef { Kind = MapKind.Virtual, PartitionNumber = partNum });
-                                break;
-                            case "*UDF Sparable Partition":
-                                maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = partNum });
-                                break;
-                            default:
-                                maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
-                                break;
-                        }
-
-                        break;
+                        case "*UDF Metadata Partition":
+                            maps.Add(new PartitionMapRef
+                            {
+                                Kind = MapKind.Metadata,
+                                PartitionNumber = partNum,
+                                MetadataFileLoc = LeU32(lvd, off + 40),
+                                MetadataMirrorLoc = LeU32(lvd, off + 44)
+                            });
+                            break;
+                        case "*UDF Virtual Partition":
+                            maps.Add(new PartitionMapRef { Kind = MapKind.Virtual, PartitionNumber = partNum });
+                            break;
+                        case "*UDF Sparable Partition":
+                            maps.Add(new PartitionMapRef { Kind = MapKind.Physical, PartitionNumber = partNum });
+                            break;
+                        default:
+                            maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
+                            break;
                     }
+
+                    break;
+                }
                 default:
                     maps.Add(new PartitionMapRef { Kind = MapKind.Unsupported });
                     break;
@@ -282,22 +280,22 @@ internal class UdfParser
                 return true;
 
             case MapKind.Metadata:
+            {
+                var remaining = lbn;
+                foreach (var ext in _metaExtents)
                 {
-                    var remaining = lbn;
-                    foreach (var ext in _metaExtents)
+                    var blocks = (uint)((ext.Size + _blockSize - 1) / _blockSize);
+                    if (remaining < blocks)
                     {
-                        var blocks = (uint)((ext.Size + _blockSize - 1) / _blockSize);
-                        if (remaining < blocks)
-                        {
-                            lba = ext.Lba + remaining;
-                            return true;
-                        }
-
-                        remaining -= blocks;
+                        lba = ext.Lba + remaining;
+                        return true;
                     }
 
-                    return false;
+                    remaining -= blocks;
                 }
+
+                return false;
+            }
 
             default:
                 return false;
@@ -349,57 +347,57 @@ internal class UdfParser
         {
             // Short ADs: block numbers are relative to the partition the FE is recorded in
             case 0:
+            {
+                for (var off = 0; off + 8 <= allocDesc.Length; off += 8)
                 {
-                    for (var off = 0; off + 8 <= allocDesc.Length; off += 8)
+                    var len = LeU32(allocDesc, off);
+                    var loc = LeU32(allocDesc, off + 4);
+                    var extType = len >> 30;
+                    len &= 0x3FFFFFFF;
+                    if (len == 0 || extType != 0) continue;
+                    if (!ResolveLba(loc, partRef, out var extLba)) continue;
+
+                    node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
+                    if (node.Lba == 0)
                     {
-                        var len = LeU32(allocDesc, off);
-                        var loc = LeU32(allocDesc, off + 4);
-                        var extType = len >> 30;
-                        len &= 0x3FFFFFFF;
-                        if (len == 0 || extType != 0) continue;
-                        if (!ResolveLba(loc, partRef, out var extLba)) continue;
-
-                        node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
-                        if (node.Lba == 0)
-                        {
-                            node.Lba = extLba;
-                        }
+                        node.Lba = extLba;
                     }
-
-                    break;
                 }
+
+                break;
+            }
             // Long ADs: carry an explicit partition reference number
             case 1:
+            {
+                for (var off = 0; off + 16 <= allocDesc.Length; off += 16)
                 {
-                    for (var off = 0; off + 16 <= allocDesc.Length; off += 16)
+                    var len = LeU32(allocDesc, off);
+                    var loc = LeU32(allocDesc, off + 4);
+                    var part = LeU16(allocDesc, off + 8);
+                    var extType = len >> 30;
+                    len &= 0x3FFFFFFF;
+                    if (len == 0 || extType != 0) continue;
+                    if (!ResolveLba(loc, part, out var extLba)) continue;
+
+                    node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
+                    if (node.Lba == 0)
                     {
-                        var len = LeU32(allocDesc, off);
-                        var loc = LeU32(allocDesc, off + 4);
-                        var part = LeU16(allocDesc, off + 8);
-                        var extType = len >> 30;
-                        len &= 0x3FFFFFFF;
-                        if (len == 0 || extType != 0) continue;
-                        if (!ResolveLba(loc, part, out var extLba)) continue;
-
-                        node.Extents.Add(new FsExtent { Lba = extLba, Size = len });
-                        if (node.Lba == 0)
-                        {
-                            node.Lba = extLba;
-                        }
+                        node.Lba = extLba;
                     }
-
-                    break;
                 }
+
+                break;
+            }
             // Embedded/inline data: file content lives inside the File Entry itself
             case 3:
-                {
-                    if (node.Size > 2048 - adOffset) return false;
+            {
+                if (node.Size > 2048 - adOffset) return false;
 
-                    node.IsEmbedded = true;
-                    node.Lba = feLba;
-                    node.EmbeddedOffset = adOffset;
-                    break;
-                }
+                node.IsEmbedded = true;
+                node.Lba = feLba;
+                node.EmbeddedOffset = adOffset;
+                break;
+            }
             default:
                 return !node.IsDirectory;
         }
@@ -528,11 +526,11 @@ internal class UdfParser
             case 8:
                 return Encoding.Latin1.GetString(data, offset + 1, length - 1).TrimEnd('\0');
             case 16:
-                {
-                    var name = Encoding.BigEndianUnicode.GetString(data, offset + 1, (length - 1) & ~1);
-                    var nul = name.IndexOf('\0');
-                    return nul >= 0 ? name[..nul] : name;
-                }
+            {
+                var name = Encoding.BigEndianUnicode.GetString(data, offset + 1, (length - 1) & ~1);
+                var nul = name.IndexOf('\0');
+                return nul >= 0 ? name[..nul] : name;
+            }
             default:
                 return "";
         }
@@ -599,49 +597,6 @@ internal class UdfParser
         }
 
         return sum == d[o + 4];
-    }
-
-    private static bool ValidateTagCrc(byte[] d, int o, uint descriptorLength)
-    {
-        if (o + 24 > d.Length) return false;
-
-        var crcLen = LeU16(d, o + 20);
-        var crcLoc = LeU32(d, o + 22);
-        if (crcLen == 0) return true;
-
-        var expectedCrc = LeU16(d, o + 16);
-        if (descriptorLength < crcLoc + crcLen) return false;
-
-        ushort crc = 0;
-        var end = (int)(crcLoc + crcLen);
-        for (var i = (int)crcLoc; i < end && i < d.Length; i++)
-        {
-            crc = CrcCcitt(crc, d[i]);
-        }
-
-        return crc == expectedCrc;
-    }
-
-    private static ushort CrcCcitt(ushort crc, byte b)
-    {
-        return (ushort)((crc << 8) ^ CrcTable[((crc >> 8) ^ b) & 0xFF]);
-    }
-
-    private static ushort[] BuildCrcTable()
-    {
-        var table = new ushort[256];
-        for (var i = 0; i < 256; i++)
-        {
-            var crc = (ushort)(i << 8);
-            for (var j = 0; j < 8; j++)
-            {
-                crc = (crc & 0x8000) != 0 ? (ushort)((crc << 1) ^ 0x1021) : (ushort)(crc << 1);
-            }
-
-            table[i] = crc;
-        }
-
-        return table;
     }
 
     private static ushort LeU16(byte[] d, int o)

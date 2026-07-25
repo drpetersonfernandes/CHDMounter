@@ -12,7 +12,6 @@ public class ServiceProviderExtendedTests
         var tasks = new List<Task>();
         for (var i = 0; i < 100; i++)
         {
-            var idx = i;
             tasks.Add(Task.Run(() =>
             {
                 var service = new ConcurrentTestService();

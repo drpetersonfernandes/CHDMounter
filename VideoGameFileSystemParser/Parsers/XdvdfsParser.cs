@@ -9,7 +9,6 @@ internal class XdvdfsParser
 {
     private readonly SectorReader _reader;
     private TrackInfo? _currentTrack;
-    private int _lbaOffset;
 
     private static readonly Encoding XdvdfsEncoding = CreateXdvdfsEncoding();
 
@@ -47,15 +46,6 @@ internal class XdvdfsParser
         _reader.SetTrack(track, true);
     }
 
-    /// <summary>
-    /// Sets the LBA offset applied to all sector reads.
-    /// </summary>
-    /// <param name="offset">The LBA offset value.</param>
-    public void SetLbaOffset(int offset)
-    {
-        _lbaOffset = offset;
-    }
-
     private static readonly byte[] XdvdfsMagic = "MICROSOFT*XBOX*MEDIA"u8.ToArray();
 
     /// <summary>
@@ -68,7 +58,6 @@ internal class XdvdfsParser
         _reader.Reset();
         if (_currentTrack != null)
             _reader.SetTrack(_currentTrack, true);
-        _reader.LbaOffset = _lbaOffset;
 
         var sectorData = new byte[2048];
         uint volumeOffsetSectors = 0;

@@ -69,12 +69,12 @@ public class LoggingServiceThreadSafetyTests
             }
         });
 
-        Assert.Empty(exclusions);
+        Assert.Empty(exceptions);
         Assert.True(service.LogEntries.Count > 0);
     }
 
     [Fact]
-    public void DuplicateMessagesWithin100msAreSuppressed()
+    public void DuplicateMessagesWithin100MsAreSuppressed()
     {
         var service = new LoggingService();
         service.Log("duplicate");

@@ -13,16 +13,10 @@ internal class PcFxIsoParser
     private readonly HashSet<uint> _visitedDirs = [];
     private bool _isHighSierra;
     private bool _isJoliet;
-    private int _lbaOffset;
 
     internal PcFxIsoParser(SectorReader reader)
     {
         _reader = reader;
-    }
-
-    internal void SetLbaOffset(int offset)
-    {
-        _lbaOffset = offset;
     }
 
     internal bool Parse(FsNode rootNode, TrackInfo? track = null)
@@ -34,7 +28,6 @@ internal class PcFxIsoParser
         else
             _reader.SetTrack(null);
 
-        _reader.LbaOffset = _lbaOffset;
         _isHighSierra = false;
         _isJoliet = false;
         _visitedDirs.Clear();

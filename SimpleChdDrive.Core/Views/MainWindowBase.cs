@@ -6,8 +6,6 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
-using SimpleChdDrive.Core.Interfaces;
-using VideoGameFileSystemParser.Models;
 using VideoGameFileSystemParser.Parsers;
 
 namespace SimpleChdDrive.Core.Views;
@@ -18,33 +16,35 @@ namespace SimpleChdDrive.Core.Views;
 /// </summary>
 public class MainWindowBase : Window
 {
-    private readonly ILoggingService _loggingService;
-    private readonly IMountService _mountService;
     private readonly IScreenshotService _screenshotService;
 
     private string? _chdPath;
     private ConsoleType _selectedConsoleType = ConsoleType.Unknown;
 
-    protected ILoggingService LoggingService => _loggingService;
-    protected IMountService MountService => _mountService;
+    private ILoggingService LoggingService { get; }
 
-    private TextBox LogTextBox => (TextBox)FindName("LogTextBox");
-    private TextBox ChdFilePathTextBox => (TextBox)FindName("ChdFilePathTextBox");
-    private ComboBox ConsoleTypeComboBox => (ComboBox)FindName("ConsoleTypeComboBox");
-    private Button MountButton => (Button)FindName("MountButton");
-    private Button UnmountButton => (Button)FindName("UnmountButton");
-    private TextBlock StatusText => (TextBlock)FindName("StatusText");
-    private TextBlock DriveLetterText => (TextBlock)FindName("DriveLetterText");
-    private Border UpdateBanner => (Border)FindName("UpdateBanner");
-    private TextBlock UpdateBannerText => (TextBlock)FindName("UpdateBannerText");
-    private Button UpdateBannerButton => (Button)FindName("UpdateBannerButton");
+    private IMountService MountService { get; }
 
-    protected virtual string[] GetStartupArgs() => [];
+    private TextBox LogTextBox => (TextBox)FindName("LogTextBox")!;
+    private TextBox ChdFilePathTextBox => (TextBox)FindName("ChdFilePathTextBox")!;
+    private ComboBox ConsoleTypeComboBox => (ComboBox)FindName("ConsoleTypeComboBox")!;
+    private Button MountButton => (Button)FindName("MountButton")!;
+    private Button UnmountButton => (Button)FindName("UnmountButton")!;
+    private TextBlock StatusText => (TextBlock)FindName("StatusText")!;
+    private TextBlock DriveLetterText => (TextBlock)FindName("DriveLetterText")!;
+    private Border UpdateBanner => (Border)FindName("UpdateBanner")!;
+    private TextBlock UpdateBannerText => (TextBlock)FindName("UpdateBannerText")!;
+    private Button UpdateBannerButton => (Button)FindName("UpdateBannerButton")!;
+
+    protected virtual string[] GetStartupArgs()
+    {
+        return [];
+    }
 
     public MainWindowBase()
     {
-        _loggingService = ServiceProvider.Get<ILoggingService>();
-        _mountService = ServiceProvider.Get<IMountService>();
+        LoggingService = ServiceProvider.Get<ILoggingService>();
+        MountService = ServiceProvider.Get<IMountService>();
         _screenshotService = ServiceProvider.Get<IScreenshotService>();
     }
 
@@ -60,7 +60,7 @@ public class MainWindowBase : Window
 
     private void WireUpLogging()
     {
-        _loggingService.LogEntries.CollectionChanged += (_, e) =>
+        LoggingService.LogEntries.CollectionChanged += (_, e) =>
         {
             if (e.Action != NotifyCollectionChangedAction.Add) return;
 
@@ -145,19 +145,19 @@ public class MainWindowBase : Window
                 chdPath = args[1];
                 break;
             case >= 1 when File.Exists(args[0]):
+            {
+                chdPath = args[0];
+                if (args.Length >= 2)
                 {
-                    chdPath = args[0];
-                    if (args.Length >= 2)
+                    var ct = ConsoleTypeHelper.ParseByName(args[1]);
+                    if (ct != ConsoleType.Unknown)
                     {
-                        var ct = ConsoleTypeHelper.ParseByName(args[1]);
-                        if (ct != ConsoleType.Unknown)
-                        {
-                            ctFromNumber = ct;
-                        }
+                        ctFromNumber = ct;
                     }
-
-                    break;
                 }
+
+                break;
+            }
         }
 
         if (chdPath != null)
@@ -216,7 +216,7 @@ public class MainWindowBase : Window
         MountButton.IsEnabled = !string.IsNullOrEmpty(_chdPath)
                                 && type != ConsoleType.Unknown
                                 && File.Exists(_chdPath)
-                                && !_mountService.IsMounted;
+                                && !MountService.IsMounted;
     }
 
     protected void ConsoleType_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -263,7 +263,7 @@ public class MainWindowBase : Window
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Mount failed: {ex.Message}");
+            LoggingService.LogError($"Mount failed: {ex.Message}");
         }
     }
 
@@ -272,7 +272,7 @@ public class MainWindowBase : Window
         _ = MountDiskAsync().ContinueWith(t =>
         {
             if (t.IsFaulted)
-                _loggingService.LogError($"Mount failed: {t.Exception?.InnerException?.Message}");
+                LoggingService.LogError($"Mount failed: {t.Exception?.InnerException?.Message}");
         }, TaskScheduler.Default);
     }
 
@@ -292,19 +292,19 @@ public class MainWindowBase : Window
                 type = sci.Type;
             }
 
-            await Task.Run(() => _mountService.Mount(_chdPath, null, type));
+            await Task.Run(() => MountService.Mount(_chdPath, null, type));
 
-            if (_mountService.IsMounted)
+            if (MountService.IsMounted)
             {
                 StatusText.Text = "Mounted";
-                DriveLetterText.Text = _mountService.MountPoint;
+                DriveLetterText.Text = MountService.MountPoint;
                 UnmountButton.IsEnabled = true;
 
                 try
                 {
                     var settings = ServiceProvider.TryGet<ISettingsService>();
                     if (settings is { Settings.AutoOpenMountedDrive: true })
-                        Process.Start("explorer.exe", _mountService.MountPoint);
+                        Process.Start("explorer.exe", MountService.MountPoint);
                 }
                 catch
                 {
@@ -319,7 +319,7 @@ public class MainWindowBase : Window
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Mount failed: {ex.Message}");
+            LoggingService.LogError($"Mount failed: {ex.Message}");
             StatusText.Text = "Mount failed";
             MountButton.IsEnabled = true;
         }
@@ -334,23 +334,23 @@ public class MainWindowBase : Window
 
             try
             {
-                await Task.Run(() => _mountService.Unmount());
+                await Task.Run(() => MountService.Unmount());
                 StatusText.Text = "Unmounted";
                 DriveLetterText.Text = "";
                 MountButton.IsEnabled = true;
             }
             catch (Exception ex)
             {
-                _loggingService.LogError($"Unmount failed: {ex.Message}");
+                LoggingService.LogError($"Unmount failed: {ex.Message}");
                 StatusText.Text = "Unmount failed";
-                UnmountButton.IsEnabled = _mountService.IsMounted;
+                UnmountButton.IsEnabled = MountService.IsMounted;
             }
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Unmount failed: {ex.Message}");
+            LoggingService.LogError($"Unmount failed: {ex.Message}");
             StatusText.Text = "Unmount failed";
-            UnmountButton.IsEnabled = _mountService.IsMounted;
+            UnmountButton.IsEnabled = MountService.IsMounted;
         }
     }
 
@@ -365,13 +365,12 @@ public class MainWindowBase : Window
         if (Directory.Exists(folder))
             Process.Start("explorer.exe", folder);
         else
-            _loggingService.LogError($"AppData folder not found: {folder}");
+            LoggingService.LogError($"AppData folder not found: {folder}");
     }
 
     protected void Settings_Click(object sender, RoutedEventArgs e)
     {
         var settingsService = ServiceProvider.TryGet<ISettingsService>();
-        if (settingsService is null) return;
         new SettingsWindow(settingsService) { Owner = this }.ShowDialog();
     }
 
@@ -384,7 +383,7 @@ public class MainWindowBase : Window
     {
         try
         {
-            _mountService.Unmount();
+            MountService.Unmount();
         }
         catch
         {

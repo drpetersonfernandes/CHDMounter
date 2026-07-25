@@ -268,15 +268,6 @@ public class ThreeDoIntegrationTests
         }
     }
 
-    private static void WalkTest(FsNode root, ITestOutputHelper output, out int files, out int dirs, out ulong maxSize)
-    {
-        files = 0;
-        dirs = 0;
-        maxSize = 0;
-        Walk(root, ref files, ref dirs, ref maxSize);
-        output.WriteLine($"  FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes");
-    }
-
     private static bool TryThreeDo(SectorReader reader, TrackInfo track, out int files, out int dirs, out ulong maxSize)
     {
         files = 0;

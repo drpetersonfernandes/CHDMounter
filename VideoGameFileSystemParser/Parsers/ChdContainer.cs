@@ -674,7 +674,10 @@ public class ChdContainer : IDisposable, IAsyncDisposable
     {
         var header = new byte[44];
         if (pcmDataSize > uint.MaxValue - 36)
-            pcmDataSize = (ulong)(uint.MaxValue - 36);
+        {
+            pcmDataSize = uint.MaxValue - 36;
+        }
+
         var riffSize = (uint)(36 + pcmDataSize);
 
         Encoding.ASCII.GetBytes("RIFF", 0, 4, header, 0);

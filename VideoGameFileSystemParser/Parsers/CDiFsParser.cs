@@ -132,7 +132,6 @@ internal class CDiFsParser
             var nameLen = buf[off];
             if (nameLen == 0) break;
 
-            var xattrLen = buf[off + 1];
             var startLbn = BeU32(buf, (int)off + 2);
             var parentDirNo = BeU16(buf, (int)off + 6);
 
@@ -143,8 +142,7 @@ internal class CDiFsParser
             {
                 Lba = startLbn,
                 Name = name,
-                Parent = parentDirNo,
-                XattrLength = xattrLen
+                Parent = parentDirNo
             });
 
             off += nameLen;
@@ -164,15 +162,11 @@ internal class CDiFsParser
         var recordLen = sectorData[0];
         if (recordLen is 0 or < CdiRecordHeaderSize) return null;
 
-        var startLbn = BeU32(sectorData, 6);
         var size = BeU32(sectorData, 14);
-        var nameLen = sectorData[32];
 
         return new CdiRootRecord
         {
-            StartLbn = startLbn,
-            Size = size,
-            NameLen = nameLen
+            Size = size
         };
     }
 
@@ -257,70 +251,70 @@ internal class CDiFsParser
                 switch (isDir)
                 {
                     case true when pathTable.Count > 0:
+                    {
+                        var subDirs = GetSubdirsFromPathTable(dirCtx.PathTableIndex, pathTable, trackStart);
+                        if (subDirs.Count > 0)
                         {
-                            var subDirs = GetSubdirsFromPathTable(dirCtx.PathTableIndex, pathTable, trackStart);
-                            if (subDirs.Count > 0)
+                            foreach (var sub in subDirs)
                             {
-                                foreach (var sub in subDirs)
+                                var child = new FsNode
                                 {
-                                    var child = new FsNode
-                                    {
-                                        Name = sub.Name,
-                                        Lba = sub.Lba,
-                                        Size = sub.Size,
-                                        IsDirectory = true,
-                                        FileNumber = 0
-                                    };
+                                    Name = sub.Name,
+                                    Lba = sub.Lba,
+                                    Size = sub.Size,
+                                    IsDirectory = true,
+                                    FileNumber = 0
+                                };
 
-                                    var childCtx = new CdiDirContext
-                                    {
-                                        Lba = sub.Lba,
-                                        Size = sub.Size,
-                                        PathTableIndex = sub.PathTableIndex
-                                    };
+                                var childCtx = new CdiDirContext
+                                {
+                                    Lba = sub.Lba,
+                                    Size = sub.Size,
+                                    PathTableIndex = sub.PathTableIndex
+                                };
 
-                                    ParseDirectory(child, childCtx, pathTable, trackStart);
-                                    dirNode.Children.Add(child);
-                                }
+                                ParseDirectory(child, childCtx, pathTable, trackStart);
+                                dirNode.Children.Add(child);
                             }
+                        }
 
-                            break;
-                        }
+                        break;
+                    }
                     case false:
+                    {
+                        var child = new FsNode
                         {
-                            var child = new FsNode
-                            {
-                                Name = name,
-                                Lba = trackStart + startLbn,
-                                Size = fileSize,
-                                IsDirectory = false,
-                                FileNumber = fileNumber,
-                                IsInterleaved = isInterleaved
-                            };
-                            dirNode.Children.Add(child);
-                            break;
-                        }
+                            Name = name,
+                            Lba = trackStart + startLbn,
+                            Size = fileSize,
+                            IsDirectory = false,
+                            FileNumber = fileNumber,
+                            IsInterleaved = isInterleaved
+                        };
+                        dirNode.Children.Add(child);
+                        break;
+                    }
                     default:
+                    {
+                        var child = new FsNode
                         {
-                            var child = new FsNode
-                            {
-                                Name = name,
-                                Lba = trackStart + startLbn,
-                                Size = fileSize,
-                                IsDirectory = true,
-                                FileNumber = fileNumber,
-                                IsInterleaved = isInterleaved
-                            };
-                            var childCtx = new CdiDirContext
-                            {
-                                Lba = child.Lba,
-                                Size = fileSize,
-                                PathTableIndex = dirCtx.PathTableIndex
-                            };
-                            ParseDirectory(child, childCtx, pathTable, trackStart);
-                            dirNode.Children.Add(child);
-                            break;
-                        }
+                            Name = name,
+                            Lba = trackStart + startLbn,
+                            Size = fileSize,
+                            IsDirectory = true,
+                            FileNumber = fileNumber,
+                            IsInterleaved = isInterleaved
+                        };
+                        var childCtx = new CdiDirContext
+                        {
+                            Lba = child.Lba,
+                            Size = fileSize,
+                            PathTableIndex = dirCtx.PathTableIndex
+                        };
+                        ParseDirectory(child, childCtx, pathTable, trackStart);
+                        dirNode.Children.Add(child);
+                        break;
+                    }
                 }
 
                 pos += recordLen;
@@ -394,19 +388,11 @@ internal class CDiFsParser
         public uint Lba;
         public string Name = "";
         public ushort Parent;
-
-        // ReSharper disable once NotAccessedField.Local
-        public byte XattrLength;
     }
 
     private class CdiRootRecord
     {
-        // ReSharper disable once NotAccessedField.Local
-        public uint StartLbn;
         public uint Size;
-
-        // ReSharper disable once NotAccessedField.Local
-        public byte NameLen;
     }
 
     private class CdiDirContext

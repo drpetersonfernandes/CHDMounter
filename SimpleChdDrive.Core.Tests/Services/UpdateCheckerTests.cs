@@ -73,7 +73,7 @@ public class UpdateCheckerTests
     {
         // Result starts as null (static field, may have been set by other tests)
         // We can at least verify the property exists and is readable
-        var result = UpdateChecker.Result;
+        _ = UpdateChecker.Result;
         // Don't assert null since other tests may have set it
     }
 }

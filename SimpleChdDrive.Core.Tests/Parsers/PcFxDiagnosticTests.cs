@@ -85,7 +85,7 @@ public class PcFxDiagnosticTests
             }
 
             // ---- Test 2: Dedicated PcFxIsoParser ----
-        testPcfx:
+            testPcfx:
             {
                 var reader2 = new SectorReader(chd, chd.UnitBytes);
                 foreach (var t in reader2.Tracks)
