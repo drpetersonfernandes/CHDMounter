@@ -263,7 +263,7 @@ internal class ChdFs : IDokanOperations, IDisposable
         try
         {
             var entry = _container.FindFile(fileName);
-            var isDir = entry?.IsDirectory ?? (fileName == "\\");
+            var isDir = entry.IsDirectory;
 
             var everyoneSid = new SecurityIdentifier("S-1-1-0");
 

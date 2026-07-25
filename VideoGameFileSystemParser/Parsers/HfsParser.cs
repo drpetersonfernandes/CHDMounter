@@ -172,8 +172,8 @@ internal class HfsParser
                 // Check for HFS+ volume header "HX" or "H+" at byte offset 1024
                 if (hdrOff + 1026 <= sec.Length)
                 {
-                    bool isHx = sec[hdrOff + 1024] == 0x48 && sec[hdrOff + 1025] == 0x58;
-                    bool isHp = sec[hdrOff + 1024] == 0x48 && sec[hdrOff + 1025] == 0x2B;
+                    var isHx = sec[hdrOff + 1024] == 0x48 && sec[hdrOff + 1025] == 0x58;
+                    var isHp = sec[hdrOff + 1024] == 0x48 && sec[hdrOff + 1025] == 0x2B;
                     if (isHx || isHp)
                     {
                         _hfsStartLba = lba;
@@ -225,7 +225,8 @@ internal class HfsParser
         catalogBlockCount = 0;
 
         // Check standard MDB byte offsets and header-offset-adjusted positions
-        int[] candidateOffsets = [
+        int[] candidateOffsets =
+        [
             0, 512, 1024, 1536,
             2, 514, 1026, 1538,
             4, 516, 1028, 1540,
@@ -298,8 +299,8 @@ internal class HfsParser
             var sig0 = sector[hdrOff];
             var sig1 = sector[hdrOff + 1];
 
-            bool isHfsPlus = (sig0 == 0x48 && sig1 == 0x58) || // "HX"
-                             (sig0 == 0x48 && sig1 == 0x2B);   // "H+"
+            var isHfsPlus = (sig0 == 0x48 && sig1 == 0x58) || // "HX"
+                            (sig0 == 0x48 && sig1 == 0x2B); // "H+"
 
             if (!isHfsPlus)
                 continue;
@@ -387,13 +388,13 @@ internal class HfsParser
             }
             else
             {
-                nodeSize = BeU16(nodeData, (int)headerRecOff + 18);
+                nodeSize = BeU16(nodeData, headerRecOff + 18);
                 if (nodeSize == 0 || nodeSize > nodeData.Length)
                     return false;
             }
         }
 
-        var currentLeaf = BeU32(nodeData, (int)headerRecOff + 10);
+        var currentLeaf = BeU32(nodeData, headerRecOff + 10);
 
         var visited = new HashSet<uint>();
         for (var safety = 0; safety < 100000 && currentLeaf != 0; safety++)
@@ -429,7 +430,7 @@ internal class HfsParser
             recordOffsets[i] = BeU16(nodeData, nodeOffset + tableOffset);
         }
 
-        foreach (var off in recordOffsets.OrderBy(o => o))
+        foreach (var off in recordOffsets.OrderBy(static o => o))
         {
             if (off + 7 > nodeSize)
                 continue;
@@ -441,7 +442,7 @@ internal class HfsParser
             var parentId = BeU32(nodeData, nodeOffset + off + 2);
             var nameLength = nodeData[nodeOffset + off + 6];
 
-            if (nameLength > 255 || off + 10 + nameLength > nodeSize)
+            if (off + 10 + nameLength > nodeSize)
                 continue;
 
             var name = Encoding.BigEndianUnicode.GetString(nodeData, nodeOffset + off + 10, nameLength * 2);
@@ -623,6 +624,7 @@ internal class HfsParser
                 {
                     if (!ScanForBtreeHeaderRecord(nodeData, out headerRecOff, out nodeSize))
                         return false;
+
                     goto parseLeaves;
                 }
             }
@@ -640,6 +642,7 @@ internal class HfsParser
             {
                 if (!ScanForBtreeHeaderRecord(nodeData, out headerRecOff, out nodeSize))
                     return false;
+
                 goto parseLeaves;
             }
 
@@ -688,7 +691,7 @@ internal class HfsParser
             recordOffsets[i] = BeU16(nodeData, nodeOffset + tableOffset);
         }
 
-        foreach (var off in recordOffsets.OrderBy(o => o))
+        foreach (var off in recordOffsets.OrderBy(static o => o))
         {
             if (off + 7 > nodeSize)
                 continue;
@@ -705,7 +708,7 @@ internal class HfsParser
 
             var name = nameLength > 0
                 ? Encoding.ASCII.GetString(nodeData, nodeOffset + off + 7, nameLength)
-                : string.Empty;
+                : "";
 
             var dataOff = nodeOffset + off + 7 + nameLength;
             if ((nameLength & 1) == 0)
@@ -841,7 +844,7 @@ internal class HfsParser
     {
         var children = _entries
             .Where(e => e.ParentId == folderId)
-            .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static e => e.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         foreach (var entry in children)
@@ -1042,7 +1045,7 @@ internal class HfsParser
     private static uint BeU32(byte[] data, int offset)
     {
         return (uint)((data[offset] << 24) | (data[offset + 1] << 16)
-            | (data[offset + 2] << 8) | data[offset + 3]);
+                                           | (data[offset + 2] << 8) | data[offset + 3]);
     }
 
     private static ushort BeU16(byte[] data, int offset)
@@ -1053,7 +1056,7 @@ internal class HfsParser
     private static int BeS32(byte[] data, int offset)
     {
         return (data[offset] << 24) | (data[offset + 1] << 16)
-            | (data[offset + 2] << 8) | data[offset + 3];
+                                    | (data[offset + 2] << 8) | data[offset + 3];
     }
 
     private const sbyte KBtLeafNode = -1;
@@ -1088,14 +1091,17 @@ internal class HfsParser
         public uint FreeNodes;
     }
 
-    private enum HfsRecordType { Folder,
+    private enum HfsRecordType
+    {
+        Folder,
         File,
         FolderThread,
-        FileThread }
+        FileThread
+    }
 
     private sealed class HfsCatalogEntry
     {
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = "";
         public uint ParentId { get; set; }
         public HfsRecordType RecordType { get; set; }
         public HfsFolderRecord? Folder { get; set; }
@@ -1109,7 +1115,7 @@ internal class HfsParser
         public ushort Valence;
         public uint FolderId;
         public uint ParentId;
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = "";
         public uint CreateDate;
         public uint ModifyDate;
         public uint BackupDate;

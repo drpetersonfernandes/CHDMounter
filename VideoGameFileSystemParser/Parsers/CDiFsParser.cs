@@ -397,13 +397,18 @@ internal class CDiFsParser
         public uint Lba;
         public string Name = "";
         public ushort Parent;
+
+        // ReSharper disable once NotAccessedField.Local
         public byte XattrLength;
     }
 
     private class CdiRootRecord
     {
+        // ReSharper disable once NotAccessedField.Local
         public uint StartLbn;
         public uint Size;
+
+        // ReSharper disable once NotAccessedField.Local
         public byte NameLen;
     }
 

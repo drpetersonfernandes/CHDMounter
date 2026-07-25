@@ -13,6 +13,8 @@ namespace SimpleChdDrive_WinFsp;
 internal sealed class ChdFs : FileSystemBase, IDisposable
 {
     private readonly ChdContainer _container;
+
+    // ReSharper disable once NotAccessedField.Local
     private readonly ILoggingService _loggingService;
     private readonly bool _persistentAcls;
 
@@ -176,7 +178,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
         ref byte[] SecurityDescriptor)
     {
         var entry = _container.FindFile(FileName);
-        FileAttributes = (uint)(entry?.IsDirectory == true
+        FileAttributes = (uint)(entry.IsDirectory
             ? System.IO.FileAttributes.Directory
             : System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReadOnly);
         SecurityDescriptor = new byte[4096];
