@@ -7,43 +7,53 @@ WPF desktop application that mounts CHD (Compressed Hunks of Data) disc images a
 
 ## Supported Consoles
 
-| # | Console | File System |
-|---|---------|-------------|
-| 1 | Amiga CD | ISO 9660 |
-| 2 | Amiga CD32 | ISO 9660 |
-| 3 | CD-i | CD-i File System |
-| 4 | Generic ISO 9660 | ISO 9660 |
-| 5 | Generic ISO Raw | Raw Sectors |
-| 6 | CUE/BIN (2352 Default) | CUE/BIN (2352 bytes/sector) |
-| 7 | CUE/BIN (Cooked) | CUE/BIN (2048 bytes/sector) |
-| 8 | CUE/ISO (2048) | CUE/ISO (2048 bytes/sector) |
-| 9 | CUE/BIN/WAV | CUE/BIN with WAV audio |
-| 10 | CUE/ISO/WAV | CUE/ISO with WAV audio |
-| 11 | Dreamcast | ISO 9660 + IP.BIN |
-| 12 | Neo Geo CD | ISO 9660 |
-| 13 | PC Engine CD | PC Engine CD-ROM |
-| 14 | PC-FX | PC-FX ISO |
-| 15 | PlayStation (Auto) | Auto-detect (PS1/PS2/PS3/PSP) |
-| 16 | PS1 | CD-ROM XA / ISO 9660 |
-| 17 | PS2 | ISO 9660 |
-| 18 | PS3 | UDF |
-| 19 | PSP | ISO 9660 (UMD) |
-| 20 | Saturn | ISO 9660 |
-| 21 | Sega Genesis CD | ISO 9660 |
-| 22 | 3DO | Opera File System |
-| 23 | Xbox | XDVDFS |
-| 24 | Xbox 360 | XGD / XSF |
+| # | Console | CLI Alias | File System |
+|---|---------|-----------|-------------|
+| 1 | Amiga CD | `amigacd`, `amiga` | ISO 9660 |
+| 2 | Amiga CD32 | `amigacd32`, `cd32` | ISO 9660 |
+| 3 | Amiga CDTV | (GUI only) | ISO 9660 |
+| 4 | CD-i | `cdi`, `cd-i` | CD-i Green Book |
+| 5 | Dreamcast | `dreamcast`, `dc` | ISO 9660 + IP.BIN |
+| 6 | FM Towns | `fmtowns`, `fmt` | ISO 9660 |
+| 7 | Generic ISO 9660 | `iso9660`, `generic`, `iso` | ISO 9660 / High Sierra |
+| 8 | Generic Raw | (GUI only) | Raw sectors → image.iso |
+| 9 | CUE/BIN (2352) | `cuebin`, `cue` | Virtual CUE/BIN |
+| 10 | CUE/BIN (2048) | `cuebin2048`, `cue2048` | Virtual CUE/BIN |
+| 11 | CUE/ISO | `cueiso` | Virtual CUE/ISO |
+| 12 | CUE/BIN/WAV | `cuebinwav`, `cuewav` | Virtual CUE/BIN/WAV |
+| 13 | CUE/ISO/WAV | `cueisowav` | Virtual CUE/ISO/WAV |
+| 14 | Neo Geo CD | `neogeo`, `ngcd` | ISO 9660 |
+| 15 | Nuon | (GUI only) | UDF → ISO 9660 fallback |
+| 16 | PC Engine CD | `pcengine`, `pce`, `tgcd` | ISO 9660 |
+| 17 | PC-FX | `pcfx` | PC-FX ISO |
+| 18 | PC-98 | (GUI only) | ISO 9660 |
+| 19 | Pico | `pico` | ISO 9660 |
+| 20 | Pippin | (GUI only) | HFS → HFS+ → UDF → ISO |
+| 21 | PlayStation (Auto) | `psauto`, `psdetect` | ISO 9660 (auto-detect) |
+| 22 | PS1 | `ps1`, `playstation`, `psx` | ISO 9660 |
+| 23 | PS2 | `ps2` | ISO 9660 |
+| 24 | PS3 | `ps3` | UDF → ISO 9660 fallback |
+| 25 | PS3 (Single File) | (GUI only) | Virtual ISO passthrough |
+| 26 | PSP | `psp` | ISO 9660 (UMD) |
+| 27 | Saturn | `saturn` | ISO 9660 |
+| 28 | Sega Genesis CD | `segagenesis`, `megacd`, `segacd` | ISO 9660 |
+| 29 | 3DO | `3do` | Opera FS (ISO 9660 fallback) |
+| 30 | X68000 | `x68000`, `x68k` | ISO 9660 → UDF fallback |
+| 31 | Xbox | `xbox` | XDVDFS |
+| 32 | Xbox 360 | `xbox360`, `x360` | XDVDFS |
+| 33 | Xbox (Single File) | (GUI only) | Virtual ISO passthrough |
 
 ## Usage
 
 ```
-SimpleChdDrive.exe <console_type> <chd_file>
+SimpleChdDrive.exe <chd_file> <console_type> [mount_point]
 ```
 
 Examples:
 ```
-SimpleChdDrive.exe 17 game.chd
-SimpleChdDrive.exe 23 game.chd
+SimpleChdDrive.exe game.chd ps2 M
+SimpleChdDrive.exe game.chd xbox360
+SimpleChdDrive.exe disc.chd cuebin
 ```
 
 Run without arguments to open the GUI for interactive file system type selection.

@@ -139,9 +139,8 @@ internal static class ChdPathCatalog
     {
         public static string[] Paths =>
         [
-            @"J:\Panasonic 3DO",
-            @"G:\MAME\MAME Software List CHDs\3do",
-            @"G:\MAME\MAME Software List CHDs\3do_m2"
+            @"I:\Panasonic 3DO",
+            @"G:\MAME\MAME Software List CHDs\3do"
         ];
     }
 
