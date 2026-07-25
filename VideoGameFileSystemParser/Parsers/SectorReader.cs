@@ -23,6 +23,10 @@ public class SectorReader
     private int _lastTrackIdx = -1;
     private readonly Dictionary<int, (uint Offset, bool Scrambled)> _trackOffsetCache = [];
 
+    private bool _globalOffsetLocked;
+    private uint _globalSectorHeaderOffset;
+    private bool _globalWasScrambled;
+
     private static readonly byte[] SyncPattern = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00];
 
     private static readonly byte[] SectorScramble =
@@ -207,22 +211,23 @@ public class SectorReader
 /// The number of bytes per compressed hunk in the CHD.
 /// </summary>
     public uint HunkBytes => _chd.HunkBytes;
+
     /// <summary>
 /// The number of bytes per sector unit (e.g., 2048 or 2352).
 /// </summary>
-    public uint UnitBytes { get; }
+internal uint UnitBytes { get; }
 
     /// <summary>
 /// The total number of bytes in the disc image.
 /// </summary>
-    public uint TotalBytes => (uint)_chd.TotalBytes;
+internal uint TotalBytes => (uint)_chd.TotalBytes;
 
     /// <summary>
 /// Initializes a new instance of the SectorReader class.
 /// </summary>
 /// <param name="unitBytes">The sector size in bytes.</param>
 /// <param name="chd">The opened ChdFile to read from.</param>
-    public SectorReader(ChdFile chd, uint unitBytes)
+internal SectorReader(ChdFile chd, uint unitBytes)
     {
         _chd = chd;
         UnitBytes = unitBytes;
@@ -234,7 +239,7 @@ public class SectorReader
 /// </summary>
 /// <param name="track">The track to set as current.</param>
 /// <param name="locked">If true, restricts reads to this track.</param>
-    public void SetTrack(TrackInfo? track, bool locked = false)
+internal void SetTrack(TrackInfo? track, bool locked = false)
     {
         CurrentTrack = track;
         _trackLocked = locked;
@@ -243,17 +248,17 @@ public class SectorReader
     /// <summary>
 /// The currently active track for sector read operations.
 /// </summary>
-    public TrackInfo? CurrentTrack { get; private set; }
+private TrackInfo? CurrentTrack { get; set; }
 
     /// <summary>
 /// The list of tracks parsed from the CHD metadata.
 /// </summary>
-    public List<TrackInfo> Tracks { get; }
+internal List<TrackInfo> Tracks { get; }
 
     /// <summary>
 /// Resets the reader internal state: hunk cache, offset detection, and track lock.
 /// </summary>
-    public void Reset()
+    internal void Reset()
     {
         _cachedHunkNum = 0xFFFFFFFF;
         _cachedHunk = [];
@@ -262,11 +267,15 @@ public class SectorReader
         _isOffsetDetected = false;
         SectorHeaderOffset = 0;
         SyncOffset = 0;
-            _offsetDetectedHunk = 0xFFFFFFFF;
-            _offsetDetectedTrack = null;
-            _lastTrackIdx = -1;
-            LbaOffset = 0;
+        _offsetDetectedHunk = 0xFFFFFFFF;
+        _offsetDetectedTrack = null;
+        _lastTrackIdx = -1;
+        LbaOffset = 0;
         _trackLocked = false;
+        _globalOffsetLocked = false;
+        _globalSectorHeaderOffset = 0;
+        _globalWasScrambled = false;
+        _trackOffsetCache.Clear();
     }
 
     /// <summary>
@@ -276,7 +285,7 @@ public class SectorReader
 /// <param name="lba">The logical block address.</param>
 /// <param name="outOffset">The buffer write offset.</param>
 /// <returns>true if the sector was read successfully.</returns>
-    public bool ReadSector(uint lba, byte[] outBuffer, int outOffset = 0)
+internal bool ReadSector(uint lba, byte[] outBuffer, int outOffset = 0)
     {
         if (!PrepareHunk(lba, out var rawOffset))
             return false;
@@ -308,7 +317,7 @@ public class SectorReader
 /// </summary>
 /// <param name="lba">The logical block address.</param>
 /// <returns>The sector data, or null on failure.</returns>
-    public byte[]? ReadSector(uint lba)
+internal byte[]? ReadSector(uint lba)
     {
         var buffer = new byte[SectorSize];
         if (ReadSector(lba, buffer))
@@ -323,7 +332,7 @@ public class SectorReader
 /// <param name="rawSector">The raw sector data output on success.</param>
 /// <param name="lba">The logical block address.</param>
 /// <returns>true if the raw sector was read.</returns>
-    public bool ReadRawSector(uint lba, out byte[] rawSector)
+internal bool ReadRawSector(uint lba, out byte[] rawSector)
     {
         rawSector = null!;
         if (!PrepareHunk(lba, out var rawOffset))
@@ -343,7 +352,7 @@ public class SectorReader
 /// </summary>
 /// <param name="lba">The logical block address.</param>
 /// <returns>The file number, or 0xFF if unavailable.</returns>
-    public byte GetSubheaderFileNumber(uint lba)
+internal byte GetSubheaderFileNumber(uint lba)
     {
         if (!PrepareHunk(lba, out var rawOffset))
             return 0xFF;
@@ -456,7 +465,12 @@ public class SectorReader
 
         var trackIdx = CurrentTrack?.Index ?? -1;
 
-        if (trackIdx >= 0 && _trackOffsetCache.TryGetValue(trackIdx, out var precached))
+        if (_globalOffsetLocked)
+        {
+            SectorHeaderOffset = _globalSectorHeaderOffset;
+            _wasScrambled = _globalWasScrambled;
+        }
+        else if (trackIdx >= 0 && _trackOffsetCache.TryGetValue(trackIdx, out var precached))
         {
             SectorHeaderOffset = precached.Offset;
             _wasScrambled = precached.Scrambled;
@@ -533,6 +547,9 @@ public class SectorReader
             SyncOffset = (uint)foundSyncOffset;
             SectorHeaderOffset = (uint)(foundSyncOffset + (isMode2 ? 24 : 16));
             _trackOffsetCache[trackIdx] = (SectorHeaderOffset, _wasScrambled);
+            _globalOffsetLocked = true;
+            _globalSectorHeaderOffset = SectorHeaderOffset;
+            _globalWasScrambled = _wasScrambled;
         }
         else
         {
@@ -560,8 +577,10 @@ public class SectorReader
                 for (var k = 0; k < 7; k++)
                 {
                     if (_cachedHunk[checkOff + k] != operaMagic[k])
-                    { operaMatch = false;
-                        break; }
+                    {
+                        operaMatch = false;
+                        break;
+                    }
                 }
 
                 if (operaMatch)
@@ -577,6 +596,9 @@ public class SectorReader
                 SyncOffset = cookedOffset;
                 SectorHeaderOffset = cookedOffset;
                 _trackOffsetCache[trackIdx] = (SectorHeaderOffset, false);
+                _globalOffsetLocked = true;
+                _globalSectorHeaderOffset = SectorHeaderOffset;
+                _globalWasScrambled = false;
             }
             else
             {
@@ -587,15 +609,21 @@ public class SectorReader
                     for (var z = 0; z < 64; z++)
                     {
                         if (_cachedHunk[rawOffsetInHunk + fallbackOffset + z] != 0)
-                        { fallbackIsZero = false;
-                            break; }
+                        {
+                            fallbackIsZero = false;
+                            break;
+                        }
                     }
                 }
 
-                if (fallbackIsZero)
+                if (fallbackIsZero || (fallbackOffset > 0 && (int)(rawOffsetInHunk + 2) <= _cachedHunk.Length &&
+                                       HasFilesystemSignature(rawOffsetInHunk)))
                 {
                     SyncOffset = 0;
                     SectorHeaderOffset = 0;
+                    _globalOffsetLocked = true;
+                    _globalSectorHeaderOffset = 0;
+                    _globalWasScrambled = false;
                 }
                 else
                 {
@@ -621,6 +649,46 @@ public class SectorReader
         return true;
     }
 
+    private bool HasFilesystemSignature(uint rawOffsetInHunk)
+    {
+        // Check for HFS/HFS+ signatures at various byte offsets within the sector.
+        // Different disc dumps have different header sizes before the actual data.
+        for (var off = 0; off <= 32; off += 2)
+        {
+            var absOff = (int)rawOffsetInHunk + off;
+            if (absOff + 2 > _cachedHunk.Length) break;
+
+            var b0 = _cachedHunk[absOff];
+            var b1 = _cachedHunk[absOff + 1];
+
+            switch (b0)
+            {
+                // HFS boot block "LK"
+                case 0x4C when b1 == 0x4B:
+                // HFS MDB "BD"
+                case 0x42 when b1 == 0x44:
+                // HFS+ volume header "HX"
+                case 0x48 when b1 == 0x58:
+                // HFS+ volume header "H+"
+                case 0x48 when b1 == 0x2B:
+                // Apple Partition Map "ER"
+                case 0x45 when b1 == 0x52:
+                    return true;
+            }
+
+            // HFS MDB "BD" at byte 1024 from data start
+            var mdbOff = absOff + 1024;
+            if (mdbOff + 2 <= _cachedHunk.Length)
+            {
+                if (_cachedHunk[mdbOff] == 0x42 && _cachedHunk[mdbOff + 1] == 0x44) return true;
+                if (_cachedHunk[mdbOff] == 0x48 && _cachedHunk[mdbOff + 1] == 0x58) return true;
+                if (_cachedHunk[mdbOff] == 0x48 && _cachedHunk[mdbOff + 1] == 0x2B) return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>
 /// Returns the appropriate sector data offset for a track.
 /// </summary>
@@ -642,7 +710,7 @@ public class SectorReader
 /// <param name="unitBytes">The sector size.</param>
 /// <param name="chd">The opened ChdFile.</param>
 /// <returns>A list of TrackInfo with computed LBA positions.</returns>
-    public static List<TrackInfo> ParseTracksWithLba(ChdFile chd, uint unitBytes)
+internal static List<TrackInfo> ParseTracksWithLba(ChdFile chd, uint unitBytes)
     {
         var tracks = new List<TrackInfo>();
         var metadata = chd.Metadata;
@@ -712,9 +780,11 @@ public class SectorReader
         {
             foreach (var t in tracks)
             {
-                if (t.Metadata?.Contains("PAD:") == true)
-                { isGdrom = true;
-                    break; }
+                if (t.Metadata.Contains("PAD:"))
+                {
+                    isGdrom = true;
+                    break;
+                }
             }
         }
 
@@ -794,8 +864,10 @@ public class SectorReader
                         for (var j = 0; j < 12; j++)
                         {
                             if (swappedSync[j] != SyncPattern[j])
-                            { match = false;
-                                break; }
+                            {
+                                match = false;
+                                break;
+                            }
                         }
 
                         if (match)

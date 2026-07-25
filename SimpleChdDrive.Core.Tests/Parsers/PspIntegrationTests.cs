@@ -27,7 +27,7 @@ public class PspIntegrationTests
     public void Iso9660ParserParsesPspDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPspDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPspDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -74,7 +74,7 @@ public class PspIntegrationTests
     public void PspParserParsesPspDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(PspParserParsesPspDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(PspParserParsesPspDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -115,7 +115,7 @@ public class PspIntegrationTests
     public void ChdContainerMountAndParsePspDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePspDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePspDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -137,23 +137,15 @@ public class PspIntegrationTests
                 Assert.Empty(badNames);
 
                 var umdData = container.FindFile(@"\UMD_DATA.BIN");
-                if (umdData != null)
                 {
                     var buf = new byte[2048];
                     var bytesRead = container.ReadFile(umdData, 0, buf, 0, buf.Length);
                     var title = Encoding.ASCII.GetString(buf, 0, Math.Min(bytesRead, 128)).TrimEnd('\0');
                     output.WriteLine($"UMD_DATA.BIN ({bytesRead} bytes): '{title}'");
                 }
-                else
-                {
-                    output.WriteLine("UMD_DATA.BIN: NOT FOUND");
-                }
 
                 var paramSfo = container.FindFile(@"\PSP_GAME\PARAM.SFO");
-                if (paramSfo != null)
-                    output.WriteLine($"PSP_GAME\\PARAM.SFO: FOUND ({paramSfo.Size:N0} bytes)");
-                else
-                    output.WriteLine("PSP_GAME\\PARAM.SFO: NOT FOUND");
+                output.WriteLine($"PSP_GAME\\PARAM.SFO: FOUND ({paramSfo.Size:N0} bytes)");
             }
             finally
             {

@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses the CD-i file system, based on ISO 9660 with custom extensions for interleaved data.
 /// </summary>
-public class CDiFsParser
+internal class CDiFsParser
 {
     private readonly SectorReader _reader;
     private static readonly Encoding Encoding = Encoding.GetEncoding("iso8859-1");
@@ -50,9 +50,8 @@ public class CDiFsParser
         var bestVdData = SearchForVolumeDescriptor(searchLba, sectorData);
         if (bestVdData == null) return false;
 
-        var vd = bestVdData;
-        var pathTableSize = BeU32(vd, 136);
-        var pathTableAddr = BeU32(vd, 148);
+        var pathTableSize = BeU32(bestVdData, 136);
+        var pathTableAddr = BeU32(bestVdData, 148);
 
         if (pathTableSize == 0 || pathTableAddr == 0) return false;
 
@@ -207,13 +206,16 @@ public class CDiFsParser
                 var nameLen = sector[pos + 32];
                 _ = sector[pos + 25];
 
-                if (nameLen == 0) { pos += recordLen;
+                if (nameLen == 0)
+                {
+                    pos += recordLen;
                     if ((pos & 1) != 0)
                     {
                         pos++;
                     }
 
-                    continue; }
+                    continue;
+                }
 
                 if (33 + nameLen > recordLen || pos + 33 + nameLen > 2048) break;
 
@@ -368,7 +370,9 @@ public class CDiFsParser
     {
         if (o + s.Length > d.Length) return false;
 
-        for (var i = 0; i < s.Length; i++) if (d[o + i] != s[i]) return false;
+        for (var i = 0; i < s.Length; i++)
+            if (d[o + i] != s[i])
+                return false;
 
         return true;
     }

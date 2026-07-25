@@ -94,8 +94,14 @@ public partial class MainWindow
     {
         if (sender is FrameworkElement { Tag: string url })
         {
-            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-            catch { /* ignored */ }
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch
+            {
+                /* ignored */
+            }
         }
     }
 
@@ -339,10 +345,13 @@ public partial class MainWindow
                 try
                 {
                     var settings = ServiceProvider.TryGet<ISettingsService>();
-                    if (settings?.Settings.AutoOpenMountedDrive == true)
+                    if (settings.Settings.AutoOpenMountedDrive)
                         Process.Start("explorer.exe", _mountService.MountPoint);
                 }
-                catch { /* ignored */ }
+                catch
+                {
+                    /* ignored */
+                }
             }
             else
             {
@@ -404,8 +413,7 @@ public partial class MainWindow
     private void Settings_Click(object sender, RoutedEventArgs e)
     {
         var settingsService = ServiceProvider.TryGet<ISettingsService>();
-        if (settingsService != null)
-            new SettingsWindow(settingsService) { Owner = this }.ShowDialog();
+        new SettingsWindow(settingsService) { Owner = this }.ShowDialog();
     }
 
     private void About_Click(object sender, RoutedEventArgs e)
@@ -415,7 +423,10 @@ public partial class MainWindow
 
     private void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
-        try { _mountService.Unmount(); }
+        try
+        {
+            _mountService.Unmount();
+        }
         catch
         {
             // ignored

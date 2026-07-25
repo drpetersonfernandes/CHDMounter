@@ -25,7 +25,7 @@ public class AmigaCd32IntegrationTests
     public void Iso9660ParserParsesAmigaCd32Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesAmigaCd32Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesAmigaCd32Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -70,7 +70,7 @@ public class AmigaCd32IntegrationTests
     public void AmigaCd32ParserParsesAmigaCd32Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(AmigaCd32ParserParsesAmigaCd32Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(AmigaCd32ParserParsesAmigaCd32Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -109,7 +109,7 @@ public class AmigaCd32IntegrationTests
     public void ChdContainerMountAndParseAmigaCd32Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseAmigaCd32Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseAmigaCd32Disc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -142,16 +142,19 @@ public class AmigaCd32IntegrationTests
     private static void Walk(FsNode node, ref int files, ref int dirs, ref ulong maxSize)
     {
         foreach (var c in node.Children)
-        {
-            if (c.IsDirectory) { dirs++;
-                Walk(c, ref files, ref dirs, ref maxSize); }
-            else { files++;
+            if (c.IsDirectory)
+            {
+                dirs++;
+                Walk(c, ref files, ref dirs, ref maxSize);
+            }
+            else
+            {
+                files++;
                 if (c.Size > maxSize)
                 {
                     maxSize = c.Size;
                 }
             }
-        }
     }
 
     private static IEnumerable<FileEntry> CollectEntries(ChdContainer container, string path)

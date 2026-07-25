@@ -58,8 +58,11 @@ public class PcFxDiagnosticTests
                     _output.WriteLine($"  Track[{t.Index}]: Type='{t.TrackType}' IsData={t.IsDataTrack} Frames={t.Frames} StartLba={t.StartLba} ChdOffset={t.ChdOffset} Pregap={t.Pregap}");
 
                 var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                if (track == null) { _output.WriteLine("  NO TRACK!");
-                    goto testPcfx; }
+                if (track == null)
+                {
+                    _output.WriteLine("  NO TRACK!");
+                    goto testPcfx;
+                }
 
                 _output.WriteLine($"  Using track: Index={track.Index} StartLba={track.StartLba} Frames={track.Frames}");
 
@@ -89,8 +92,11 @@ public class PcFxDiagnosticTests
                     _output.WriteLine($"  Track[{t.Index}]: Type='{t.TrackType}' IsData={t.IsDataTrack} Frames={t.Frames} StartLba={t.StartLba} ChdOffset={t.ChdOffset} Pregap={t.Pregap}");
 
                 var track2 = reader2.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader2.Tracks.FirstOrDefault();
-                if (track2 == null) { _output.WriteLine("  PcFxIso: NO TRACK!");
-                    return; }
+                if (track2 == null)
+                {
+                    _output.WriteLine("  PcFxIso: NO TRACK!");
+                    return;
+                }
 
                 _output.WriteLine($"  PcFxIso using track: Index={track2.Index} StartLba={track2.StartLba} Frames={track2.Frames}");
 
@@ -138,6 +144,7 @@ public class PcFxDiagnosticTests
 
                 lastHunk = h;
             }
+
             var secOff = (int)(s * chd.UnitBytes);
             if (secOff + 16 > hunkBuf.Length) continue;
 
@@ -150,8 +157,12 @@ public class PcFxDiagnosticTests
 
                     var rawOk = true;
                     for (var j = 0; j < 5; j++)
-                        if (hunkBuf[secOff + off + 1 + j] != cd001[j]) { rawOk = false;
-                            break; }
+                        if (hunkBuf[secOff + off + 1 + j] != cd001[j])
+                        {
+                            rawOk = false;
+                            break;
+                        }
+
                     if (rawOk)
                     {
                         var msf = $"{hunkBuf[secOff + off + 12]:X2}:{hunkBuf[secOff + off + 13]:X2}:{hunkBuf[secOff + off + 14]:X2}";
@@ -166,8 +177,12 @@ public class PcFxDiagnosticTests
                 // cooked sector - check at offset 1
                 var rawOk = true;
                 for (var j = 0; j < 5; j++)
-                    if (hunkBuf[secOff + 1 + j] != cd001[j]) { rawOk = false;
-                        break; }
+                    if (hunkBuf[secOff + 1 + j] != cd001[j])
+                    {
+                        rawOk = false;
+                        break;
+                    }
+
                 if (rawOk)
                 {
                     _output.WriteLine($"    COOKED CD001 at frame={frame} typeByte={hunkBuf[secOff]:X2}");
@@ -213,12 +228,19 @@ public class PcFxDiagnosticTests
 
                 var rawMatch = true;
                 for (var j = 0; j < 5; j++)
-                    if (hunkBuf[secOff + 1 + j] != cd001[j]) { rawMatch = false;
-                        break; }
+                    if (hunkBuf[secOff + 1 + j] != cd001[j])
+                    {
+                        rawMatch = false;
+                        break;
+                    }
+
                 var hsMatch = true;
                 for (var j = 0; j < 5; j++)
-                    if (hunkBuf[secOff + 9 + j] != cdrom[j]) { hsMatch = false;
-                        break; }
+                    if (hunkBuf[secOff + 9 + j] != cdrom[j])
+                    {
+                        hsMatch = false;
+                        break;
+                    }
 
                 if (rawMatch || hsMatch)
                 {
@@ -229,6 +251,7 @@ public class PcFxDiagnosticTests
                         var b = hunkBuf[secOff + 40 + j];
                         volChars[j] = b is >= 0x20 and < 0x7F ? (char)b : '.';
                     }
+
                     var volId = new string(volChars).Trim();
 
                     _output.WriteLine($"    FOUND {(rawMatch ? "CD001" : "CDROM")} at LBA={lba} dataOff={dataOff} typeByte={typeByte:X2} volId='{volId}'");
@@ -247,6 +270,7 @@ public class PcFxDiagnosticTests
                         _output.WriteLine($"    BYTE-OFFSET CD001 at LBA={lba} dataOff={dataOff} byteOfs={i} typeByte={hunkBuf[secOff + i]:X2}");
                         found++;
                     }
+
                     if (hunkBuf.Length > secOff + i + 13 &&
                         hunkBuf[secOff + i + 9] == cdrom[0] &&
                         hunkBuf[secOff + i + 10] == cdrom[1] &&
@@ -270,6 +294,7 @@ public class PcFxDiagnosticTests
             if (track.ChdOffset + rel < endFrame)
                 dumpFrames.Add(track.ChdOffset + rel);
         }
+
         foreach (var frame in dumpFrames)
         {
             var h = frame / sectorsPerHunk;
@@ -314,9 +339,14 @@ public class PcFxDiagnosticTests
     {
         foreach (var c in node.Children)
         {
-            if (c.IsDirectory) { dirs++;
-                Walk(c, ref files, ref dirs, ref maxSize); }
-            else { files++;
+            if (c.IsDirectory)
+            {
+                dirs++;
+                Walk(c, ref files, ref dirs, ref maxSize);
+            }
+            else
+            {
+                files++;
                 if (c.Size > maxSize)
                 {
                     maxSize = c.Size;

@@ -83,7 +83,7 @@ public partial class App
     {
         try
         {
-            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
             if (currentPath.Contains("WinFsp", StringComparison.OrdinalIgnoreCase))
                 return;
 
@@ -146,19 +146,40 @@ public partial class App
         DiagnosticLogger.LogSection("APPLICATION SHUTDOWN");
         try
         {
-            try { _logTextWriter?.Dispose(); }
-            catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter", true); }
+            try
+            {
+                _logTextWriter.Dispose();
+            }
+            catch (Exception ex)
+            {
+                ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter", true);
+            }
 
-            try { ServiceProvider.DisposeAllServices(); }
-            catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose services", true); }
+            try
+            {
+                ServiceProvider.DisposeAllServices();
+            }
+            catch (Exception ex)
+            {
+                ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Failed to dispose services", true);
+            }
 
-            if (_originalConsoleOut != null) Console.SetOut(_originalConsoleOut);
-            if (_originalConsoleError != null) Console.SetError(_originalConsoleError);
+            Console.SetOut(_originalConsoleOut);
+            Console.SetError(_originalConsoleError);
         }
-        catch (Exception ex) { ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Error during exit cleanup", true); }
+        catch (Exception ex)
+        {
+            ErrorLoggerStatic.ReportSilentException(ex, "App.OnExit: Error during exit cleanup", true);
+        }
 
-        try { AppLogger.CloseAndFlush(); }
-        catch (Exception ex) { Debug.WriteLine($"Failed to flush loggers: {ex.Message}"); }
+        try
+        {
+            AppLogger.CloseAndFlush();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to flush loggers: {ex.Message}");
+        }
 
         base.OnExit(e);
     }

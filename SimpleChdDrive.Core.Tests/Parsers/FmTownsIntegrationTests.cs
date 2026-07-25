@@ -25,7 +25,7 @@ public class FmTownsIntegrationTests
     public void Iso9660ParserParsesFmTownsDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesFmTownsDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesFmTownsDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -71,7 +71,7 @@ public class FmTownsIntegrationTests
     public void FmTownsParserParsesFmTownsDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(FmTownsParserParsesFmTownsDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(FmTownsParserParsesFmTownsDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -105,11 +105,12 @@ public class FmTownsIntegrationTests
             return true;
         });
     }
+
     [Fact]
     public void GenericIso9660ParserParsesFmTownsDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(GenericIso9660ParserParsesFmTownsDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(GenericIso9660ParserParsesFmTownsDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -148,7 +149,7 @@ public class FmTownsIntegrationTests
     public void ChdContainerMountAndParseFmTownsDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseFmTownsDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseFmTownsDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -182,7 +183,7 @@ public class FmTownsIntegrationTests
     public void ChdContainerCheckParseAndRead()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try

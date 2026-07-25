@@ -7,7 +7,7 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// Handles byte-offset VD signatures within raw sectors and uses tolerant
 /// continue-on-error directory record parsing for discs with unusual layouts.
 /// </summary>
-public class PcFxIsoParser
+internal class PcFxIsoParser
 {
     private readonly SectorReader _reader;
     private readonly HashSet<uint> _visitedDirs = [];
@@ -25,7 +25,7 @@ public class PcFxIsoParser
         _lbaOffset = offset;
     }
 
-    public bool Parse(FsNode rootNode, TrackInfo? track = null)
+    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
 
@@ -48,6 +48,7 @@ public class PcFxIsoParser
             vdOffsets.Add(166);
             vdOffsets.Add(167);
         }
+
         var foundPvd = false;
         byte[]? bestVdData = null;
         var pvdOffsetInSector = 0;

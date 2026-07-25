@@ -31,15 +31,19 @@ internal class MountService : IMountService, IDisposable
             using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp")
                             ?? Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp");
             if (key == null)
-            { _loggingService.LogError("WinFsp not found.");
-                return false; }
+            {
+                _loggingService.LogError("WinFsp not found.");
+                return false;
+            }
 
             _loggingService.Log("WinFsp detected.");
             return true;
         }
         catch (Exception ex)
-        { _loggingService.LogError($"WinFsp detection failed: {ex.Message}");
-            return false; }
+        {
+            _loggingService.LogError($"WinFsp detection failed: {ex.Message}");
+            return false;
+        }
     }
 
     public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
@@ -107,8 +111,14 @@ internal class MountService : IMountService, IDisposable
         _loggingService.Log($"Unmounting {MountPoint} (WinFsp)...");
         if (_host != null)
         {
-            try { _host.Unmount(); }
-            catch (Exception ex) { _loggingService.LogError($"Error: {ex.Message}"); }
+            try
+            {
+                _host.Unmount();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error: {ex.Message}");
+            }
         }
 
         _host?.Dispose();
@@ -156,6 +166,7 @@ internal class MountService : IMountService, IDisposable
                 chars[i] = '_';
             }
         }
+
         return new string(chars);
     }
 

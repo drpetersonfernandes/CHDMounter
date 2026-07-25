@@ -25,7 +25,7 @@ public class Pc98IntegrationTests
     public void Pc98ConsoleParserParsesDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Pc98ConsoleParserParsesDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Pc98ConsoleParserParsesDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             if (err != ChdError.Chderrnone)
@@ -69,7 +69,7 @@ public class Pc98IntegrationTests
     public void Iso9660ParserParsesPc98Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPc98Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPc98Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             if (err != ChdError.Chderrnone)
@@ -120,7 +120,7 @@ public class Pc98IntegrationTests
     public void GenericIso9660ParserParsesPc98Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(GenericIso9660ParserParsesPc98Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(GenericIso9660ParserParsesPc98Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             if (err != ChdError.Chderrnone)
@@ -164,7 +164,7 @@ public class Pc98IntegrationTests
     public void ChdContainerMountAndParsePc98Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePc98Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePc98Disc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -202,7 +202,7 @@ public class Pc98IntegrationTests
     public void ChdContainerCheckParseAndRead()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try

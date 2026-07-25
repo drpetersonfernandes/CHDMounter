@@ -25,7 +25,7 @@ public class ThreeDoIntegrationTests
     public void ThreeDoParserParsesThreeDoDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ThreeDoParserParsesThreeDoDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ThreeDoParserParsesThreeDoDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -61,6 +61,7 @@ public class ThreeDoIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }
@@ -69,7 +70,7 @@ public class ThreeDoIntegrationTests
     public void ThreeDoConsoleParserParsesThreeDoDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ThreeDoConsoleParserParsesThreeDoDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ThreeDoConsoleParserParsesThreeDoDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -99,6 +100,7 @@ public class ThreeDoIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }
@@ -107,7 +109,7 @@ public class ThreeDoIntegrationTests
     public void ChdContainerMountAndParseThreeDoDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseThreeDoDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseThreeDoDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -132,6 +134,7 @@ public class ThreeDoIntegrationTests
             {
                 container.Dispose();
             }
+
             return true;
         });
     }
@@ -140,7 +143,7 @@ public class ThreeDoIntegrationTests
     public void BulkParseAllThreeDoDiscs()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(BulkParseAllThreeDoDiscs), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(BulkParseAllThreeDoDiscs), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -173,6 +176,7 @@ public class ThreeDoIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }
@@ -181,7 +185,7 @@ public class ThreeDoIntegrationTests
     public void M2DiscPaserDiagnostic()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(M2DiscPaserDiagnostic), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(M2DiscPaserDiagnostic), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -226,6 +230,7 @@ public class ThreeDoIntegrationTests
                     fi = 0;
                     di = 0;
                 }
+
                 output.WriteLine($"  Iso9660Parser: {(okIso ? $"OK ({fi} files, {di} dirs)" : "FAIL")}");
 
                 var okThreeDoCt = TryContainerMount(path, ConsoleType.ThreeDo, out var c3F, out var c3D);
@@ -238,6 +243,7 @@ public class ThreeDoIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }

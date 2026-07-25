@@ -31,7 +31,7 @@ public class XboxIntegrationTests
     public void XdvdfsParserParsesXboxDisc()
     {
         var paths = GetXboxPaths();
-        SequentialTestRunner.Run(_output, nameof(XdvdfsParserParsesXboxDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(XdvdfsParserParsesXboxDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -106,7 +106,7 @@ public class XboxIntegrationTests
     public void XdvdfsAndUdfParserParsesXbox360Disc()
     {
         var paths = GetXbox360Paths();
-        SequentialTestRunner.Run(_output, nameof(XdvdfsAndUdfParserParsesXbox360Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(XdvdfsAndUdfParserParsesXbox360Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -159,7 +159,7 @@ public class XboxIntegrationTests
 
                 Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
 
-                var xexFiles = FindNodes(root).Count(n => !n.IsDirectory && n.Name.EndsWith(".xex", StringComparison.OrdinalIgnoreCase));
+                var xexFiles = FindNodes(root).Count(static n => !n.IsDirectory && n.Name.EndsWith(".xex", StringComparison.OrdinalIgnoreCase));
                 output.WriteLine($"XEX files found: {xexFiles}");
             }
             finally

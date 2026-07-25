@@ -21,14 +21,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="SimpleChdDrive" />
-        <InternalsVisibleTo Include="SimpleChdDrive_WinFsp" />
-        <InternalsVisibleTo Include="SimpleChdDrive.Core.Tests" />
-        <InternalsVisibleTo Include="Tester" />
+    <InternalsVisibleTo Include="SimpleChdDrive" />
+    <InternalsVisibleTo Include="SimpleChdDrive_WinFsp" />
+    <InternalsVisibleTo Include="SimpleChdDrive.Core.Tests" />
+    <InternalsVisibleTo Include="Tester" />
+    <InternalsVisibleTo Include="ChdDiagnoster" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CHDSharp" Version="1.1.0" />
+        <PackageReference Include="CHDSharp" Version="1.2.0" />
     </ItemGroup>
 
 </Project>

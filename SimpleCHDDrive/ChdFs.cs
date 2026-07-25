@@ -28,8 +28,6 @@ internal class ChdFs : IDokanOperations, IDisposable
         }
 
         var entry = _container.FindFile(fileName);
-        if (entry == null)
-            return DokanResult.PathNotFound;
 
         if (entry.IsDirectory)
         {
@@ -67,8 +65,6 @@ internal class ChdFs : IDokanOperations, IDisposable
         if (info.Context is not FileEntry entry)
         {
             entry = _container.FindFile(fileName);
-            if (entry == null)
-                return DokanResult.InvalidHandle;
         }
 
         bytesRead = _container.ReadFile(entry, (ulong)offset, buffer, 0, buffer.Length);
@@ -80,8 +76,6 @@ internal class ChdFs : IDokanOperations, IDisposable
         fileInfo = new FileInformation();
 
         var entry = _container.FindFile(fileName);
-        if (entry == null)
-            return DokanResult.PathNotFound;
 
         fileInfo.Attributes = entry.IsDirectory
             ? FileAttributes.Directory
@@ -102,12 +96,7 @@ internal class ChdFs : IDokanOperations, IDisposable
 
         if (entries.Count == 0)
         {
-            var root = _container.FindFile(fileName);
-            if (root == null)
-            {
-                files = Array.Empty<FileInformation>();
-                return DokanResult.PathNotFound;
-            }
+            _container.FindFile(fileName);
         }
 
         var result = new List<FileInformation>
@@ -160,7 +149,10 @@ internal class ChdFs : IDokanOperations, IDisposable
                 "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$",
                 RegexOptions.IgnoreCase);
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 
     public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
@@ -294,7 +286,10 @@ internal class ChdFs : IDokanOperations, IDisposable
 
             return DokanResult.Success;
         }
-        catch { return DokanResult.Error; }
+        catch
+        {
+            return DokanResult.Error;
+        }
     }
 
     public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections, IDokanFileInfo info)

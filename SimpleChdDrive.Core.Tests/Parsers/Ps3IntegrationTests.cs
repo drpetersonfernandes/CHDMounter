@@ -27,7 +27,7 @@ public class Ps3IntegrationTests
     public void UdfParserParsesPs3Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(UdfParserParsesPs3Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(UdfParserParsesPs3Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -65,7 +65,7 @@ public class Ps3IntegrationTests
     public void Iso9660BridgeParsesPs3Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660BridgeParsesPs3Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660BridgeParsesPs3Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -102,7 +102,7 @@ public class Ps3IntegrationTests
     public void PlayStation3ParserParsesPs3Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(PlayStation3ParserParsesPs3Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(PlayStation3ParserParsesPs3Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -139,7 +139,7 @@ public class Ps3IntegrationTests
     public void ChdContainerMountAndParsePs3Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePs3Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePs3Disc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -163,19 +163,11 @@ public class Ps3IntegrationTests
                 var magic = new byte[4];
 
                 var sfb = container.FindFile(@"\PS3_DISC.SFB");
-                if (sfb != null)
-                {
-                    Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
-                    Assert.Equal(".SFB"u8.ToArray(), magic);
-                    output.WriteLine("PS3_DISC.SFB: OK");
-                }
-                else
-                {
-                    output.WriteLine("PS3_DISC.SFB: NOT FOUND");
-                }
+                Assert.Equal(4, container.ReadFile(sfb, 0, magic, 0, 4));
+                Assert.Equal(".SFB"u8.ToArray(), magic);
+                output.WriteLine("PS3_DISC.SFB: OK");
 
                 var sfo = container.FindFile(@"\PS3_GAME\PARAM.SFO");
-                if (sfo != null)
                 {
                     Assert.Equal(4, container.ReadFile(sfo, 0, magic, 0, 4));
                     Assert.Equal("\0PSF"u8.ToArray(), magic);
@@ -186,10 +178,6 @@ public class Ps3IntegrationTests
                     var title = ReadSfoString(sfoBuf, sfoLen);
                     if (title != null)
                         output.WriteLine($"  TITLE_ID: {title}");
-                }
-                else
-                {
-                    output.WriteLine("PARAM.SFO: NOT FOUND");
                 }
                 return true;
             }
@@ -266,6 +254,7 @@ public class Ps3IntegrationTests
                     Assert.Equal(entry.Size, sum);
                     VerifyExtentBoundary(container, iso, entry);
                 }
+
                 return true;
             }
             finally
@@ -275,7 +264,7 @@ public class Ps3IntegrationTests
         });
     }
 
-    private void VerifyHead(ChdContainer container, FileStream iso, FileEntry entry)
+    private void VerifyHead(ChdContainer container, Stream iso, FileEntry entry)
     {
         var ext = entry.Extents.Count > 0 ? entry.Extents[0] : new FileExtent { Lba = entry.Lba, Size = entry.Size };
         var n = (int)Math.Min(65536, Math.Min(ext.Size, entry.Size));
@@ -290,7 +279,7 @@ public class Ps3IntegrationTests
         _output.WriteLine($"OK head {n,6} bytes  {entry.FullPath}  (LBA {ext.Lba}, size {entry.Size:N0}, extents {entry.Extents.Count})");
     }
 
-    private void VerifyExtentBoundary(ChdContainer container, FileStream iso, FileEntry entry)
+    private void VerifyExtentBoundary(ChdContainer container, Stream iso, FileEntry entry)
     {
         var ext0 = entry.Extents[0];
         var ext1 = entry.Extents[1];

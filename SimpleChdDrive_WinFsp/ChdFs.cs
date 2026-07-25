@@ -59,15 +59,6 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
         NormalizedName = FileName;
 
         var entry = _container.FindFile(FileName);
-        if (entry == null)
-        {
-            if (FileName is "\\" or "/")
-            {
-                entry = new FileEntry { Name = "\\", FullPath = "\\", IsDirectory = true };
-            }
-            else
-                return STATUS_OBJECT_NAME_NOT_FOUND;
-        }
 
         NormalizedName = entry.Name;
         FileNode = entry;
@@ -96,7 +87,10 @@ internal sealed class ChdFs : FileSystemBase, IDisposable
             BytesTransferred = (uint)read;
             return STATUS_SUCCESS;
         }
-        finally { ArrayPool<byte>.Shared.Return(readBuffer); }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(readBuffer);
+        }
     }
 
     public override int GetFileInfo(object FileNode, object FileDesc, out FileInfo FileInfo)

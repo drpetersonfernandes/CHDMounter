@@ -25,7 +25,7 @@ public class SegaGenesisCdIntegrationTests
     public void Iso9660ParserParsesSegaCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesSegaCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesSegaCdDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -70,7 +70,7 @@ public class SegaGenesisCdIntegrationTests
     public void SegaGenesisCdParserParsesSegaCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(SegaGenesisCdParserParsesSegaCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(SegaGenesisCdParserParsesSegaCdDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -109,7 +109,7 @@ public class SegaGenesisCdIntegrationTests
     public void ChdContainerMountAndParseSegaCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseSegaCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseSegaCdDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -143,9 +143,14 @@ public class SegaGenesisCdIntegrationTests
     {
         foreach (var c in node.Children)
         {
-            if (c.IsDirectory) { dirs++;
-                Walk(c, ref files, ref dirs, ref maxSize); }
-            else { files++;
+            if (c.IsDirectory)
+            {
+                dirs++;
+                Walk(c, ref files, ref dirs, ref maxSize);
+            }
+            else
+            {
+                files++;
                 if (c.Size > maxSize)
                 {
                     maxSize = c.Size;

@@ -25,7 +25,7 @@ public class X68000IntegrationTests
     public void Iso9660ParserParsesX68000Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesX68000Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesX68000Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             if (err != ChdError.Chderrnone)
@@ -76,7 +76,7 @@ public class X68000IntegrationTests
     public void GenericIso9660ParserParsesX68000Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(GenericIso9660ParserParsesX68000Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(GenericIso9660ParserParsesX68000Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             if (err != ChdError.Chderrnone)
@@ -120,7 +120,7 @@ public class X68000IntegrationTests
     public void ChdContainerMountAndParseX68000Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseX68000Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseX68000Disc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -158,7 +158,7 @@ public class X68000IntegrationTests
     public void ChdContainerCheckParseAndRead()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try

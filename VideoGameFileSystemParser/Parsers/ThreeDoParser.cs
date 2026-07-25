@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses the Opera file system used on 3DO Interactive Multiplayer discs.
 /// </summary>
-public class ThreeDoParser
+internal class ThreeDoParser
 {
     private readonly SectorReader _reader;
 
@@ -156,7 +156,10 @@ public class ThreeDoParser
 
     private static bool CheckMagic(byte[] d, int o, byte[] m)
     {
-        for (var i = 0; i < m.Length; i++) { if (d[o + i] != m[i]) return false; }
+        for (var i = 0; i < m.Length; i++)
+        {
+            if (d[o + i] != m[i]) return false;
+        }
 
         return true;
     }

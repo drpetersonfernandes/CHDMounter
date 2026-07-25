@@ -28,7 +28,7 @@ public class PceCdIntegrationTests
     public void BootSignatureDetectedOnDataTrack()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(BootSignatureDetectedOnDataTrack), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(BootSignatureDetectedOnDataTrack), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -68,6 +68,7 @@ public class PceCdIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }
@@ -76,7 +77,7 @@ public class PceCdIntegrationTests
     public void PcEngineCdParserParsesPceCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(PcEngineCdParserParsesPceCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(PcEngineCdParserParsesPceCdDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -110,6 +111,7 @@ public class PceCdIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }
@@ -118,7 +120,7 @@ public class PceCdIntegrationTests
     public void ChdContainerMountAndParsePceCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePceCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePceCdDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -174,6 +176,7 @@ public class PceCdIntegrationTests
             {
                 container.Dispose();
             }
+
             return true;
         });
     }

@@ -25,7 +25,7 @@ public class CDiIntegrationTests
     public void CDiFsParserParsesCdiDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(CDiFsParserParsesCdiDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(CDiFsParserParsesCdiDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -61,6 +61,7 @@ public class CDiIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }
@@ -69,7 +70,7 @@ public class CDiIntegrationTests
     public void CDiParserParsesCdiDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(CDiParserParsesCdiDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(CDiParserParsesCdiDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -99,6 +100,7 @@ public class CDiIntegrationTests
             {
                 chd.Dispose();
             }
+
             return true;
         });
     }
@@ -107,7 +109,7 @@ public class CDiIntegrationTests
     public void ChdContainerMountAndParseCdiDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseCdiDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseCdiDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -132,6 +134,7 @@ public class CDiIntegrationTests
             {
                 container.Dispose();
             }
+
             return true;
         });
     }
@@ -140,9 +143,14 @@ public class CDiIntegrationTests
     {
         foreach (var c in node.Children)
         {
-            if (c.IsDirectory) { dirs++;
-                Walk(c, ref files, ref dirs, ref maxSize); }
-            else { files++;
+            if (c.IsDirectory)
+            {
+                dirs++;
+                Walk(c, ref files, ref dirs, ref maxSize);
+            }
+            else
+            {
+                files++;
                 if (c.Size > maxSize)
                 {
                     maxSize = c.Size;

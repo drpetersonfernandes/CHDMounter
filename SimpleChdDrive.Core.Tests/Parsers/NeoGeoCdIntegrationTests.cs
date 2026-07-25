@@ -25,7 +25,7 @@ public class NeoGeoCdIntegrationTests
     public void Iso9660ParserParsesNeoGeoCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesNeoGeoCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesNeoGeoCdDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -70,7 +70,7 @@ public class NeoGeoCdIntegrationTests
     public void NeoGeoCdParserParsesNeoGeoCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(NeoGeoCdParserParsesNeoGeoCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(NeoGeoCdParserParsesNeoGeoCdDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -109,7 +109,7 @@ public class NeoGeoCdIntegrationTests
     public void ChdContainerMountAndParseNeoGeoCdDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseNeoGeoCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseNeoGeoCdDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -143,9 +143,14 @@ public class NeoGeoCdIntegrationTests
     {
         foreach (var c in node.Children)
         {
-            if (c.IsDirectory) { dirs++;
-                Walk(c, ref files, ref dirs, ref maxSize); }
-            else { files++;
+            if (c.IsDirectory)
+            {
+                dirs++;
+                Walk(c, ref files, ref dirs, ref maxSize);
+            }
+            else
+            {
+                files++;
                 if (c.Size > maxSize)
                 {
                     maxSize = c.Size;

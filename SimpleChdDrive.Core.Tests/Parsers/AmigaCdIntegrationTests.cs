@@ -30,7 +30,7 @@ public class AmigaCdIntegrationTests
     public void Iso9660ParserParsesAmigaCdDisc()
     {
         var paths = GetSamplePaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesAmigaCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesAmigaCdDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -75,7 +75,7 @@ public class AmigaCdIntegrationTests
     public void AmigaCdParserParsesAmigaCdDisc()
     {
         var paths = GetSamplePaths();
-        SequentialTestRunner.Run(_output, nameof(AmigaCdParserParsesAmigaCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(AmigaCdParserParsesAmigaCdDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -114,7 +114,7 @@ public class AmigaCdIntegrationTests
     public void ChdContainerMountAndParseAmigaCdDisc()
     {
         var paths = GetSamplePaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseAmigaCdDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseAmigaCdDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -148,7 +148,7 @@ public class AmigaCdIntegrationTests
     public void BulkParseAllAmigaCdDiscs()
     {
         var paths = GetAllPaths();
-        SequentialTestRunner.Run(_output, nameof(BulkParseAllAmigaCdDiscs), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(BulkParseAllAmigaCdDiscs), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);

@@ -26,7 +26,7 @@ public class DreamcastIntegrationTests
     public void DreamcastParserParsesDreamcastDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(DreamcastParserParsesDreamcastDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(DreamcastParserParsesDreamcastDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -58,7 +58,7 @@ public class DreamcastIntegrationTests
                 Walk(root, ref files, ref dirs, ref maxSize);
 
                 var allNodes = FindNodes(root);
-                var rockRidgeNodes = allNodes.Count(n => n.UnixMode.HasValue);
+                var rockRidgeNodes = allNodes.Count(static n => n.UnixMode.HasValue);
                 output.WriteLine($"FsNode tree: {files} files, {dirs} dirs, largest file {maxSize:N0} bytes, RR entries={rockRidgeNodes}");
 
                 var topFifteen = root.Children.OrderByDescending(static n => n.Size).Take(15);
@@ -67,12 +67,12 @@ public class DreamcastIntegrationTests
 
                 Assert.True(files >= 5, $"Suspiciously few files parsed: {files}");
 
-                var executables = allNodes.Count(n => !n.IsDirectory && n.Name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase));
+                var executables = allNodes.Count(static n => !n.IsDirectory && n.Name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase));
                 output.WriteLine($"BIN files: {executables}");
 
                 if (rockRidgeNodes > 0)
                 {
-                    var sample = allNodes.First(n => n.UnixMode.HasValue);
+                    var sample = allNodes.First(static n => n.UnixMode.HasValue);
                     output.WriteLine($"Rock Ridge sample: {sample.Name} mode=0x{sample.UnixMode:X8} uid={sample.Uid} gid={sample.Gid}");
                 }
             }
@@ -89,7 +89,7 @@ public class DreamcastIntegrationTests
     public void ChdContainerMountAndParseDreamcastDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseDreamcastDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseDreamcastDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -123,7 +123,7 @@ public class DreamcastIntegrationTests
     public void DiagnoseSectorReaderForGdrom()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(DiagnoseSectorReaderForGdrom), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(DiagnoseSectorReaderForGdrom), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);

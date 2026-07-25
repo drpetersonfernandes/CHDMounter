@@ -245,7 +245,8 @@ public class XdvdfsParser
     private static bool CheckMagic(byte[] data, int offset, byte[] magic)
     {
         for (var i = 0; i < magic.Length; i++)
-            if (data[offset + i] != magic[i]) return false;
+            if (data[offset + i] != magic[i])
+                return false;
 
         return true;
     }

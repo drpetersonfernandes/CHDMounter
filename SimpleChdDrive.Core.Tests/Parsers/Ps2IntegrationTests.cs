@@ -27,7 +27,7 @@ public class Ps2IntegrationTests
     public void Iso9660ParserParsesPs2Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPs2Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPs2Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -73,7 +73,7 @@ public class Ps2IntegrationTests
     public void PlayStation2ParserParsesPs2Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(PlayStation2ParserParsesPs2Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(PlayStation2ParserParsesPs2Disc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -113,7 +113,7 @@ public class Ps2IntegrationTests
     public void ChdContainerMountAndParsePs2Disc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePs2Disc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePs2Disc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -135,16 +135,11 @@ public class Ps2IntegrationTests
                 Assert.Empty(badNames);
 
                 var systemCnf = container.FindFile(@"\SYSTEM.CNF");
-                if (systemCnf != null)
                 {
                     var buf = new byte[256];
                     var bytesRead = container.ReadFile(systemCnf, 0, buf, 0, buf.Length);
                     var text = Encoding.ASCII.GetString(buf, 0, bytesRead);
                     output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "").Replace("\n", " / ")}");
-                }
-                else
-                {
-                    output.WriteLine("SYSTEM.CNF: NOT FOUND");
                 }
                 return true;
             }

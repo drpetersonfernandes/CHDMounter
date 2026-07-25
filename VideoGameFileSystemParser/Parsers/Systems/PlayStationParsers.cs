@@ -5,9 +5,10 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses PlayStation 1 disc images using ISO 9660 on the first data track.
 /// </summary>
-public class PlayStation1Parser : IConsoleParser
+internal class PlayStation1Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
     /// <summary>
 /// Gets or sets whether to force parsing even when verification fails.
 /// </summary>
@@ -65,7 +66,8 @@ public class PlayStation1Parser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -74,9 +76,10 @@ public class PlayStation1Parser : IConsoleParser
 /// <summary>
 /// Auto-detect parser for PlayStation discs. Uses ISO 9660 on the first data track.
 /// </summary>
-public class PlayStationAutoDetectParser : IConsoleParser
+internal class PlayStationAutoDetectParser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
     /// <summary>
 /// Gets or sets whether to force parsing even when verification fails.
 /// </summary>
@@ -130,7 +133,8 @@ public class PlayStationAutoDetectParser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -139,15 +143,16 @@ public class PlayStationAutoDetectParser : IConsoleParser
 /// <summary>
 /// Parses PlayStation 2 disc images using ISO 9660 on the first data track.
 /// </summary>
-public class PlayStation2Parser : IConsoleParser
+internal class PlayStation2Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
     /// <summary>
 /// Gets or sets whether to force parsing even when verification fails.
 /// </summary>
     public bool ForceMode { get; set; }
 
-    public PlayStation2Parser(SectorReader reader)
+    internal PlayStation2Parser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -195,7 +200,8 @@ public class PlayStation2Parser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -204,9 +210,10 @@ public class PlayStation2Parser : IConsoleParser
 /// <summary>
 /// Parses PlayStation 3 disc images using UDF, falling back to ISO 9660 if UDF fails.
 /// </summary>
-public class PlayStation3Parser : IConsoleParser
+internal class PlayStation3Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
     /// <summary>
 /// Gets or sets whether to force parsing even when verification fails.
 /// </summary>
@@ -264,7 +271,8 @@ public class PlayStation3Parser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }

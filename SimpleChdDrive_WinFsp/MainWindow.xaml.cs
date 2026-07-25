@@ -11,7 +11,7 @@ using VideoGameFileSystemParser.Parsers;
 
 namespace SimpleChdDrive_WinFsp;
 
-public partial class MainWindow
+internal partial class MainWindow
 {
     private readonly ILoggingService _loggingService;
     private readonly IMountService _mountService;
@@ -94,8 +94,14 @@ public partial class MainWindow
     {
         if (sender is FrameworkElement { Tag: string url })
         {
-            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-            catch { /* ignored */ }
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch
+            {
+                /* ignored */
+            }
         }
     }
 
@@ -174,8 +180,10 @@ public partial class MainWindow
         foreach (var item in ConsoleTypeComboBox.Items)
         {
             if (item is ConsoleInfo ci && ci.Type == type)
-            { ConsoleTypeComboBox.SelectedItem = item;
-                return; }
+            {
+                ConsoleTypeComboBox.SelectedItem = item;
+                return;
+            }
         }
     }
 
@@ -262,9 +270,12 @@ public partial class MainWindow
     private void BrowseChd_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFileDialog { Filter = "CHD files (*.chd)|*.chd|All files (*.*)|*.*", Title = "Select CHD File" };
-        if (dlg.ShowDialog() == true) { ChdFilePathTextBox.Text = dlg.FileName;
+        if (dlg.ShowDialog() == true)
+        {
+            ChdFilePathTextBox.Text = dlg.FileName;
             _chdPath = dlg.FileName;
-            ValidateAndEnableMount(); }
+            ValidateAndEnableMount();
+        }
     }
 
     private void OpenChd_Click(object sender, RoutedEventArgs e)
@@ -305,23 +316,34 @@ public partial class MainWindow
             }
 
             await Task.Run(() => _mountService.Mount(_chdPath, null, type));
-            if (_mountService.IsMounted) { StatusText.Text = "Mounted";
+            if (_mountService.IsMounted)
+            {
+                StatusText.Text = "Mounted";
                 DriveLetterText.Text = _mountService.MountPoint;
                 UnmountButton.IsEnabled = true;
                 try
                 {
                     var settings = ServiceProvider.TryGet<ISettingsService>();
-                    if (settings?.Settings.AutoOpenMountedDrive == true)
+                    if (settings.Settings.AutoOpenMountedDrive)
                         Process.Start("explorer.exe", _mountService.MountPoint);
                 }
-                catch { /* ignored */ }
+                catch
+                {
+                    /* ignored */
+                }
             }
-            else { StatusText.Text = "Mount failed";
-                MountButton.IsEnabled = true; }
+            else
+            {
+                StatusText.Text = "Mount failed";
+                MountButton.IsEnabled = true;
+            }
         }
-        catch (Exception ex) { _loggingService.LogError($"Mount failed: {ex.Message}");
+        catch (Exception ex)
+        {
+            _loggingService.LogError($"Mount failed: {ex.Message}");
             StatusText.Text = "Mount failed";
-            MountButton.IsEnabled = true; }
+            MountButton.IsEnabled = true;
+        }
     }
 
     private async void Unmount_Click(object sender, RoutedEventArgs e)
@@ -349,7 +371,8 @@ public partial class MainWindow
         {
             _loggingService.LogError($"Unmount failed: {ex.Message}");
             StatusText.Text = "Unmount failed";
-            UnmountButton.IsEnabled = _mountService.IsMounted;        }
+            UnmountButton.IsEnabled = _mountService.IsMounted;
+        }
     }
 
     private void Exit_Click(object sender, RoutedEventArgs e)
@@ -369,8 +392,7 @@ public partial class MainWindow
     private void Settings_Click(object sender, RoutedEventArgs e)
     {
         var settingsService = ServiceProvider.TryGet<ISettingsService>();
-        if (settingsService != null)
-            new SettingsWindow(settingsService) { Owner = this }.ShowDialog();
+        new SettingsWindow(settingsService) { Owner = this }.ShowDialog();
     }
 
     private void About_Click(object sender, RoutedEventArgs e)
@@ -380,7 +402,10 @@ public partial class MainWindow
 
     private void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
-        try { _mountService.Unmount(); }
+        try
+        {
+            _mountService.Unmount();
+        }
         catch
         {
             // ignored

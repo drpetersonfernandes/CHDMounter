@@ -61,7 +61,7 @@ public class PcFxParser : IConsoleParser
                 return true;
         }
 
-        return _isoParser.Parse(rootNode, null);
+        return _isoParser.Parse(rootNode);
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ public class AmigaCdParser : Iso9660Wrapper
 /// <summary>
 /// Parses Sharp X68000 disc images using ISO 9660, falling back to UDF if ISO 9660 fails.
 /// </summary>
-public class X68000Parser : IConsoleParser
+internal class X68000Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
@@ -218,7 +218,8 @@ public class X68000Parser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -285,7 +286,8 @@ public class PicoParser : Iso9660Wrapper
 }
 
 /// <summary>
-/// Parses Apple Bandai Pippin disc images using HFS (Macintosh Hierarchical File System).
+/// Parses Apple Bandai Pippin disc images using HFS (Macintosh Hierarchical File System),
+/// falling back to HFS+, UDF, and ISO 9660 if HFS parsing fails.
 /// </summary>
 public class PippinParser : IConsoleParser
 {
@@ -310,6 +312,12 @@ public class PippinParser : IConsoleParser
 
     public bool Parse(FsNode rootNode)
     {
+        foreach (var t in _reader.Tracks)
+        {
+            if (t.IsDataTrack && ParseTrack(rootNode, t))
+                return true;
+        }
+
         return ParseTrack(rootNode, FindDataTrack());
     }
 
@@ -320,6 +328,10 @@ public class PippinParser : IConsoleParser
         if (_hfsParser.Parse(rootNode, track))
             return true;
 
+        var udfParser = new UdfParser(_reader);
+        if (udfParser.Parse(rootNode, track))
+            return true;
+
         var isoParser = new Iso9660Parser(_reader);
         return isoParser.Parse(rootNode, track);
     }
@@ -327,7 +339,8 @@ public class PippinParser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -338,7 +351,8 @@ public abstract class Iso9660Wrapper : IConsoleParser
     /// <summary>
 /// The sector reader used by this parser.
 /// </summary>
-    protected SectorReader Reader { get; }
+private SectorReader Reader { get; }
+
     public bool ForceMode { get; set; }
 
     /// <summary>
@@ -355,6 +369,7 @@ public abstract class Iso9660Wrapper : IConsoleParser
 /// </summary>
 /// <returns>The console type.</returns>
     public abstract ConsoleType GetConsoleType();
+
     /// <summary>
 /// Returns the human-readable console name.
 /// </summary>
@@ -391,10 +406,11 @@ public abstract class Iso9660Wrapper : IConsoleParser
 /// Finds the first data track in the reader.
 /// </summary>
 /// <returns>The first data TrackInfo, or null.</returns>
-    protected TrackInfo? FindDataTrack()
+private TrackInfo? FindDataTrack()
     {
         foreach (var t in Reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return Reader.Tracks.FirstOrDefault();
     }

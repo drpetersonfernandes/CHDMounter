@@ -2,7 +2,7 @@ using System.Text;
 
 namespace SimpleChdDrive.Core.Logging;
 
-public class LogTextWriter : TextWriter
+internal class LogTextWriter : TextWriter
 {
     private readonly TextWriter _originalWriter;
 
@@ -25,7 +25,7 @@ public class LogTextWriter : TextWriter
         {
             var loggingService = ServiceProvider.TryGet<ILoggingService>();
             if (value != null)
-                loggingService?.Log(value);
+                loggingService.Log(value);
         }
         catch
         {

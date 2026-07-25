@@ -9,7 +9,7 @@
         MinHeight="400" MinWidth="640"
         WindowStartupLocation="CenterScreen"
         KeyDown="MainWindow_KeyDown"
-        Style="{StaticResource ModernWindowStyle}">
+        Style="{StaticResource ModernWindowStyle}" x:ClassModifier="internal">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

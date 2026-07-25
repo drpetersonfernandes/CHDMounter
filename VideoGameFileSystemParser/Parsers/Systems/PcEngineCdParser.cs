@@ -6,7 +6,7 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses NEC PC Engine CD/TurboGrafx-CD disc images. Locates the boot signature, attempts ISO 9660, falls back to raw track exposure.
 /// </summary>
-public class PcEngineCdParser : IConsoleParser
+internal class PcEngineCdParser : IConsoleParser
 {
     private const string Signature = "PC Engine CD-ROM SYSTEM";
     private const string GamesExpressSignature = "GAMES EXPRESS CD CARD";
@@ -14,6 +14,7 @@ public class PcEngineCdParser : IConsoleParser
     private const uint ZeroScanLimit = 600;
 
     private readonly SectorReader _reader;
+
     /// <summary>
 /// Gets or sets whether to force parsing even when the boot signature is not found.
 /// </summary>
@@ -23,7 +24,7 @@ public class PcEngineCdParser : IConsoleParser
 /// Initializes a new instance of the PcEngineCdParser class.
 /// </summary>
 /// <param name="reader">The SectorReader to read sectors from.</param>
-    public PcEngineCdParser(SectorReader reader)
+internal PcEngineCdParser(SectorReader reader)
     {
         _reader = reader;
     }

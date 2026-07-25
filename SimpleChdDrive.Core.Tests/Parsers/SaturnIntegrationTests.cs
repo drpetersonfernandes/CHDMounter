@@ -25,7 +25,7 @@ public class SaturnIntegrationTests
     public void Iso9660ParserParsesSaturnDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesSaturnDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesSaturnDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -70,7 +70,7 @@ public class SaturnIntegrationTests
     public void SegaSaturnParserParsesSaturnDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(SegaSaturnParserParsesSaturnDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(SegaSaturnParserParsesSaturnDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -109,7 +109,7 @@ public class SaturnIntegrationTests
     public void ChdContainerMountAndParseSaturnDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseSaturnDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParseSaturnDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -143,9 +143,14 @@ public class SaturnIntegrationTests
     {
         foreach (var c in node.Children)
         {
-            if (c.IsDirectory) { dirs++;
-                Walk(c, ref files, ref dirs, ref maxSize); }
-            else { files++;
+            if (c.IsDirectory)
+            {
+                dirs++;
+                Walk(c, ref files, ref dirs, ref maxSize);
+            }
+            else
+            {
+                files++;
                 if (c.Size > maxSize)
                 {
                     maxSize = c.Size;

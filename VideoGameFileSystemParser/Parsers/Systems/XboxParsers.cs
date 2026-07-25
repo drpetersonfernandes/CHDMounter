@@ -5,9 +5,10 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses original Xbox disc images using the XDVDFS file system.
 /// </summary>
-public class XboxParser : IConsoleParser
+internal class XboxParser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
     /// <summary>
 /// Gets or sets whether to force parsing even when verification fails.
 /// </summary>
@@ -66,7 +67,8 @@ public class XboxParser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -75,9 +77,10 @@ public class XboxParser : IConsoleParser
 /// <summary>
 /// Parses Xbox 360 disc images using the XDVDFS file system.
 /// </summary>
-public class Xbox360Parser : IConsoleParser
+internal class Xbox360Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
+
     /// <summary>
 /// Gets or sets whether to force parsing even when verification fails.
 /// </summary>
@@ -132,7 +135,8 @@ public class Xbox360Parser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }

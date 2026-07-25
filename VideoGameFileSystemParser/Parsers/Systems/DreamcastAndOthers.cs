@@ -85,7 +85,7 @@ public class DreamcastParser : IConsoleParser
 /// <summary>
 /// Parses Philips CD-i disc images using CDiFsParser, falling back to ISO 9660.
 /// </summary>
-public class CDiParser : IConsoleParser
+internal class CDiParser : IConsoleParser
 {
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
@@ -126,7 +126,8 @@ public class CDiParser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -135,7 +136,7 @@ public class CDiParser : IConsoleParser
 /// <summary>
 /// Parses 3DO Interactive Multiplayer disc images using the Opera file system parser.
 /// </summary>
-public class ThreeDoConsoleParser : IConsoleParser
+internal class ThreeDoConsoleParser : IConsoleParser
 {
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
@@ -176,7 +177,8 @@ public class ThreeDoConsoleParser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }
@@ -268,7 +270,8 @@ public class GenericIso9660Parser : IConsoleParser
     private TrackInfo? FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.FirstOrDefault();
     }
@@ -277,7 +280,7 @@ public class GenericIso9660Parser : IConsoleParser
 /// <summary>
 /// Parses VM Labs Nuon DVD-ROM disc images using UDF, falling back to ISO 9660 if UDF fails.
 /// </summary>
-public class NuonParser : IConsoleParser
+internal class NuonParser : IConsoleParser
 {
     private readonly SectorReader _reader;
     public bool ForceMode { get; set; }
@@ -315,7 +318,8 @@ public class NuonParser : IConsoleParser
     private TrackInfo FindDataTrack()
     {
         foreach (var t in _reader.Tracks)
-            if (t.IsDataTrack) return t;
+            if (t.IsDataTrack)
+                return t;
 
         return _reader.Tracks.Count > 0 ? _reader.Tracks[0] : new TrackInfo();
     }

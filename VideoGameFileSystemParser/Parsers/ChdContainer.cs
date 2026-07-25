@@ -24,6 +24,7 @@ public class ChdContainer : IDisposable
     private readonly string _chdPath;
 
     private ChdFile? _primaryChd;
+
     private enum CueExportMode
     {
         CueBin,
@@ -52,22 +53,27 @@ public class ChdContainer : IDisposable
     /// Gets the volume name (derived from the CHD file name).
     /// </summary>
     public string VolumeName { get; private set; } = "";
+
     /// <summary>
     /// Gets the total size of the disc image in bytes.
     /// </summary>
     public ulong VolumeSize { get; private set; }
+
     /// <summary>
     /// Gets whether the CHD contains at least one data track.
     /// </summary>
     public bool HasDataTracks { get; private set; }
+
     /// <summary>
     /// Gets the number of bytes per sector unit (e.g., 2048 or 2352).
     /// </summary>
     public uint UnitBytes { get; private set; }
+
     /// <summary>
     /// Gets the number of bytes per compressed hunk.
     /// </summary>
     public uint HunkBytes { get; private set; }
+
     /// <summary>
     /// Gets or sets the console type used for parsing this image.
     /// </summary>
@@ -105,7 +111,7 @@ public class ChdContainer : IDisposable
         VolumeName = Path.GetFileNameWithoutExtension(_chdPath);
 
         _readerPool.Add(reader);
-        HasDataTracks = reader.Tracks.Any(t => t.IsDataTrack);
+        HasDataTracks = reader.Tracks.Any(static t => t.IsDataTrack);
         lock (_poolLock)
         {
             _availableReaders.Add(reader);
@@ -230,9 +236,15 @@ public class ChdContainer : IDisposable
         var sb = new StringBuilder();
         foreach (var part in parts)
         {
-            if (part == "\\") { sb.Append('\\'); }
-            else { if (sb.Length > 0 && sb[^1] != '\\') sb.Append('\\');
-                sb.Append(part); }
+            if (part == "\\")
+            {
+                sb.Append('\\');
+            }
+            else
+            {
+                if (sb.Length > 0 && sb[^1] != '\\') sb.Append('\\');
+                sb.Append(part);
+            }
         }
 
         var path = sb.ToString().ToLowerInvariant();
@@ -339,7 +351,6 @@ public class ChdContainer : IDisposable
         }
 
         var reader = AcquireReader();
-        if (reader == null) return 0;
 
         reader.SetTrack(null);
 
@@ -372,9 +383,11 @@ public class ChdContainer : IDisposable
                         foreach (var ext in entry.Extents)
                         {
                             if (curOff >= extentStart && curOff < extentStart + ext.Size)
-                            { baseLba = ext.Lba;
+                            {
+                                baseLba = ext.Lba;
                                 offsetInExtent = curOff - extentStart;
-                                break; }
+                                break;
+                            }
 
                             extentStart += ext.Size;
                         }
@@ -412,7 +425,10 @@ public class ChdContainer : IDisposable
 
             return totalRead;
         }
-        finally { ReleaseReader(reader); }
+        finally
+        {
+            ReleaseReader(reader);
+        }
     }
 
     private void BuildVirtualCueExport(CueExportMode mode)
@@ -477,7 +493,9 @@ public class ChdContainer : IDisposable
 
                 var modeStr = isIsoMode
                     ? (t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? "MODE2/2048" : "MODE1/2048")
-                    : t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI") ? $"MODE2/{_cueSectorSize}" : $"MODE1/{_cueSectorSize}";
+                    : t.TrackType.Contains("MODE2") || t.TrackType.Contains("CDI")
+                        ? $"MODE2/{_cueSectorSize}"
+                        : $"MODE1/{_cueSectorSize}";
 
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  TRACK {trackNum:D2} {modeStr}");
 
@@ -493,7 +511,6 @@ public class ChdContainer : IDisposable
 
                 cumulativeFrames += t.Frames;
                 _cueBinSize += (ulong)t.Frames * _cueSectorSize;
-                freshFile = false;
             }
             else
             {
@@ -547,9 +564,9 @@ public class ChdContainer : IDisposable
                 {
                     _cueBinSize += (ulong)t.Frames * _cueSectorSize;
                 }
-
-                freshFile = false;
             }
+
+            freshFile = false;
         }
 
         _cueText = sb.ToString();
@@ -649,7 +666,6 @@ public class ChdContainer : IDisposable
         if (_cachedTracks == null || _cachedTracks.Count == 0) return 0;
 
         var reader = AcquireReader();
-        if (reader == null) return 0;
 
         try
         {
@@ -686,7 +702,7 @@ public class ChdContainer : IDisposable
                 var byteInFrame = (uint)(offsetInTrack % _cueSectorSize);
                 var logicalLba = targetTrack.StartLba + frameInTrack;
 
-                if (reader.ReadRawSector(logicalLba, out var rawSector) && rawSector != null)
+                if (reader.ReadRawSector(logicalLba, out var rawSector))
                 {
                     var dataOffset = _cueSectorSize == 2048
                         ? reader.SectorHeaderOffset
@@ -710,7 +726,10 @@ public class ChdContainer : IDisposable
 
             return totalRead;
         }
-        finally { ReleaseReader(reader); }
+        finally
+        {
+            ReleaseReader(reader);
+        }
     }
 
     private int ReadVirtualWav(int trackIndex, ulong offset, byte[] buffer, int bufOffset, int bytesToRead)
@@ -729,7 +748,6 @@ public class ChdContainer : IDisposable
         if (track == null) return 0;
 
         var reader = AcquireReader();
-        if (reader == null) return 0;
 
         reader.SetTrack(track, true);
 
@@ -749,7 +767,7 @@ public class ChdContainer : IDisposable
 
                 var logicalLba = track.StartLba + frameInTrack;
 
-                if (reader.ReadRawSector(logicalLba, out var rawSector) && rawSector != null)
+                if (reader.ReadRawSector(logicalLba, out var rawSector))
                 {
                     var available = (int)(audioSectorSize - byteInFrame);
                     var toCopy = Math.Min(available, bytesToRead - totalRead);
@@ -769,7 +787,10 @@ public class ChdContainer : IDisposable
 
             return totalRead;
         }
-        finally { ReleaseReader(reader); }
+        finally
+        {
+            ReleaseReader(reader);
+        }
     }
 
     private int ReadRawChdBytes(ulong offset, byte[] buffer, int bufOffset, int bytesToRead)
@@ -799,7 +820,10 @@ public class ChdContainer : IDisposable
 
     private void ReleaseReader(SectorReader reader)
     {
-        lock (_poolLock) { _availableReaders.Add(reader); }
+        lock (_poolLock)
+        {
+            _availableReaders.Add(reader);
+        }
     }
 
     /// <summary>
@@ -807,7 +831,10 @@ public class ChdContainer : IDisposable
     /// </summary>
     public void Dispose()
     {
-        lock (_poolLock) { _poolShutdown = true; }
+        lock (_poolLock)
+        {
+            _poolShutdown = true;
+        }
 
         _readerPool.Clear();
         _availableReaders.Clear();

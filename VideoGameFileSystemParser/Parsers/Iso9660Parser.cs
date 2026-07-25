@@ -6,7 +6,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses ISO 9660 (High Sierra, Joliet, CD-XA) file systems. Supports SUSP/Rock Ridge for POSIX attributes and symlinks.
 /// </summary>
-public class Iso9660Parser
+internal class Iso9660Parser
 {
     private const int MaxCeChain = 64;
 
@@ -211,8 +211,10 @@ public class Iso9660Parser
         }
 
         if (CheckMagic(data, 9, "CDROM"))
-        { isHs = true;
-            return true; }
+        {
+            isHs = true;
+            return true;
+        }
 
         // byte-offset scanning (handles raw-sector images with un-stripped sync headers)
         if (!_scanWithinSector)
@@ -234,8 +236,10 @@ public class Iso9660Parser
             }
 
             if (CheckMagicOffset(data, i, "CDROM", 9))
-            { isHs = true;
-                return true; }
+            {
+                isHs = true;
+                return true;
+            }
         }
 
         return false;
@@ -444,6 +448,7 @@ public class Iso9660Parser
                             {
                                 child.NodeType = FsNodeType.Directory;
                             }
+
                             if (susp != null)
                             {
                                 if (susp.UnixMode.HasValue)
@@ -481,6 +486,7 @@ public class Iso9660Parser
                                     child.AccessedTime = susp.AccessedTime;
                                 }
                             }
+
                             child.Extents.Add(new FsExtent { Lba = child.Lba, Size = child.Size });
                             if (child.IsDirectory) ParseDirectory(child, trackStart);
                             dirNode.Children.Add(child);
@@ -559,8 +565,10 @@ public class Iso9660Parser
                 var entryLen = buf[off + 2];
                 if (entryLen < 4 || entryLen > len) break;
 
-                if (s0 == 'S' && s1 == 'T') {
-                    break; }
+                if (s0 == 'S' && s1 == 'T')
+                {
+                    break;
+                }
 
                 // CE: Continuation Entry (deferred)
                 if (s0 == 'C' && s1 == 'E' && entryLen >= 28)
@@ -638,6 +646,7 @@ public class Iso9660Parser
                     {
                         /* ModifiedTime set from ISO record; TF value skipped */
                     }
+
                     idx += (tfFlags & 0x04) != 0 ? 1 : 0;
 
                     if ((tfFlags & 0x08) != 0 && stampOff + (idx + 1) * stampSize <= off + entryLen)

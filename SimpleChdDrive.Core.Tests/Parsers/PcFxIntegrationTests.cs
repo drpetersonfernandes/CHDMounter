@@ -25,7 +25,7 @@ public class PcFxIntegrationTests
     public void Iso9660ParserParsesPcFxDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPcFxDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(Iso9660ParserParsesPcFxDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -70,7 +70,7 @@ public class PcFxIntegrationTests
     public void PcFxParserParsesDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(PcFxParserParsesDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(PcFxParserParsesDisc), paths, static (path, output) =>
         {
             var err = ChdFile.Open(path, out var chd);
             Assert.Equal(ChdError.Chderrnone, err);
@@ -109,7 +109,7 @@ public class PcFxIntegrationTests
     public void ChdContainerMountAndParsePcFxDisc()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePcFxDisc), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerMountAndParsePcFxDisc), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try
@@ -143,7 +143,7 @@ public class PcFxIntegrationTests
     public void ChdContainerCheckParseAndRead()
     {
         var paths = GetPaths();
-        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, (path, output) =>
+        SequentialTestRunner.Run(_output, nameof(ChdContainerCheckParseAndRead), paths, static (path, output) =>
         {
             var container = new ChdContainer(path);
             try

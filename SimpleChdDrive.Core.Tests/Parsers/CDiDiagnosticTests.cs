@@ -50,6 +50,7 @@ public class CDiDiagnosticTests
                         var c = (char)raw[i];
                         firstChars.Append(c is >= (char)32 and <= (char)126 ? c : '.');
                     }
+
                     sb.AppendLine(CultureInfo.InvariantCulture, $"  LBA={lba,3}: sync=[{syncHex}] chars=[{firstChars}]");
                 }
             }
