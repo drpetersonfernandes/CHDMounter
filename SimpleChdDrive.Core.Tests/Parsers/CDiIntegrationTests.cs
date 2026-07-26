@@ -37,12 +37,17 @@ public class CDiIntegrationTests
                 var reader = new SectorReader(chd, unitBytes);
                 output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count}");
 
+                var dataTrack = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack);
+                if (dataTrack is null)
+                {
+                    output.WriteLine("Audio-only disc — no data track to parse");
+                    return true;
+                }
+
                 var root = new FsNode();
                 var parser = new CDiFsParser(reader);
 
-                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                Assert.NotNull(track);
-                var ok = parser.Parse(root, track);
+                var ok = parser.Parse(root, dataTrack);
                 output.WriteLine($"CDiFsParser: {(ok ? "OK" : "FAILED")}");
 
                 Assert.True(ok, "CDiFsParser could not parse the disc");
@@ -81,6 +86,13 @@ public class CDiIntegrationTests
                 var reader = new SectorReader(chd, chd.UnitBytes);
                 output.WriteLine($"UnitBytes={chd.UnitBytes} Tracks={reader.Tracks.Count}");
 
+                var hasDataTrack = reader.Tracks.Any(static t => t.IsDataTrack);
+                if (!hasDataTrack)
+                {
+                    output.WriteLine("Audio-only disc — no data track to parse");
+                    return true;
+                }
+
                 var root = new FsNode();
                 var parser = new CDiParser(reader);
 
@@ -114,7 +126,15 @@ public class CDiIntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                Assert.True(container.MountAndParse(ConsoleType.CDi), "MountAndParse failed");
+                var success = container.MountAndParse(ConsoleType.CDi);
+
+                if (!success && container is { HasDataTracks: false, VolumeSize: > 0 })
+                {
+                    output.WriteLine("Audio-only disc — no data track to parse");
+                    return true;
+                }
+
+                Assert.True(success, "MountAndParse failed");
 
                 var all = CollectEntries(container, "\\").ToList();
                 var fileEntries = all.Where(static e => !e.IsDirectory).ToList();

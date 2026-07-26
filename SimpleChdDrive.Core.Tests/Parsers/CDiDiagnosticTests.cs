@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 using CHDSharp;
 using CHDSharp.Models;
@@ -19,70 +18,69 @@ public class CDiDiagnosticTests
     [Fact]
     public void DiagnosticCdiReadyDisc()
     {
-        var sb = new StringBuilder();
         const string path = @"G:\MAME\MAME Software List CHDs\cdi\aliengat\alien gate (us, set 1)(cdi-ready).chd";
+        if (!File.Exists(path))
+            return;
 
-        if (!File.Exists(path)) return;
-
-        sb.AppendLine(CultureInfo.InvariantCulture, $"=== {Path.GetFileName(path)} ===");
         var err = ChdFile.Open(path, out var chd);
-        if (err != ChdError.Chderrnone || chd is null) return;
+        Assert.Equal(ChdError.Chderrnone, err);
+        Assert.NotNull(chd);
 
         try
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"UnitBytes={chd.UnitBytes} HunkBytes={chd.HunkBytes}");
+            _output.WriteLine($"UnitBytes={chd.UnitBytes} HunkBytes={chd.HunkBytes}");
 
             var reader = new SectorReader(chd, chd.UnitBytes);
+            Assert.NotEmpty(reader.Tracks);
+
             foreach (var t in reader.Tracks)
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  Track {t.Index}: {t.TrackType} data={t.IsDataTrack} frames={t.Frames} pregap={t.Pregap} startLba={t.StartLba} chdOffset={t.ChdOffset}");
+                _output.WriteLine($"  Track {t.Index}: {t.TrackType} data={t.IsDataTrack} frames={t.Frames} pregap={t.Pregap} startLba={t.StartLba} chdOffset={t.ChdOffset}");
 
             reader.Reset();
 
-            sb.AppendLine("--- Reading raw sectors LBA 0-25 (unlocked, raw) ---");
+            var rawReadCount = 0;
             for (uint lba = 0; lba < 26; lba++)
             {
                 if (reader.ReadRawSector(lba, out var raw))
                 {
-                    var syncHex = BitConverter.ToString(raw, 0, Math.Min(24, raw.Length));
-                    var firstChars = new StringBuilder();
-                    for (var i = 0; i < Math.Min(64, raw.Length); i++)
-                    {
-                        var c = (char)raw[i];
-                        firstChars.Append(c is >= (char)32 and <= (char)126 ? c : '.');
-                    }
-
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  LBA={lba,3}: sync=[{syncHex}] chars=[{firstChars}]");
+                    rawReadCount++;
+                    Assert.NotNull(raw);
+                    Assert.True(raw.Length > 0, $"Raw sector at LBA {lba} should not be empty");
                 }
             }
+            _output.WriteLine($"Raw sectors read: {rawReadCount}/26");
+            Assert.True(rawReadCount > 0, "Should be able to read at least some raw sectors");
 
-            sb.AppendLine("--- Now trying to read LBA 0-25 via ReadSector (2048 cooked) ---");
             var buf = new byte[2048];
+            var cookedReadCount = 0;
             for (uint lba = 0; lba < 26; lba++)
             {
                 if (reader.ReadSector(lba, buf))
                 {
+                    cookedReadCount++;
                     var sig1 = Encoding.ASCII.GetString(buf, 1, 5);
-                    var sig4 = Encoding.ASCII.GetString(buf, 0, 5);
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  LBA={lba,3}: type={buf[0]:X2} sig1='{sig1}' sig4='{sig4}'");
+                    _output.WriteLine($"  LBA={lba,3}: type={buf[0]:X2} sig1='{sig1}'");
                 }
             }
+            _output.WriteLine($"Cooked sectors read: {cookedReadCount}/26");
 
-            sb.AppendLine("--- Also try locked mode reading at LBA 0 ---");
             reader.Reset();
             var dataTrack = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack);
             if (dataTrack != null)
             {
                 reader.SetTrack(dataTrack, true);
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Locked to track 1 (startLba={dataTrack.StartLba}), trying LBA 0: {reader.ReadSector(0, buf)}");
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Locked, trying LBA 150: {reader.ReadSector(150, buf)}");
+                Assert.True(reader.ReadSector(0, buf), "Locked read at LBA 0 should succeed");
+                Assert.True(reader.ReadSector(150, buf), "Locked read at LBA 150 should succeed");
+            }
+            else
+            {
+                _output.WriteLine("No data track found (audio-only CDi-ready disc)");
             }
         }
         finally
         {
             chd.Dispose();
         }
-
-        Assert.Fail(sb.ToString());
     }
 
     [Fact]
@@ -145,72 +143,81 @@ public class CDiDiagnosticTests
     [Fact]
     public void DiagnosticMusicCdiDiscs()
     {
-        var sb = new StringBuilder();
         var paths = new[]
         {
             @"I:\Philips CD-i\Pavarotti - O Sole Mio (USA).chd",
             @"I:\Philips CD-i\James Brown - Non Stop Hit Machine (USA).chd"
         };
 
+        var anyTested = false;
+
         foreach (var path in paths)
         {
             if (!File.Exists(path)) continue;
 
-            sb.AppendLine(CultureInfo.InvariantCulture, $"=== {Path.GetFileName(path)} ===");
+            anyTested = true;
+
+            _output.WriteLine($"=== {Path.GetFileName(path)} ===");
             var err = ChdFile.Open(path, out var chd);
-            if (err != ChdError.Chderrnone || chd is null) continue;
+            Assert.Equal(ChdError.Chderrnone, err);
+            Assert.NotNull(chd);
 
             try
             {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"UnitBytes={chd.UnitBytes} HunkBytes={chd.HunkBytes}");
+                _output.WriteLine($"UnitBytes={chd.UnitBytes} HunkBytes={chd.HunkBytes}");
 
                 var reader = new SectorReader(chd, chd.UnitBytes);
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Tracks: {reader.Tracks.Count}");
+                Assert.NotEmpty(reader.Tracks);
 
                 foreach (var t in reader.Tracks)
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"  Track {t.Index}: {t.TrackType} data={t.IsDataTrack} frames={t.Frames} pregap={t.Pregap} startLba={t.StartLba} chdOffset={t.ChdOffset}");
+                    _output.WriteLine($"  Track {t.Index}: {t.TrackType} data={t.IsDataTrack} frames={t.Frames} pregap={t.Pregap} startLba={t.StartLba} chdOffset={t.ChdOffset}");
 
                 reader.Reset();
                 var dataTrack = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack);
-                if (dataTrack == null)
+                if (dataTrack is null)
                 {
-                    sb.AppendLine("  No data track found!");
+                    _output.WriteLine("No data track found (audio-only disc)");
                     continue;
                 }
 
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Data track: {dataTrack.Index} type={dataTrack.TrackType} startLba={dataTrack.StartLba} frames={dataTrack.Frames} pregap={dataTrack.Pregap}");
+                _output.WriteLine($"Data track: {dataTrack.Index} type={dataTrack.TrackType} startLba={dataTrack.StartLba} frames={dataTrack.Frames} pregap={dataTrack.Pregap}");
 
+                var rawReadCount = 0;
                 for (uint lba = 0; lba < 30; lba++)
                 {
                     if (reader.ReadRawSector(lba, out var raw))
                     {
-                        var syncHex = BitConverter.ToString(raw, 0, Math.Min(16, raw.Length));
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  Raw LBA={lba,3}: sync=[{syncHex}]");
+                        rawReadCount++;
+                        Assert.NotNull(raw);
                     }
                 }
+                _output.WriteLine($"Raw sectors read: {rawReadCount}/30");
+                Assert.True(rawReadCount > 0, "Should be able to read at least some raw sectors");
 
                 reader.Reset();
                 reader.SetTrack(dataTrack, true);
                 var buf = new byte[2048];
+                var cookedReadCount = 0;
 
-                sb.AppendLine(CultureInfo.InvariantCulture, $"Reading locked from track start LBA {dataTrack.StartLba}:");
                 for (uint offset = 0; offset < 30; offset++)
                 {
                     var lba = dataTrack.StartLba + offset;
                     if (reader.ReadSector(lba, buf))
                     {
+                        cookedReadCount++;
                         var sig1 = Encoding.ASCII.GetString(buf, 1, 5);
-                        var sig0 = Encoding.ASCII.GetString(buf, 0, 5);
-                        sb.AppendLine(CultureInfo.InvariantCulture, $"  LBA={lba} off={offset}: type={buf[0]:X2} sig1='{sig1}' sig0='{sig0}'");
+                        _output.WriteLine($"  LBA={lba} off={offset}: type={buf[0]:X2} sig1='{sig1}'");
                     }
                 }
+                _output.WriteLine($"Cooked sectors read: {cookedReadCount}/30");
 
-                sb.AppendLine("Trying CDiFsParser:");
                 reader.Reset();
                 var root = new FsNode();
                 var parser = new CDiFsParser(reader);
                 var ok = parser.Parse(root, dataTrack);
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  Parse result: {ok}, children: {root.Children.Count}");
+                _output.WriteLine($"CDiFsParser result: {ok}, children: {root.Children.Count}");
+                Assert.True(ok, "CDiFsParser should parse the data track successfully");
+                Assert.NotEmpty(root.Children);
             }
             finally
             {
@@ -218,6 +225,7 @@ public class CDiDiagnosticTests
             }
         }
 
-        Assert.Fail(sb.ToString());
+        if (!anyTested)
+            _output.WriteLine("No music CDi CHD files found at expected paths — test skipped");
     }
 }
