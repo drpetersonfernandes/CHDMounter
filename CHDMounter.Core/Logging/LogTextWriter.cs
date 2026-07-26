@@ -2,7 +2,7 @@ using System.Text;
 
 namespace CHDMounter.Core.Logging;
 
-public class LogTextWriter : TextWriter
+internal class LogTextWriter : TextWriter
 {
     private readonly TextWriter _originalWriter;
 

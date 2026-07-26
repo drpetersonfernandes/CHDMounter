@@ -37,10 +37,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="SimpleChdDrive" />
-        <InternalsVisibleTo Include="SimpleChdDrive_WinFsp" />
-        <InternalsVisibleTo Include="SimpleChdDrive.Core.Tests" />
-        <InternalsVisibleTo Include="Tester" />
+        <InternalsVisibleTo Include="CHDMounter" />
+        <InternalsVisibleTo Include="CHDMounter_WinFsp" />
+        <InternalsVisibleTo Include="CHDMounter.Core.Tests" />
+        <InternalsVisibleTo Include="CHDMounter_Tester" />
         <InternalsVisibleTo Include="ChdDiagnoster" />
     </ItemGroup>
 
