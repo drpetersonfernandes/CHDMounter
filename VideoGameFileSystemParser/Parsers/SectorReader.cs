@@ -983,6 +983,9 @@ public class SectorReader : IDisposable
         return (byte)((bcd >> 4) * 10 + (bcd & 0x0F));
     }
 
+    /// <summary>
+    /// Releases all resources used by the <see cref="SectorReader"/>, including the cached hunk buffer.
+    /// </summary>
     public void Dispose()
     {
         ReturnCachedHunk();
