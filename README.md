@@ -1,14 +1,13 @@
-# CHDMounter
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20x64%20%7C%20ARM64-0078d7.svg)](https://www.microsoft.com/windows)
+[![.NET 10.0](https://img.shields.io/badge/.NET-10.0-512bd4.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.txt)
+[![GitHub release](https://img.shields.io/github/v/release/drpetersonfernandes/CHDMounter)](https://github.com/drpetersonfernandes/CHDMounter/releases)
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
-[![Platform](https://img.shields.io/badge/platform-Windows-blue)](https://www.microsoft.com/windows)
-[![Arch](https://img.shields.io/badge/arch-x64%20%7C%20ARM64-lightgrey)](#)
+# CHDMounter
 
 Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives on Windows. Supports 31 console types and 8 filesystem formats across consoles and PC optical media.
 
-<p align="center">
-  <img src=".github/screenshot.png" alt="Screenshot" width="700">
-</p>
+![](screenshot.png)
 
 ---
 
@@ -86,7 +85,7 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 
 ### Download
 
-Grab the latest self-contained executable from [Releases](https://github.com/your/repo/releases):
+Grab the latest self-contained executable from [Releases](https://github.com/drpetersonfernandes/CHDMounter/releases):
 
 - `CHDMounter.exe` — Dokan-based
 - `CHDMounter_WinFsp.exe` — WinFsp-based
@@ -105,6 +104,7 @@ Opens the main window. Click **Browse** to select a CHD file, pick a filesystem 
 
 ```
 CHDMounter.exe <chd_file> <console_type> [mount_point]
+CHDMounter_WinFsp.exe <chd_file> <console_type> [mount_point]
 ```
 
 **Examples:**
@@ -120,103 +120,67 @@ CHDMounter.exe disc.chd cuebin
 
 # Mount with generic ISO 9660 parser
 CHDMounter_WinFsp.exe data.chd iso9660 N
+
+# Using the WinFsp variant for PS3
+CHDMounter_WinFsp.exe game.chd ps3
 ```
 
 If `<console_type>` is omitted in GUI mode, a dialog appears asking you to choose.
 
----
+### Console Type Reference
 
-## Project Structure
+You can specify the console type using either a **numeric index** or a **string alias** (case-insensitive).
 
-```
-CHDMounter.sln
-├── VideoGameFileSystemParser/             Standalone parser library (NuGet, cross-platform)
-│   ├── Interfaces/
-│   │   └── IConsoleParser.cs              Contract for console-specific parsers
-│   ├── Models/
-│   │   ├── ConsoleType.cs                 Enum: 31 console types
-│   │   ├── ConsoleInfo.cs                 record(ConsoleType, Name)
-│   │   ├── FileEntry.cs                   Flat file/directory entry
-│   │   ├── FsNode.cs                      Tree node with LBA, extents, symlinks, POSIX attrs
-│   │   └── TrackInfo.cs                   CHD track metadata
-│   └── Parsers/
-│       ├── Iso9660Parser.cs               ISO 9660 / High Sierra / Joliet / SUSP / Rock Ridge
-│       ├── UdfParser.cs                   UDF 1.02-2.60 (PS3/DVD/Blu-ray/Nuon)
-│       ├── XdvdfsParser.cs                Xbox XDVDFS binary-tree parser
-│       ├── ThreeDoParser.cs               3DO OperaFS block-based parser
-│       ├── CDiFsParser.cs                 CD-i Green Book with interleaving
-│       ├── HfsParser.cs                   Apple HFS/HFS+ catalog B-tree parser
-│       ├── PcFxIsoParser.cs               PC-FX dedicated byte-offset VD scanner
-│       ├── ChdContainer.cs                High-level API + virtual CUE/BIN/ISO/WAV export
-│       ├── SectorReader.cs                LBA→CHD frame mapper + sector header detection
-│       ├── ParserFactory.cs               ConsoleType → parser dispatch
-│       └── Systems/                       25 console wrapper classes
-│           ├── PlayStationParsers.cs       PS1, PS2, PS3, PS Auto-Detect
-│           ├── XboxParsers.cs             Xbox, Xbox 360
-│           ├── DreamcastAndOthers.cs      Dreamcast, CDi, 3DO, GenericIsoRaw, Nuon, Pippin
-│           ├── Iso9660ConsoleParsers.cs   PSP, Saturn, NeoGeo, Amiga, FM Towns, X68000, PC-98, Pico...
-│           ├── PcEngineCdParser.cs        PC Engine CD / TurboGrafx-CD
-│           └── PcFxIsoParser.cs           NEC PC-FX
-│
-├── CHDMounter.Core/                   Shared library (WPF, services, views)
-│   ├── Interfaces/
-│   │   ├── ILoggingService.cs             Log collection with UI binding
-│   │   ├── IMountService.cs               Mount/unmount contract
-│   │   ├── ISettingsService.cs            Settings persistence
-│   │   └── IScreenshotService.cs          Screenshot capture
-│   ├── Services/
-│   │   ├── LoggingService.cs              WPF-dispatched ObservableCollection<LogEntry>
-│   │   ├── ServiceProvider.cs             ConcurrentDictionary DI container
-│   │   ├── SettingsService.cs             DPAPI-encrypted JSON settings
-│   │   ├── ConsoleTypeHelper.cs           CLI arg → ConsoleType mapping
-│   │   ├── DriveHelper.cs                 Auto-select drive letter M-Q
-│   │   ├── UpdateChecker.cs               GitHub releases version check
-│   │   ├── BugReportClient.cs             Error/warning reporting queue
-│   │   ├── StatsClient.cs                 Anonymous usage telemetry
-│   │   └── ScreenshotService.cs           Win32 foreground window capture
-│   ├── Logging/
-│   │   ├── AppLogger.cs                   Serilog configuration
-│   │   ├── DiagnosticLogger.cs            Temp-file logger with 7-day cleanup
-│   │   ├── ErrorLogger.cs                 Global unhandled exception handlers
-│   │   ├── BugReportSink.cs               Serilog sink → BugReportClient
-│   │   └── LogTextWriter.cs               Console → ILoggingService redirect
-│   ├── Views/
-│   │   ├── MainWindowBase.cs              Shared base class for Dokan/WinFsp UIs
-│   │   ├── ConsoleSelectionWindow.xaml    Console type selection dialog
-│   │   ├── SettingsWindow.xaml            Settings dialog
-│   │   └── AboutWindow.xaml               About dialog
-│   └── Themes/
-│       └── DarkTheme.xaml                 WPF-UI dark theme ResourceDictionary
-│
-├── CHDMounter/                        WPF EXE — Dokan
-│   ├── ChdFs.cs                           IDokanOperations VFS implementation
-│   ├── Services/MountService.cs           Dokan mount/unmount lifecycle
-│   ├── App.xaml / App.xaml.cs             Entry point, service registration, args
-│   └── MainWindow.xaml / .cs              UI (inherits MainWindowBase)
-│
-├── CHDMounter_WinFsp/                 WPF EXE — WinFsp
-│   ├── ChdFs.cs                           FileSystemBase VFS implementation
-│   ├── Services/MountService.cs           WinFsp mount/unmount, cross-integrity admin
-│   ├── App.xaml / App.xaml.cs             Entry point (includes WinFsp PATH fix)
-│   └── MainWindow.xaml / .cs              UI (inherits MainWindowBase)
-│
-├── CHDMounter_Tester/                 WPF EXE — Batch testing
-│   ├── Services/
-│   │   ├── TestRunnerService.cs           Batch CHD parsing with progress events
-│   │   └── PdfExportService.cs            QuestPDF report generation
-│   ├── Models/
-│   │   ├── TestResult.cs                  Per-file parse result record
-│   │   └── TestSummary.cs                 Aggregated statistics
-│   └── MainWindow.xaml / .cs              Test UI with PDF export
-│
-├── CHDMounter.Core.Tests/             xUnit integration and unit tests
-│   ├── Parsers/                           Parser integration tests (20+ consoles)
-│   ├── Services/                          Service unit tests
-│   ├── Logging/                           Logging infrastructure tests
-│   └── Models/                            Model and enum tests
-│
-└── ChdDiagnoster/                         Standalone console diagnostic tool
-    └── Program.cs                         HFS parsing diagnostics
+#### Numeric Indexes (1–27)
+
+| Index | Console Type | CLI String Aliases |
+|-------|--------------|-------------------|
+| 1 | Amiga CD | `amigacd`, `amiga` |
+| 2 | Amiga CD32 | `amigacd32`, `cd32` |
+| 3 | CD-i | `cdi`, `cd-i` |
+| 4 | Generic ISO 9660 | `iso9660`, `generic`, `iso` |
+| 5 | Generic Raw | *(GUI only)* |
+| 6 | CUE/BIN (Raw) | `cuebin`, `cue` |
+| 7 | CUE/BIN (Cooked) | `cuebin2048`, `cue2048` |
+| 8 | CUE/ISO | `cueiso` |
+| 9 | CUE/BIN/WAV | `cuebinwav`, `cuewav` |
+| 10 | CUE/ISO/WAV | `cueisowav` |
+| 11 | Dreamcast | `dreamcast`, `dc` |
+| 12 | FM Towns | `fmtowns`, `fmt` |
+| 13 | Neo Geo CD | `neogeo`, `ngcd` |
+| 14 | PC Engine CD | `pcengine`, `pce`, `tgcd` |
+| 15 | PC-FX | `pcfx` |
+| 16 | PlayStation (Auto) | `psauto`, `psdetect` |
+| 17 | PS1 | `ps1`, `playstation`, `psx` |
+| 18 | PS2 | `ps2` |
+| 19 | PS3 | `ps3` |
+| 20 | PSP | `psp` |
+| 21 | Saturn | `saturn` |
+| 22 | Sega Genesis / Mega CD | `segagenesis`, `megacd`, `segacd` |
+| 23 | 3DO | `3do` |
+| 24 | Xbox | `xbox` |
+| 25 | Xbox 360 | `xbox360`, `x360` |
+| 26 | X68000 | `x68000`, `x68k` |
+| 27 | Pico | `pico` |
+
+#### GUI-Only Console Types
+
+These console types are only available through the GUI dropdown and cannot be specified via command line:
+
+- **PC-98** — ISO 9660
+- **Nuon** — UDF → ISO 9660 fallback (VM Labs Nuon DVD)
+- **Pippin** — HFS → HFS+ → UDF → ISO (Apple Bandai Pippin)
+
+**Examples using numeric indexes:**
+```bash
+# Mount a PS2 game (index 18) as drive M:
+CHDMounter.exe 18 game.chd M
+
+# Mount an Xbox 360 game (index 25)
+CHDMounter.exe 25 game.chd
+
+# Mount as virtual CUE/BIN (index 6)
+CHDMounter.exe 6 disc.chd
 ```
 
 ---
@@ -228,24 +192,34 @@ CHDMounter.sln
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Windows 10+ (x64 or ARM64)
 
-### Build
+### Run with Command-Line Arguments
+
+After building or publishing, you can run the executables with command-line arguments:
 
 ```bash
-git clone https://github.com/your/repo.git
-cd repo
-dotnet build -c Release
+# Using the Dokan variant
+CHDMounter.exe <chd_file> <console_type> [mount_point]
+
+# Using the WinFsp variant
+CHDMounter_WinFsp.exe <chd_file> <console_type> [mount_point]
 ```
 
-Artifacts appear in `CHDMounter\bin\Release\net10.0-windows\win-x64\` and `CHDMounter_WinFsp\bin\Release\...`.
-
-### Publish (single-file self-contained)
-
+**Examples:**
 ```bash
-dotnet publish CHDMounter\CHDMounter.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish CHDMounter_WinFsp\CHDMounter_WinFsp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+# Mount a PS2 game as drive M:
+CHDMounter.exe game.chd ps2 M
 
-# ARM64
-dotnet publish CHDMounter\CHDMounter.csproj -c Release -r win-arm64 --self-contained true -p:PublishSingleFile=true
+# Mount an Xbox 360 game (auto-select drive letter)
+CHDMounter.exe game.chd xbox360
+
+# Mount as virtual CUE/BIN
+CHDMounter.exe disc.chd cuebin
+
+# Mount with generic ISO 9660 parser
+CHDMounter_WinFsp.exe data.chd iso9660 N
+
+# Using the WinFsp variant for PS3
+CHDMounter_WinFsp.exe game.chd ps3
 ```
 
 ---
@@ -272,18 +246,9 @@ The `SectorReader` maps logical block addresses (LBAs) to byte offsets within CH
 
 ### File System Parsing
 
-Each parser reads raw 2048-byte sectors and reconstructs the directory tree in a `FsNode` hierarchy:
+CHDMounter uses the [VideoGameFileSystemParser](https://github.com/drpetersonfernandes/VideoGameFileSystemParser) library (v1.0.0) to parse various console file systems from raw 2048-byte sectors and reconstruct directory trees.
 
-| Parser            | Magic / Signature              | Entry Size | Key Field Offsets                               |
-|-------------------|--------------------------------|------------|------------------------------------------------|
-| ISO 9660          | `CD001` / `CDROM` at sector 16 | 34 bytes   | LBA:2, Size:10, Flags:25, Name:33              |
-| XDVDFS (Xbox)     | `MICROSOFT*XBOX*MEDIA`         | 14+ bytes  | Left:0, Right:2, Sector:4, Size:8, Attr:12     |
-| OperaFS (3DO)     | `01 5A 5A 5A 5A 5A 01`        | 0x48+      | Flags:0, BlockSize:4, Name:32, Avatars:64      |
-| CD-i (Green Book) | `CD-I ` / `CD-RTOS` / `CD001`  | 34+ bytes  | Extended attrs with file_number for interleaving |
-| UDF               | AVDP at sector 256, Tag ID=2   | variable   | ShortAd:8, LongAd:16 extent descriptors        |
-| HFS/HFS+          | `BD` (MDB) / `H+` (volume header) | variable  | Catalog B-tree with CNID-based hierarchy        |
-
-The ISO 9660 parser supports SUSP/Rock Ridge POSIX attributes (symlinks, Unix permissions, timestamps) and Joliet UTF-16BE filenames.
+Supported file systems include ISO 9660 (with Joliet/Rock Ridge), XDVDFS (Xbox), OperaFS (3DO), CD-i Green Book, UDF, and HFS/HFS+.
 
 ### VFS Operations
 
@@ -301,28 +266,71 @@ For SingleFile mode, the container serves the entire decompressed CHD image as a
 
 ---
 
-## NuGet Dependencies
+## Differences between Dokan and WinFsp Variants
 
-| Package              | Version    | Purpose                                   |
-|----------------------|------------|-------------------------------------------|
-| `CHDSharp`           | 1.2.0      | MAME CHD format reader                    |
-| `DokanNet`           | 2.3.0.3    | Dokan virtual filesystem driver bindings   |
-| `winfsp.net`         | 2.2.26194  | WinFsp virtual filesystem driver bindings  |
-| `WPF-UI`             | 4.3.0      | Modern WPF theming (Fluent/Win11 style)    |
-| `Serilog`            | 4.4.0      | Structured logging                         |
-| `Serilog.Sinks.File` | 7.0.0      | File-based log output                      |
-| `Serilog.Sinks.Debug`| 3.0.0      | Visual Studio debug output logging         |
-| `QuestPDF`           | 2026.7.1   | PDF report generation (Tester only)        |
+| Aspect | Dokan | WinFsp |
+|--------|-------|--------|
+| Driver | Kernel-mode (Dokan.sys) | User-mode (WinFsp) |
+| NuGet | `DokanNet` 2.3.0.3 | `winfsp.net` 2.2.26194 |
+| FileSystem base | `IDokanOperations` | `FileSystemBase` |
+| Admin mount | Standard | Cross-integrity folder mounts with permissive DACL |
+
+Both variants share the same core functionality and UI. Choose based on your driver preference.
+
+---
+
+## Tester Application (CHDMounter_Tester)
+
+WPF desktop application for **batch testing and benchmarking** CHD disc image parsing. Scans folders of `.chd` files, parses each one with a selected console file system parser, and generates summary reports with PDF export.
+
+### Features
+
+- Select a folder of CHD files and a target console type
+- Batch-parse every `.chd` file in the folder
+- Report success/failure, file count, directory count, volume size, and timing per file
+- View aggregated summary statistics (fastest, slowest, average, total throughput)
+- Export results to **PDF** with QuestPDF
+
+### Usage
+
+1. Launch `CHDMounter_Tester.exe`
+2. Select a folder containing `.chd` files
+3. Choose a console type from the dropdown
+4. Click **Run Tests** to begin batch parsing
+5. Click **Export PDF** to save results
+
+---
+
+## Dependencies
+
+### NuGet Packages
+
+| Package              | Version   | Purpose                                   |
+|----------------------|-----------|-------------------------------------------|
+| `CHDSharp`           | 1.2.0     | MAME CHD format reader                    |
+| `coverlet.collector` | 10.0.1    | Code coverage (Tests only)                |
+| `DokanNet`           | 2.3.0.3   | Dokan virtual filesystem driver bindings  |
+| `Microsoft.NET.Test.Sdk` | 18.8.1    | Test SDK (Tests only)                     |
+| `QuestPDF`           | 2026.7.1  | PDF report generation (Tester only)       |
+| `Serilog`            | 4.4.0     | Structured logging                        |
+| `Serilog.Sinks.Debug`| 3.0.0     | Visual Studio debug output logging        |
+| `Serilog.Sinks.File` | 7.0.0     | File-based log output                     |
+| `VideoGameFileSystemParser` | 1.0.0     | Filesystem parser                         |
+| `winfsp.net`         | 2.2.26194 | WinFsp virtual filesystem driver bindings |
+| `WPF-UI`             | 4.3.0     | Modern WPF theming (Fluent/Win11 style)   |
+| `xUnit`              | 2.9.3     | Test framework (Tests only)               |
+| `xunit.runner.visualstudio` | 3.1.5     | VS test adapter (Tests only)              |
 
 ---
 
 ## Acknowledgments
 
-- **CHDSharp library** — https://github.com/drpetersonfernandes/CHDSharp
+- **CHDSharp** — https://github.com/drpetersonfernandes/CHDSharp
+- **VideoGameFileSystemParser** — https://github.com/drpetersonfernandes/VideoGameFileSystemParser
 - **MAME** — https://github.com/mamedev/mame
 
 ---
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the GPLv3 License – see the [LICENSE](LICENSE.txt) file for details.
