@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wpfui="clr-namespace:Wpf.Ui.Controls;assembly=Wpf.Ui"
         mc:Ignorable="d"
         Title="Tester - CHD Parsing Test Tool"
         Height="720" Width="1100"
@@ -22,12 +23,24 @@
 
         <Menu Grid.Row="0" Margin="0" ToolTip="Application menu bar">
             <MenuItem Header="File" ToolTip="File operations">
-                <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application" />
+                <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="ArrowExit20" />
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="Help" ToolTip="Help and information">
-                <MenuItem Header="Open AppData Folder" Click="OpenAppDataFolder_Click" ToolTip="Open the application data folder in Explorer" />
+                <MenuItem Header="Open AppData Folder" Click="OpenAppDataFolder_Click" ToolTip="Open the application data folder in Explorer">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="FolderOpen24" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
-                <MenuItem Header="About" Click="About_Click" ToolTip="About Tester" />
+                <MenuItem Header="About" Click="About_Click" ToolTip="About Tester">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="Info24" />
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
         </Menu>
 

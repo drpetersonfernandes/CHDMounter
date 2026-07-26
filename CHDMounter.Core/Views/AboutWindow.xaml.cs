@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Navigation;
 
 namespace CHDMounter.Core.Views;
 
@@ -58,5 +59,18 @@ public partial class AboutWindow
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        }
+        catch
+        {
+            // ignored
+        }
+        e.Handled = true;
     }
 }

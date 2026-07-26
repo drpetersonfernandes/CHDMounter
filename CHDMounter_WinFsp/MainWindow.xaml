@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:CHDMounter.Core.Views;assembly=CHDMounter.Core"
+        xmlns:wpfui="clr-namespace:Wpf.Ui.Controls;assembly=Wpf.Ui"
         mc:Ignorable="d"
         Title="CHDMounter (WinFsp)"
         Height="500" Width="800"
@@ -22,16 +23,36 @@
 
         <Menu Grid.Row="0" Margin="0" ToolTip="Application menu bar">
             <MenuItem Header="File" ToolTip="File operations">
-                <MenuItem Header="Open CHD..." Click="OpenChd_Click" ToolTip="Select a CHD disc image file to mount" />
+                <MenuItem Header="Open CHD..." Click="OpenChd_Click" ToolTip="Select a CHD disc image file to mount">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="Document24" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
-                <MenuItem Header="Settings" Click="Settings_Click" ToolTip="Open the settings window" />
+                <MenuItem Header="Settings" Click="Settings_Click" ToolTip="Open the settings window">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="Settings24" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
-                <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application" />
+                <MenuItem Header="Exit" Click="Exit_Click" ToolTip="Close the application">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="ArrowExit20" />
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="Help" ToolTip="Help and information">
-                <MenuItem Header="Open AppData Folder" Click="OpenAppDataFolder_Click" ToolTip="Open the application data folder in Explorer" />
+                <MenuItem Header="Open AppData Folder" Click="OpenAppDataFolder_Click" ToolTip="Open the application data folder in Explorer">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="FolderOpen24" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
-                <MenuItem Header="About" Click="About_Click" ToolTip="About CHDMounter" />
+                <MenuItem Header="About" Click="About_Click" ToolTip="About CHDMounter">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="Info24" />
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
         </Menu>
 
