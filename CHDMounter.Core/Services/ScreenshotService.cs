@@ -17,6 +17,11 @@ public class ScreenshotService : IScreenshotService
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetWindowRect(IntPtr hWnd, out Rect lpRect);
 
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out Rect pvAttribute, int cbAttribute);
+
+    private const int DwmwaExtendedFrameBounds = 9;
+
     [StructLayout(LayoutKind.Sequential)]
     private struct Rect
     {
@@ -55,8 +60,20 @@ public class ScreenshotService : IScreenshotService
                 return;
             }
 
-            var width = rect.Right - rect.Left;
-            var height = rect.Bottom - rect.Top;
+            // Use extended frame bounds to exclude invisible window borders/shadows on Windows 10/11.
+            DwmGetWindowAttribute(hwnd, DwmwaExtendedFrameBounds, out var extRect, Marshal.SizeOf<Rect>());
+            var width = extRect.Right - extRect.Left;
+            var height = extRect.Bottom - extRect.Top;
+            var left = extRect.Left;
+            var top = extRect.Top;
+
+            if (width <= 0 || height <= 0)
+            {
+                width = rect.Right - rect.Left;
+                height = rect.Bottom - rect.Top;
+                left = rect.Left;
+                top = rect.Top;
+            }
 
             if (width <= 0 || height <= 0)
             {
@@ -66,7 +83,7 @@ public class ScreenshotService : IScreenshotService
 
             using var bitmap = new Bitmap(width, height);
             using var graphics = Graphics.FromImage(bitmap);
-            graphics.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(width, height));
+            graphics.CopyFromScreen(left, top, 0, 0, new Size(width, height));
 
             var fileName = $"screenshot_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.png";
             var savedPath = TrySaveImage(bitmap, fileName);

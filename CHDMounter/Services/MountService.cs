@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Windows;
 using DokanNet;
 using DokanNet.Logging;
 using CHDMounter.Core.Interfaces;
@@ -27,23 +29,20 @@ internal class MountService : IMountService
 
     public bool CanMount()
     {
-        try
-        {
-            var version = DokanVersion();
-            _loggingService.Log($"Dokan version: {version}");
-            return version > 0;
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError($"Dokan driver not found: {ex.Message}");
-            return false;
-        }
+        return IsDokanInstalled();
     }
 
     public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
     {
         if (IsMounted)
             throw new InvalidOperationException("Already mounted.");
+
+        if (!IsDokanInstalled())
+        {
+            _loggingService.LogError("Dokan driver not found. Unable to mount CHD.");
+            ShowDokanNotInstalledDialog();
+            return;
+        }
 
         _loggingService.Log($"Opening and parsing CHD: {chdPath} as {consoleType}...");
 
@@ -112,6 +111,41 @@ internal class MountService : IMountService
     {
         Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    private static bool IsDokanInstalled()
+    {
+        try
+        {
+            return DokanVersion() > 0;
+        }
+        catch (DllNotFoundException)
+        {
+            return false;
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return false;
+        }
+    }
+
+    private static void ShowDokanNotInstalledDialog()
+    {
+        const string message = "The Dokan file system driver (dokan2.dll) is required to mount CHD files as virtual drives. " +
+                               "It does not appear to be installed on this system.\n\n" +
+                               "Would you like to open the Dokan download page?";
+
+        var result = MessageBox.Show(message, "Dokan Driver Not Found",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/dokan-dev/dokany/releases",
+                UseShellExecute = true
+            });
+        }
     }
 }
 

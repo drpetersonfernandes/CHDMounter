@@ -306,7 +306,7 @@ public partial class MainWindow
     {
         var folder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "CHDMounter_Tester", "logs");
+            "CHDMounter_Tester");
         if (Directory.Exists(folder))
             Process.Start("explorer.exe", folder);
         else

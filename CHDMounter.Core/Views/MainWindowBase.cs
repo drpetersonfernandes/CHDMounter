@@ -280,6 +280,12 @@ public class MainWindowBase : Window
     {
         if (string.IsNullOrEmpty(_chdPath)) return;
 
+        if (!MountService.CanMount())
+        {
+            StatusText.Text = "Driver not found";
+            return;
+        }
+
         MountButton.IsEnabled = false;
         UnmountButton.IsEnabled = false;
         StatusText.Text = "Mounting...";
@@ -379,15 +385,34 @@ public class MainWindowBase : Window
         new AboutWindow { Owner = this }.ShowDialog();
     }
 
-    private void MainWindow_Closing(object? sender, CancelEventArgs e)
+    private bool _isClosing;
+
+    private async void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
         try
         {
-            MountService.Unmount();
+            if (_isClosing) return;
+
+            if (!MountService.IsMounted) return;
+
+            e.Cancel = true;
+            _isClosing = true;
+            StatusText.Text = "Unmounting before exit...";
+
+            try
+            {
+                await Task.Run(() => MountService.Unmount());
+            }
+            catch
+            {
+                // ignored
+            }
+
+            Close();
         }
-        catch
+        catch (Exception)
         {
-            // ignored
+            // ignore
         }
     }
 

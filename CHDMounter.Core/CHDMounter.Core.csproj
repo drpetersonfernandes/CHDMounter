@@ -24,6 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="CHDSharp" Version="1.2.0" />
         <PackageReference Include="VideoGameFileSystemParser" Version="1.0.0" />
     </ItemGroup>
 

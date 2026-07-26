@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Windows;
 using Fsp;
 using Microsoft.Win32;
 using CHDMounter.Core.Interfaces;
@@ -26,29 +28,19 @@ internal class MountService : IMountService
 
     public bool CanMount()
     {
-        try
-        {
-            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp")
-                            ?? Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp");
-            if (key == null)
-            {
-                _loggingService.LogError("WinFsp not found.");
-                return false;
-            }
-
-            _loggingService.Log("WinFsp detected.");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError($"WinFsp detection failed: {ex.Message}");
-            return false;
-        }
+        return IsWinFspInstalled();
     }
 
     public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
     {
         if (IsMounted) throw new InvalidOperationException("Already mounted.");
+
+        if (!IsWinFspInstalled())
+        {
+            _loggingService.LogError("WinFsp not found. Unable to mount CHD.");
+            ShowWinFspNotInstalledDialog();
+            return;
+        }
 
         _loggingService.Log($"Opening and parsing CHD: {chdPath} as {consoleType} (WinFsp)...");
 
@@ -187,5 +179,88 @@ internal class MountService : IMountService
     {
         Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    private static bool IsWinFspInstalled()
+    {
+        return EnsureWinFspOnPath();
+    }
+
+    private static bool EnsureWinFspOnPath()
+    {
+        try
+        {
+            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+            if (currentPath.Contains("WinFsp", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var binDir = FindWinFspBinDir();
+            if (binDir == null)
+                return false;
+
+            var dllName = Environment.Is64BitProcess ? "winfsp-x64.dll" : "winfsp-x86.dll";
+            var dllPath = Path.Combine(binDir, dllName);
+            if (!File.Exists(dllPath))
+                return false;
+
+            Environment.SetEnvironmentVariable("PATH", binDir + ";" + currentPath, EnvironmentVariableTarget.Process);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string? FindWinFspBinDir()
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp")
+                            ?? Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp");
+            if (key == null)
+                return null;
+
+            var sxsDir = key.GetValue("SxsDir") as string;
+            if (!string.IsNullOrEmpty(sxsDir))
+            {
+                var sxsBin = Path.Combine(sxsDir, "bin");
+                if (Directory.Exists(sxsBin))
+                    return sxsBin;
+            }
+
+            var installDir = key.GetValue("InstallDir") as string;
+            if (!string.IsNullOrEmpty(installDir))
+            {
+                var installBin = Path.Combine(installDir, "bin");
+                if (Directory.Exists(installBin))
+                    return installBin;
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return null;
+    }
+
+    private static void ShowWinFspNotInstalledDialog()
+    {
+        const string message = "The WinFsp file system driver is required to mount CHD files as virtual drives. " +
+                               "It does not appear to be installed on this system.\n\n" +
+                               "Would you like to open the WinFsp download page?";
+
+        var result = MessageBox.Show(message, "WinFsp Not Found",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/winfsp/winfsp/releases",
+                UseShellExecute = true
+            });
+        }
     }
 }

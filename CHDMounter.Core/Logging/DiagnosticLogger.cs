@@ -14,6 +14,11 @@ public static class DiagnosticLogger
     public static string? LogFilePath { get; private set; }
 
     /// <summary>
+    /// Gets the application data folder path (e.g. %LOCALAPPDATA%/CHDMounter).
+    /// </summary>
+    public static string AppDataFolder { get; private set; } = string.Empty;
+
+    /// <summary>
     /// Gets the application data folder path where log files are stored.
     /// </summary>
     public static string AppDataLogFolder { get; private set; } = string.Empty;
@@ -36,7 +41,8 @@ public static class DiagnosticLogger
     /// <param name="appName">The application name used for the log folder path. Defaults to "CHDMounter".</param>
     public static void Initialize(string appName = "CHDMounter")
     {
-        AppDataLogFolder = Path.Combine(GetAppDataFolder(appName), "logs");
+        AppDataFolder = GetAppDataFolder(appName);
+        AppDataLogFolder = Path.Combine(AppDataFolder, "logs");
         Directory.CreateDirectory(AppDataLogFolder);
         LogFilePath = Path.Combine(AppDataLogFolder, $"debug_{DateTime.Now:yyyyMMdd_HHmmss}.log");
         AppLogger.Initialize(LogFilePath);
@@ -75,12 +81,12 @@ public static class DiagnosticLogger
     }
 
     /// <summary>
-    /// Gets the application data log folder path for the current application.
+    /// Gets the application data folder path for the current application.
     /// </summary>
-    /// <returns>The full path to the log folder.</returns>
+    /// <returns>The full path to the application data folder.</returns>
     public static string GetAppDataFolderForCurrentApp()
     {
-        return AppDataLogFolder;
+        return AppDataFolder;
     }
 
     public static void LogSection(string section)

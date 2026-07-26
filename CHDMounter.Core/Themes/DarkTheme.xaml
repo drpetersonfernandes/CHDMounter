@@ -186,7 +186,7 @@
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Padding" Value="0,2" />
         <Style.Resources>
             <Style TargetType="MenuItem" BasedOn="{StaticResource SubmenuItemContainerStyle}" />
             <Style TargetType="Separator" BasedOn="{StaticResource MenuSeparatorStyle}" />
