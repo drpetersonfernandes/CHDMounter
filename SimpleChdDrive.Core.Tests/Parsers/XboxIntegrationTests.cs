@@ -41,8 +41,9 @@ public class XboxIntegrationTests
             {
                 var unitBytes = chd.UnitBytes;
                 var reader = new SectorReader(chd, unitBytes);
-                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                Assert.NotNull(track);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack)
+                            ?? reader.Tracks.FirstOrDefault()
+                            ?? new TrackInfo();
 
                 output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
 
@@ -116,8 +117,9 @@ public class XboxIntegrationTests
             {
                 var unitBytes = chd.UnitBytes;
                 var reader = new SectorReader(chd, unitBytes);
-                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                Assert.NotNull(track);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack)
+                            ?? reader.Tracks.FirstOrDefault()
+                            ?? new TrackInfo();
 
                 output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
 

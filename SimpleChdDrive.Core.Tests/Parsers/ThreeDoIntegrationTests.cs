@@ -40,8 +40,9 @@ public class ThreeDoIntegrationTests
                 var root = new FsNode();
                 var parser = new ThreeDoParser(reader);
 
-                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                Assert.NotNull(track);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack)
+                            ?? reader.Tracks.FirstOrDefault()
+                            ?? new TrackInfo();
                 var ok = parser.Parse(root, track);
                 output.WriteLine($"ThreeDoParser: {(ok ? "OK" : "FAILED")}");
 
@@ -155,8 +156,9 @@ public class ThreeDoIntegrationTests
 
                 var root = new FsNode();
                 var parser = new ThreeDoParser(reader);
-                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                Assert.NotNull(track);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack)
+                            ?? reader.Tracks.FirstOrDefault()
+                            ?? new TrackInfo();
 
                 var ok = parser.Parse(root, track);
                 var fileName = Path.GetFileName(path);

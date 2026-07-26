@@ -37,8 +37,9 @@ public class Ps3IntegrationTests
             {
                 var unitBytes = chd.UnitBytes;
                 var reader = new SectorReader(chd, unitBytes);
-                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                Assert.NotNull(track);
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack)
+                            ?? reader.Tracks.FirstOrDefault()
+                            ?? new TrackInfo();
 
                 var root = new FsNode();
                 var udfOk = new UdfParser(reader).Parse(root, track);

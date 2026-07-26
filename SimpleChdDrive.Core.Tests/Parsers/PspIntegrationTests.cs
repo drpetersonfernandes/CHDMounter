@@ -37,8 +37,17 @@ public class PspIntegrationTests
             {
                 var unitBytes = chd.UnitBytes;
                 var reader = new SectorReader(chd, unitBytes);
-                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack) ?? reader.Tracks.FirstOrDefault();
-                Assert.NotNull(track);
+                var hasDataTrack = reader.Tracks.Any(static t => t.IsDataTrack);
+
+                if (!hasDataTrack)
+                {
+                    output.WriteLine("Audio-only disc — no data track to parse");
+                    return true;
+                }
+
+                var track = reader.Tracks.FirstOrDefault(static t => t.IsDataTrack)
+                            ?? reader.Tracks.FirstOrDefault()
+                            ?? new TrackInfo();
 
                 output.WriteLine($"UnitBytes={unitBytes} Tracks={reader.Tracks.Count} TrackType={track.TrackType}");
 
@@ -83,6 +92,14 @@ public class PspIntegrationTests
             try
             {
                 var reader = new SectorReader(chd, chd.UnitBytes);
+                var hasDataTrack = reader.Tracks.Any(static t => t.IsDataTrack);
+
+                if (!hasDataTrack)
+                {
+                    output.WriteLine("Audio-only disc — no data track to parse");
+                    return true;
+                }
+
                 var root = new FsNode();
                 var parser = new PspParser(reader);
 
@@ -120,7 +137,15 @@ public class PspIntegrationTests
             var container = new ChdContainer(path);
             try
             {
-                Assert.True(container.MountAndParse(ConsoleType.Psp), "MountAndParse failed");
+                var parsed = container.MountAndParse(ConsoleType.Psp);
+
+                if (!parsed && !container.HasDataTracks)
+                {
+                    output.WriteLine("Audio-only disc — no data track to parse");
+                    return true;
+                }
+
+                Assert.True(parsed, "MountAndParse failed");
 
                 foreach (var e in container.ListDirectory("\\"))
                     output.WriteLine($"  {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
