@@ -1,6 +1,6 @@
-# SimpleChdDrive.Core.Tests
+# CHDMounter.Core.Tests
 
-Integration and unit test project for the SimpleChdDrive solution. Validates file system parsers against real CHD disc images across 20+ console types, and tests all services, logging infrastructure, and models.
+Integration and unit test project for the CHDMounter solution. Validates file system parsers against real CHD disc images across 20+ console types, and tests all services, logging infrastructure, and models.
 
 [![NuGet](https://img.shields.io/badge/.NET-10.0-blue)](https://dotnet.microsoft.com/)
 [![xUnit](https://img.shields.io/badge/xUnit-2.9.3-green)](https://xunit.net/)
@@ -95,7 +95,7 @@ dotnet test
 Or from the solution root:
 
 ```bash
-dotnet test SimpleChdDrive.Core.Tests
+dotnet test CHDMounter.Core.Tests
 ```
 
 Test CHD files must be placed in the directories specified in `ChdPathCatalog.cs`.
@@ -110,4 +110,4 @@ Test CHD files must be placed in the directories specified in `ChdPathCatalog.cs
 
 ## License
 
-GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/SimpleChdDrive/blob/main/LICENSE) file for details.
+GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/CHDMounter/blob/main/LICENSE) file for details.

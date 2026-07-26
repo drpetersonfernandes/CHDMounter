@@ -1,4 +1,4 @@
-# SimpleChdDrive Tester
+# CHDMounter Tester
 
 WPF desktop application for **batch testing and benchmarking** CHD disc image parsing. Scans folders of `.chd` files, parses each one with a selected console file system parser, and generates summary reports with PDF export.
 
@@ -14,11 +14,11 @@ WPF desktop application for **batch testing and benchmarking** CHD disc image pa
 
 ## Supported Consoles
 
-All 31 console file systems supported — see the [main project](https://github.com/drpetersonfernandes/SimpleChdDrive) for the full list.
+All 31 console file systems supported — see the [main project](https://github.com/drpetersonfernandes/CHDMounter) for the full list.
 
 ## Usage
 
-1. Launch `SimpleChdDrive_Tester.exe`
+1. Launch `CHDMounter_Tester.exe`
 2. Select a folder containing `.chd` files
 3. Choose a console type from the dropdown
 4. Click **Run Tests** to begin batch parsing
@@ -38,8 +38,8 @@ All 31 console file systems supported — see the [main project](https://github.
 - **WPF-UI** 4.3.0 — Modern WPF theming
 - **QuestPDF** 2026.7.1 — PDF report generation
 - **Serilog** — Structured logging
-- **SimpleChdDrive.Core** — Shared services and interfaces (includes VideoGameFileSystemParser)
+- **CHDMounter.Core** — Shared services and interfaces (includes VideoGameFileSystemParser)
 
 ## License
 
-GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/SimpleChdDrive/blob/main/LICENSE) file for details.
+GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/CHDMounter/blob/main/LICENSE) file for details.

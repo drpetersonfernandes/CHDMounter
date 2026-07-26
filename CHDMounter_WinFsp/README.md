@@ -1,4 +1,4 @@
-# SimpleChdDrive (WinFsp)
+# CHDMounter (WinFsp)
 
 WPF desktop application that mounts CHD (Compressed Hunks of Data) disc images as **read-only virtual drives** in Windows using the [WinFsp](https://github.com/winfsp/winfsp) user-mode file system driver.
 
@@ -46,14 +46,14 @@ WPF desktop application that mounts CHD (Compressed Hunks of Data) disc images a
 ## Usage
 
 ```
-SimpleChdDrive_WinFsp.exe <chd_file> <console_type> [mount_point]
+CHDMounter_WinFsp.exe <chd_file> <console_type> [mount_point]
 ```
 
 Examples:
 ```
-SimpleChdDrive_WinFsp.exe game.chd ps2 M
-SimpleChdDrive_WinFsp.exe game.chd xbox360
-SimpleChdDrive_WinFsp.exe disc.chd cuebin
+CHDMounter_WinFsp.exe game.chd ps2 M
+CHDMounter_WinFsp.exe game.chd xbox360
+CHDMounter_WinFsp.exe disc.chd cuebin
 ```
 
 Run without arguments to open the GUI for interactive file system type selection.
@@ -80,7 +80,7 @@ The application automatically locates the WinFsp installation via the Windows re
 - **WPF-UI** 4.3.0 — Modern WPF theming
 - **Serilog** — Structured logging
 - **VideoGameFileSystemParser** — CHD file system parsing library
-- **SimpleChdDrive.Core** — Shared services and interfaces
+- **CHDMounter.Core** — Shared services and interfaces
 
 ## Building
 
@@ -92,4 +92,4 @@ Output is a self-contained single-file executable for `win-x64` and `win-arm64`.
 
 ## License
 
-GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/SimpleChdDrive/blob/main/LICENSE) file for details.
+GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/CHDMounter/blob/main/LICENSE) file for details.

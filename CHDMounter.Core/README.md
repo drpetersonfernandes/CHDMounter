@@ -1,6 +1,6 @@
-# SimpleChdDrive.Core
+# CHDMounter.Core
 
-Shared core library for the SimpleChdDrive solution. Provides common services, logging infrastructure, WPF views, settings, and interfaces used by both the Dokan and WinFsp frontend applications.
+Shared core library for the CHDMounter solution. Provides common services, logging infrastructure, WPF views, settings, and interfaces used by both the Dokan and WinFsp frontend applications.
 
 [![NuGet](https://img.shields.io/badge/.NET-10.0-blue)](https://dotnet.microsoft.com/)
 
@@ -72,4 +72,4 @@ Shared core library for the SimpleChdDrive solution. Provides common services, l
 
 ## License
 
-GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/SimpleChdDrive/blob/main/LICENSE) file for details.
+GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/CHDMounter/blob/main/LICENSE) file for details.

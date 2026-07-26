@@ -1,4 +1,4 @@
-# SimpleChdDrive
+# CHDMounter
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Platform](https://img.shields.io/badge/platform-Windows-blue)](https://www.microsoft.com/windows)
@@ -88,15 +88,15 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 
 Grab the latest self-contained executable from [Releases](https://github.com/your/repo/releases):
 
-- `SimpleChdDrive.exe` — Dokan-based
-- `SimpleChdDrive_WinFsp.exe` — WinFsp-based
+- `CHDMounter.exe` — Dokan-based
+- `CHDMounter_WinFsp.exe` — WinFsp-based
 
 No installation required. Just download and run.
 
 ### GUI Mode
 
 ```
-SimpleChdDrive.exe
+CHDMounter.exe
 ```
 
 Opens the main window. Click **Browse** to select a CHD file, pick a filesystem type from the dropdown, and click **Mount**. The drive appears in Explorer.
@@ -104,22 +104,22 @@ Opens the main window. Click **Browse** to select a CHD file, pick a filesystem 
 ### Command Line
 
 ```
-SimpleChdDrive.exe <chd_file> <console_type> [mount_point]
+CHDMounter.exe <chd_file> <console_type> [mount_point]
 ```
 
 **Examples:**
 ```bash
 # Mount a PS2 game as drive M:
-SimpleChdDrive.exe game.chd ps2 M
+CHDMounter.exe game.chd ps2 M
 
 # Mount an Xbox 360 game (auto-select drive letter)
-SimpleChdDrive.exe game.chd xbox360
+CHDMounter.exe game.chd xbox360
 
 # Mount as virtual CUE/BIN
-SimpleChdDrive.exe disc.chd cuebin
+CHDMounter.exe disc.chd cuebin
 
 # Mount with generic ISO 9660 parser
-SimpleChdDrive_WinFsp.exe data.chd iso9660 N
+CHDMounter_WinFsp.exe data.chd iso9660 N
 ```
 
 If `<console_type>` is omitted in GUI mode, a dialog appears asking you to choose.
@@ -129,7 +129,7 @@ If `<console_type>` is omitted in GUI mode, a dialog appears asking you to choos
 ## Project Structure
 
 ```
-SimpleChdDrive.sln
+CHDMounter.sln
 ├── VideoGameFileSystemParser/             Standalone parser library (NuGet, cross-platform)
 │   ├── Interfaces/
 │   │   └── IConsoleParser.cs              Contract for console-specific parsers
@@ -158,7 +158,7 @@ SimpleChdDrive.sln
 │           ├── PcEngineCdParser.cs        PC Engine CD / TurboGrafx-CD
 │           └── PcFxIsoParser.cs           NEC PC-FX
 │
-├── SimpleChdDrive.Core/                   Shared library (WPF, services, views)
+├── CHDMounter.Core/                   Shared library (WPF, services, views)
 │   ├── Interfaces/
 │   │   ├── ILoggingService.cs             Log collection with UI binding
 │   │   ├── IMountService.cs               Mount/unmount contract
@@ -188,19 +188,19 @@ SimpleChdDrive.sln
 │   └── Themes/
 │       └── DarkTheme.xaml                 WPF-UI dark theme ResourceDictionary
 │
-├── SimpleChdDrive/                        WPF EXE — Dokan
+├── CHDMounter/                        WPF EXE — Dokan
 │   ├── ChdFs.cs                           IDokanOperations VFS implementation
 │   ├── Services/MountService.cs           Dokan mount/unmount lifecycle
 │   ├── App.xaml / App.xaml.cs             Entry point, service registration, args
 │   └── MainWindow.xaml / .cs              UI (inherits MainWindowBase)
 │
-├── SimpleChdDrive_WinFsp/                 WPF EXE — WinFsp
+├── CHDMounter_WinFsp/                 WPF EXE — WinFsp
 │   ├── ChdFs.cs                           FileSystemBase VFS implementation
 │   ├── Services/MountService.cs           WinFsp mount/unmount, cross-integrity admin
 │   ├── App.xaml / App.xaml.cs             Entry point (includes WinFsp PATH fix)
 │   └── MainWindow.xaml / .cs              UI (inherits MainWindowBase)
 │
-├── SimpleChdDrive_Tester/                 WPF EXE — Batch testing
+├── CHDMounter_Tester/                 WPF EXE — Batch testing
 │   ├── Services/
 │   │   ├── TestRunnerService.cs           Batch CHD parsing with progress events
 │   │   └── PdfExportService.cs            QuestPDF report generation
@@ -209,7 +209,7 @@ SimpleChdDrive.sln
 │   │   └── TestSummary.cs                 Aggregated statistics
 │   └── MainWindow.xaml / .cs              Test UI with PDF export
 │
-├── SimpleChdDrive.Core.Tests/             xUnit integration and unit tests
+├── CHDMounter.Core.Tests/             xUnit integration and unit tests
 │   ├── Parsers/                           Parser integration tests (20+ consoles)
 │   ├── Services/                          Service unit tests
 │   ├── Logging/                           Logging infrastructure tests
@@ -236,16 +236,16 @@ cd repo
 dotnet build -c Release
 ```
 
-Artifacts appear in `SimpleChdDrive\bin\Release\net10.0-windows\win-x64\` and `SimpleChdDrive_WinFsp\bin\Release\...`.
+Artifacts appear in `CHDMounter\bin\Release\net10.0-windows\win-x64\` and `CHDMounter_WinFsp\bin\Release\...`.
 
 ### Publish (single-file self-contained)
 
 ```bash
-dotnet publish SimpleChdDrive\SimpleChdDrive.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish SimpleChdDrive_WinFsp\SimpleChdDrive_WinFsp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish CHDMounter\CHDMounter.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish CHDMounter_WinFsp\CHDMounter_WinFsp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 
 # ARM64
-dotnet publish SimpleChdDrive\SimpleChdDrive.csproj -c Release -r win-arm64 --self-contained true -p:PublishSingleFile=true
+dotnet publish CHDMounter\CHDMounter.csproj -c Release -r win-arm64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ---
@@ -254,7 +254,7 @@ dotnet publish SimpleChdDrive\SimpleChdDrive.csproj -c Release -r win-arm64 --se
 
 ### CHD Reading
 
-CHD (Compressed Hunks of Data) is MAME's lossless compression format for CD/DVD/HDD images. SimpleChdDrive uses [CHDSharp](https://github.com/drpetersonfernandes/CHDSharp) to read all five CHD versions (V1-V5) and all compression codecs:
+CHD (Compressed Hunks of Data) is MAME's lossless compression format for CD/DVD/HDD images. CHDMounter uses [CHDSharp](https://github.com/drpetersonfernandes/CHDSharp) to read all five CHD versions (V1-V5) and all compression codecs:
 
 - **General**: zlib (deflate), LZMA, FLAC (headerless, 16-bit stereo), dynamic Huffman, Zstd
 - **CD-sector**: CDZL (zlib), CDLZ (LZMA), CDFL (FLAC), CDZS (Zstd) — with ECC regeneration

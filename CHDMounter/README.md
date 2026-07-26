@@ -1,4 +1,4 @@
-# SimpleChdDrive (Dokan)
+# CHDMounter (Dokan)
 
 WPF desktop application that mounts CHD (Compressed Hunks of Data) disc images as **read-only virtual drives** in Windows using the [Dokan](https://github.com/dokan-dev/dokany) file system driver.
 
@@ -46,14 +46,14 @@ WPF desktop application that mounts CHD (Compressed Hunks of Data) disc images a
 ## Usage
 
 ```
-SimpleChdDrive.exe <chd_file> <console_type> [mount_point]
+CHDMounter.exe <chd_file> <console_type> [mount_point]
 ```
 
 Examples:
 ```
-SimpleChdDrive.exe game.chd ps2 M
-SimpleChdDrive.exe game.chd xbox360
-SimpleChdDrive.exe disc.chd cuebin
+CHDMounter.exe game.chd ps2 M
+CHDMounter.exe game.chd xbox360
+CHDMounter.exe disc.chd cuebin
 ```
 
 Run without arguments to open the GUI for interactive file system type selection.
@@ -69,7 +69,7 @@ Run without arguments to open the GUI for interactive file system type selection
 - **WPF-UI** 4.3.0 — Modern WPF theming
 - **Serilog** — Structured logging
 - **VideoGameFileSystemParser** — CHD file system parsing library
-- **SimpleChdDrive.Core** — Shared services and interfaces
+- **CHDMounter.Core** — Shared services and interfaces
 
 ## Building
 
@@ -81,4 +81,4 @@ Output is a self-contained single-file executable for `win-x64` and `win-arm64`.
 
 ## License
 
-GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/SimpleChdDrive/blob/main/LICENSE) file for details.
+GNU General Public License v3.0 — see the [LICENSE](https://github.com/drpetersonfernandes/CHDMounter/blob/main/LICENSE) file for details.
