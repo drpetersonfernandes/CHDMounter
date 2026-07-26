@@ -58,18 +58,13 @@ internal class PcEngineCdParser : IConsoleParser
         if (dataTracks.Count == 0)
             return false;
 
-        var verified = false;
         var dataStarts = new Dictionary<int, uint>();
 
         foreach (var track in dataTracks)
         {
-            var dataStart = FindDataAreaStart(track, out var hasSignature);
+            var dataStart = FindDataAreaStart(track, out _);
             dataStarts[track.Index] = dataStart;
-            verified |= hasSignature;
         }
-
-        if (!verified && !ForceMode)
-            return false;
 
         var bootTrack = dataTracks[0];
         if (TryParseIso9660(rootNode, bootTrack, dataStarts[bootTrack.Index]))

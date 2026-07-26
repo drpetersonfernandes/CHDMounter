@@ -62,13 +62,57 @@ internal class PcFxParser : IConsoleParser
                 return true;
         }
 
-        return _isoParser.Parse(rootNode);
+        if (_isoParser.Parse(rootNode))
+            return true;
+
+        var dataTracks = _reader.Tracks.Where(static t => t.IsDataTrack).ToList();
+        if (dataTracks.Count == 0)
+            return false;
+
+        rootNode.Name = "/";
+        rootNode.IsDirectory = true;
+
+        foreach (var track in dataTracks)
+        {
+            var size = (ulong)track.Frames * 2048;
+            var node = new FsNode
+            {
+                Name = $"TRACK{track.Index:D2}.iso",
+                Lba = track.StartLba,
+                Size = size,
+                IsDirectory = false
+            };
+            node.Extents.Add(new FsExtent { Lba = track.StartLba, Size = size });
+            rootNode.Children.Add(node);
+        }
+
+        return rootNode.Children.Count > 0;
     }
 
     /// <inheritdoc />
     public bool ParseTrack(FsNode rootNode, TrackInfo track)
     {
-        return _isoParser.Parse(rootNode, track);
+        if (_isoParser.Parse(rootNode, track))
+            return true;
+
+        if (!track.IsDataTrack)
+            return false;
+
+        var size = (ulong)track.Frames * 2048;
+        rootNode.Name = "/";
+        rootNode.IsDirectory = true;
+
+        var node = new FsNode
+        {
+            Name = $"TRACK{track.Index:D2}.iso",
+            Lba = track.StartLba,
+            Size = size,
+            IsDirectory = false
+        };
+        node.Extents.Add(new FsExtent { Lba = track.StartLba, Size = size });
+        rootNode.Children.Add(node);
+
+        return true;
     }
 }
 

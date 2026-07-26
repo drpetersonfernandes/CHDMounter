@@ -164,7 +164,7 @@ public class ChdContainer : IDisposable, IAsyncDisposable
 
         BuildFromFsNode(parsedRoot);
 
-        if (consoleType == ConsoleType.PcEngineCd)
+        if (consoleType is ConsoleType.PcEngineCd or ConsoleType.PcFx)
             BuildVirtualCueExport(CueExportMode.CueBin);
 
         return true;
