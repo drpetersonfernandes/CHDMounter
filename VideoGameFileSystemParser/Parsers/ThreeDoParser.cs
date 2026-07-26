@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses the Opera file system used on 3DO Interactive Multiplayer discs.
 /// </summary>
-internal class ThreeDoParser
+public class ThreeDoParser
 {
     private readonly SectorReader _reader;
 
@@ -21,7 +21,7 @@ internal class ThreeDoParser
     /// Initializes a new instance of the ThreeDoParser class.
     /// </summary>
     /// <param name="reader">The SectorReader to read sectors from.</param>
-    internal ThreeDoParser(SectorReader reader)
+    public ThreeDoParser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -32,7 +32,7 @@ internal class ThreeDoParser
     /// <param name="track">Optional track.</param>
     /// <param name="rootNode">The root FsNode to populate.</param>
     /// <returns>true if parsing succeeded.</returns>
-    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
+    public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
         if (track != null)

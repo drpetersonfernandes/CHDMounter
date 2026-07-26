@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses UDF (Universal Disk Format) file systems. Supports metadata partitions, allocation descriptors, embedded data, and symlinks.
 /// </summary>
-internal class UdfParser
+public class UdfParser
 {
     private const int MaxDirectoryBytes = 64 * 1024 * 1024;
     private const int MaxDirectoryDepth = 64;
@@ -37,7 +37,7 @@ internal class UdfParser
     /// Initializes a new instance of the UdfParser class.
     /// </summary>
     /// <param name="reader">The SectorReader to read sectors from.</param>
-    internal UdfParser(SectorReader reader)
+    public UdfParser(SectorReader reader)
     {
         _reader = reader;
     }

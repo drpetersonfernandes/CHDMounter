@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses the XDVDFS file system used on original Xbox and Xbox 360 discs.
 /// </summary>
-internal class XdvdfsParser
+public class XdvdfsParser
 {
     private readonly SectorReader _reader;
     private TrackInfo? _currentTrack;
@@ -29,7 +29,7 @@ internal class XdvdfsParser
     /// Initializes a new instance of the XdvdfsParser class.
     /// </summary>
     /// <param name="reader">The SectorReader to read sectors from.</param>
-    internal XdvdfsParser(SectorReader reader)
+    public XdvdfsParser(SectorReader reader)
     {
         _reader = reader;
     }

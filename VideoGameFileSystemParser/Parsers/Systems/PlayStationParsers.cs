@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses PlayStation 1 disc images using ISO 9660 on the first data track.
 /// </summary>
-internal class PlayStation1Parser : IConsoleParser
+public class PlayStation1Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
@@ -18,7 +18,7 @@ internal class PlayStation1Parser : IConsoleParser
     /// Initializes a new instance of the PlayStation1Parser class.
     /// </summary>
     /// <param name="reader">The SectorReader to read sectors from.</param>
-    internal PlayStation1Parser(SectorReader reader)
+    public PlayStation1Parser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -143,7 +143,7 @@ internal class PlayStationAutoDetectParser : IConsoleParser
 /// <summary>
 /// Parses PlayStation 2 disc images using ISO 9660 on the first data track.
 /// </summary>
-internal class PlayStation2Parser : IConsoleParser
+public class PlayStation2Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
@@ -152,7 +152,11 @@ internal class PlayStation2Parser : IConsoleParser
     /// </summary>
     public bool ForceMode { get; set; }
 
-    internal PlayStation2Parser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PlayStation2Parser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public PlayStation2Parser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -210,7 +214,7 @@ internal class PlayStation2Parser : IConsoleParser
 /// <summary>
 /// Parses PlayStation 3 disc images using UDF, falling back to ISO 9660 if UDF fails.
 /// </summary>
-internal class PlayStation3Parser : IConsoleParser
+public class PlayStation3Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
@@ -219,7 +223,11 @@ internal class PlayStation3Parser : IConsoleParser
     /// </summary>
     public bool ForceMode { get; set; }
 
-    internal PlayStation3Parser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PlayStation3Parser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public PlayStation3Parser(SectorReader reader)
     {
         _reader = reader;
     }

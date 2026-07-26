@@ -5,7 +5,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses the CD-i file system, based on ISO 9660 with custom extensions for interleaved data.
 /// </summary>
-internal class CDiFsParser
+public class CDiFsParser
 {
     private readonly SectorReader _reader;
     private static readonly Encoding Encoding = Encoding.GetEncoding("iso8859-1");
@@ -17,7 +17,7 @@ internal class CDiFsParser
     /// Initializes a new instance of the CDiFsParser class.
     /// </summary>
     /// <param name="reader">The SectorReader to read sectors from.</param>
-    internal CDiFsParser(SectorReader reader)
+    public CDiFsParser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -28,7 +28,7 @@ internal class CDiFsParser
     /// <param name="track">Optional track.</param>
     /// <param name="rootNode">The root FsNode to populate.</param>
     /// <returns>true if parsing succeeded.</returns>
-    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
+    public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         var sectorData = new byte[2048];
         var trackStart = track?.StartLba ?? 0u;

@@ -5,9 +5,13 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses Sony PSP disc images using ISO 9660 on the first data track.
 /// </summary>
-internal class PspParser : Iso9660Wrapper
+public class PspParser : Iso9660Wrapper
 {
-    internal PspParser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PspParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public PspParser(SectorReader reader) : base(reader)
     {
     }
 
@@ -27,12 +31,16 @@ internal class PspParser : Iso9660Wrapper
 /// <summary>
 /// Parses NEC PC-FX disc images using the dedicated PcFxIsoParser.
 /// </summary>
-internal class PcFxParser : IConsoleParser
+public class PcFxParser : IConsoleParser
 {
     private readonly SectorReader _reader;
     private readonly PcFxIsoParser _isoParser;
 
-    internal PcFxParser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PcFxParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public PcFxParser(SectorReader reader)
     {
         _reader = reader;
         _isoParser = new PcFxIsoParser(reader);
@@ -119,9 +127,13 @@ internal class PcFxParser : IConsoleParser
 /// <summary>
 /// Parses Sega Genesis CD / Mega CD disc images using ISO 9660.
 /// </summary>
-internal class SegaGenesisCdParser : Iso9660Wrapper
+public class SegaGenesisCdParser : Iso9660Wrapper
 {
-    internal SegaGenesisCdParser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SegaGenesisCdParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public SegaGenesisCdParser(SectorReader reader) : base(reader)
     {
     }
 
@@ -141,9 +153,13 @@ internal class SegaGenesisCdParser : Iso9660Wrapper
 /// <summary>
 /// Parses Sega Saturn disc images using ISO 9660.
 /// </summary>
-internal class SegaSaturnParser : Iso9660Wrapper
+public class SegaSaturnParser : Iso9660Wrapper
 {
-    internal SegaSaturnParser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SegaSaturnParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public SegaSaturnParser(SectorReader reader) : base(reader)
     {
     }
 
@@ -163,9 +179,13 @@ internal class SegaSaturnParser : Iso9660Wrapper
 /// <summary>
 /// Parses SNK NeoGeo CD disc images using ISO 9660.
 /// </summary>
-internal class NeoGeoCdParser : Iso9660Wrapper
+public class NeoGeoCdParser : Iso9660Wrapper
 {
-    internal NeoGeoCdParser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NeoGeoCdParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public NeoGeoCdParser(SectorReader reader) : base(reader)
     {
     }
 
@@ -185,9 +205,13 @@ internal class NeoGeoCdParser : Iso9660Wrapper
 /// <summary>
 /// Parses Commodore Amiga CD32 disc images using ISO 9660.
 /// </summary>
-internal class AmigaCd32Parser : Iso9660Wrapper
+public class AmigaCd32Parser : Iso9660Wrapper
 {
-    internal AmigaCd32Parser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AmigaCd32Parser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public AmigaCd32Parser(SectorReader reader) : base(reader)
     {
     }
 
@@ -207,9 +231,13 @@ internal class AmigaCd32Parser : Iso9660Wrapper
 /// <summary>
 /// Parses Commodore Amiga CD disc images using ISO 9660.
 /// </summary>
-internal class AmigaCdParser : Iso9660Wrapper
+public class AmigaCdParser : Iso9660Wrapper
 {
-    internal AmigaCdParser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AmigaCdParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public AmigaCdParser(SectorReader reader) : base(reader)
     {
     }
 
@@ -283,9 +311,13 @@ internal class X68000Parser : IConsoleParser
 /// <summary>
 /// Parses NEC PC-98 disc images using ISO 9660.
 /// </summary>
-internal class Pc98Parser : Iso9660Wrapper
+public class Pc98Parser : Iso9660Wrapper
 {
-    internal Pc98Parser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Pc98Parser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public Pc98Parser(SectorReader reader) : base(reader)
     {
     }
 
@@ -305,9 +337,13 @@ internal class Pc98Parser : Iso9660Wrapper
 /// <summary>
 /// Parses Fujitsu FM Towns disc images using ISO 9660.
 /// </summary>
-internal class FmTownsParser : Iso9660Wrapper
+public class FmTownsParser : Iso9660Wrapper
 {
-    internal FmTownsParser(SectorReader reader) : base(reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FmTownsParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public FmTownsParser(SectorReader reader) : base(reader)
     {
     }
 
@@ -413,7 +449,10 @@ internal class PippinParser : IConsoleParser
     }
 }
 
-internal abstract class Iso9660Wrapper : IConsoleParser
+/// <summary>
+/// Base class for console parsers that use ISO 9660 file system parsing.
+/// </summary>
+public abstract class Iso9660Wrapper : IConsoleParser
 {
     /// <summary>
     /// The sector reader used by this parser.

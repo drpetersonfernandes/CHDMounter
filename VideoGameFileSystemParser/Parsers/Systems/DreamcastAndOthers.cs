@@ -6,7 +6,7 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// <summary>
 /// Parses Sega Dreamcast GD-ROM disc images. Prefers tracks containing the IP.BIN boot sector signature.
 /// </summary>
-internal class DreamcastParser : IConsoleParser
+public class DreamcastParser : IConsoleParser
 {
     private const string IpBinSignature = "SEGA SEGAKATANA ";
 
@@ -15,7 +15,11 @@ internal class DreamcastParser : IConsoleParser
     /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    internal DreamcastParser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DreamcastParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public DreamcastParser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -91,14 +95,18 @@ internal class DreamcastParser : IConsoleParser
 /// <summary>
 /// Parses Philips CD-i disc images using CDiFsParser, falling back to ISO 9660.
 /// </summary>
-internal class CDiParser : IConsoleParser
+public class CDiParser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
     /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    internal CDiParser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CDiParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public CDiParser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -148,14 +156,18 @@ internal class CDiParser : IConsoleParser
 /// <summary>
 /// Parses 3DO Interactive Multiplayer disc images using the Opera file system parser.
 /// </summary>
-internal class ThreeDoConsoleParser : IConsoleParser
+public class ThreeDoConsoleParser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
     /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    internal ThreeDoConsoleParser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ThreeDoConsoleParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public ThreeDoConsoleParser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -212,7 +224,7 @@ internal class GenericIsoRawParser : IConsoleParser
     /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    internal GenericIsoRawParser(SectorReader reader)
+    public GenericIsoRawParser(SectorReader reader)
     {
         _reader = reader;
     }
@@ -256,14 +268,18 @@ internal class GenericIsoRawParser : IConsoleParser
 /// <summary>
 /// Generic ISO 9660 parser for standard data discs without console-specific handling.
 /// </summary>
-internal class GenericIso9660Parser : IConsoleParser
+public class GenericIso9660Parser : IConsoleParser
 {
     private readonly SectorReader _reader;
 
     /// <inheritdoc />
     public bool ForceMode { get; set; }
 
-    internal GenericIso9660Parser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GenericIso9660Parser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public GenericIso9660Parser(SectorReader reader)
     {
         _reader = reader;
     }

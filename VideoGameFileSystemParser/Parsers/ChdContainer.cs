@@ -174,7 +174,7 @@ public class ChdContainer : IDisposable, IAsyncDisposable
     /// Builds the internal file entry table from a parsed <see cref="FsNode"/> tree.
     /// </summary>
     /// <param name="rootNode">The root node of the parsed file system tree.</param>
-    internal void BuildFromFsNode(FsNode rootNode)
+    public void BuildFromFsNode(FsNode rootNode)
     {
         _entries.Clear();
         _parentHandles.Clear();

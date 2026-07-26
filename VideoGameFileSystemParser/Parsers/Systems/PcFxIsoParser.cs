@@ -7,19 +7,29 @@ namespace VideoGameFileSystemParser.Parsers.Systems;
 /// Handles byte-offset VD signatures within raw sectors and uses tolerant
 /// continue-on-error directory record parsing for discs with unusual layouts.
 /// </summary>
-internal class PcFxIsoParser
+public class PcFxIsoParser
 {
     private readonly SectorReader _reader;
     private readonly HashSet<uint> _visitedDirs = [];
     private bool _isHighSierra;
     private bool _isJoliet;
 
-    internal PcFxIsoParser(SectorReader reader)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PcFxIsoParser"/> class.
+    /// </summary>
+    /// <param name="reader">The sector reader to use for reading disc data.</param>
+    public PcFxIsoParser(SectorReader reader)
     {
         _reader = reader;
     }
 
-    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
+    /// <summary>
+    /// Parses the PC-FX ISO 9660 file system and builds the directory tree.
+    /// </summary>
+    /// <param name="rootNode">The root FsNode to populate.</param>
+    /// <param name="track">Optional track to restrict parsing to.</param>
+    /// <returns>true if parsing succeeded.</returns>
+    public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
 

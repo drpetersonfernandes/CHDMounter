@@ -188,7 +188,7 @@ public class SectorReader : IDisposable
     /// Returns a read-only span of the sector scramble table used for descrambling.
     /// </summary>
     /// <returns>A span of the sector scramble bytes.</returns>
-    internal static ReadOnlySpan<byte> GetSectorScramble()
+    public static ReadOnlySpan<byte> GetSectorScramble()
     {
         return SectorScramble;
     }
@@ -196,12 +196,12 @@ public class SectorReader : IDisposable
     /// <summary>
     /// The byte offset within a raw sector where the 2048-byte data payload begins.
     /// </summary>
-    internal uint SectorHeaderOffset { get; private set; }
+    public uint SectorHeaderOffset { get; private set; }
 
     /// <summary>
     /// The byte offset within a sector where the CD sync pattern was found.
     /// </summary>
-    internal uint SyncOffset { get; private set; }
+    public uint SyncOffset { get; private set; }
 
     /// <summary>
     /// An LBA offset applied to all sector reads.
@@ -228,7 +228,7 @@ public class SectorReader : IDisposable
     /// </summary>
     /// <param name="unitBytes">The sector size in bytes.</param>
     /// <param name="chd">The opened ChdFile to read from.</param>
-    internal SectorReader(ChdFile chd, uint unitBytes)
+    public SectorReader(ChdFile chd, uint unitBytes)
     {
         _chd = chd;
         UnitBytes = unitBytes;
@@ -240,7 +240,7 @@ public class SectorReader : IDisposable
     /// </summary>
     /// <param name="track">The track to set as current.</param>
     /// <param name="locked">If true, restricts reads to this track.</param>
-    internal void SetTrack(TrackInfo? track, bool locked = false)
+    public void SetTrack(TrackInfo? track, bool locked = false)
     {
         CurrentTrack = track;
         _trackLocked = locked;
@@ -254,12 +254,12 @@ public class SectorReader : IDisposable
     /// <summary>
     /// The list of tracks parsed from the CHD metadata.
     /// </summary>
-    internal List<TrackInfo> Tracks { get; }
+    public List<TrackInfo> Tracks { get; }
 
     /// <summary>
     /// Resets the reader internal state: hunk cache, offset detection, and track lock.
     /// </summary>
-    internal void Reset()
+    public void Reset()
     {
         ReturnCachedHunk();
         _cachedHunkNum = 0xFFFFFFFF;
@@ -295,7 +295,7 @@ public class SectorReader : IDisposable
     /// <param name="lba">The logical block address.</param>
     /// <param name="outOffset">The buffer write offset.</param>
     /// <returns>true if the sector was read successfully.</returns>
-    internal bool ReadSector(uint lba, byte[] outBuffer, int outOffset = 0)
+    public bool ReadSector(uint lba, byte[] outBuffer, int outOffset = 0)
     {
         if (!PrepareHunk(lba, out var rawOffset))
             return false;
@@ -327,7 +327,7 @@ public class SectorReader : IDisposable
     /// </summary>
     /// <param name="lba">The logical block address.</param>
     /// <returns>The sector data, or null on failure.</returns>
-    internal byte[]? ReadSector(uint lba)
+    public byte[]? ReadSector(uint lba)
     {
         var buffer = new byte[SectorSize];
         if (ReadSector(lba, buffer))
@@ -342,7 +342,7 @@ public class SectorReader : IDisposable
     /// <param name="rawSector">The raw sector data output on success.</param>
     /// <param name="lba">The logical block address.</param>
     /// <returns>true if the raw sector was read.</returns>
-    internal bool ReadRawSector(uint lba, out byte[] rawSector)
+    public bool ReadRawSector(uint lba, out byte[] rawSector)
     {
         rawSector = null!;
         if (!PrepareHunk(lba, out var rawOffset))
@@ -718,7 +718,7 @@ public class SectorReader : IDisposable
     /// </summary>
     /// <param name="track">The track to evaluate.</param>
     /// <returns>16 for MODE1, 24 for MODE2/CDI, 0 for audio.</returns>
-    internal static uint GetSectorDataOffset(TrackInfo? track)
+    public static uint GetSectorDataOffset(TrackInfo? track)
     {
         if (track is null) return 16;
         if (!track.IsDataTrack) return 0;

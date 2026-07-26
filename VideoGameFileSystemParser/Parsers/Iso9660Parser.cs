@@ -6,7 +6,7 @@ namespace VideoGameFileSystemParser.Parsers;
 /// <summary>
 /// Parses ISO 9660 (High Sierra, Joliet, CD-XA) file systems. Supports SUSP/Rock Ridge for POSIX attributes and symlinks.
 /// </summary>
-internal class Iso9660Parser
+public class Iso9660Parser
 {
     private const int MaxCeChain = 64;
 
@@ -26,7 +26,7 @@ internal class Iso9660Parser
     /// <param name="scanWithinSector">If true, scans entire sectors byte-offset for VD signatures
     /// (handles raw-sector images where CD sync headers weren't fully stripped,
     /// e.g. some PC-FX and other CD-ROM dumps).</param>
-    internal Iso9660Parser(SectorReader reader, bool scanWithinSector = false)
+    public Iso9660Parser(SectorReader reader, bool scanWithinSector = false)
     {
         _reader = reader;
         _scanWithinSector = scanWithinSector;
@@ -38,7 +38,7 @@ internal class Iso9660Parser
     /// <param name="track">Optional track to restrict parsing to.</param>
     /// <param name="rootNode">The root FsNode to populate.</param>
     /// <returns>true if parsing succeeded.</returns>
-    internal bool Parse(FsNode rootNode, TrackInfo? track = null)
+    public bool Parse(FsNode rootNode, TrackInfo? track = null)
     {
         _reader.Reset();
 
