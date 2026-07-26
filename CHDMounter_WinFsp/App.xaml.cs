@@ -7,6 +7,10 @@ using CHDMounter.Core.Interfaces;
 
 namespace CHDMounter_WinFsp;
 
+/// <summary>
+/// Application entry point for the WinFsp-based CHD mounter. Handles service registration,
+/// logging initialization, WinFsp path configuration, and application lifecycle.
+/// </summary>
 public partial class App
 {
     internal static string[] StartupArgs { get; private set; } = [];

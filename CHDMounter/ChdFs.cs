@@ -8,11 +8,19 @@ using DokanFileAccess = DokanNet.FileAccess;
 
 namespace CHDMounter;
 
+/// <summary>
+/// Implements the Dokan file system interface to expose a CHD container as a read-only virtual drive.
+/// </summary>
 internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
     private readonly ILoggingService _loggingService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ChdFs"/> class.
+    /// </summary>
+    /// <param name="container">The parsed CHD container to serve files from.</param>
+    /// <param name="loggingService">The logging service for recording mount/unmount events.</param>
     public ChdFs(ChdContainer container, ILoggingService loggingService)
     {
         _container = container;

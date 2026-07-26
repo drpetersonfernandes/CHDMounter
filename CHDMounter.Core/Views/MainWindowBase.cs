@@ -36,11 +36,18 @@ public class MainWindowBase : Window
     private TextBlock UpdateBannerText => (TextBlock)FindName("UpdateBannerText")!;
     private Button UpdateBannerButton => (Button)FindName("UpdateBannerButton")!;
 
+    /// <summary>
+    /// Returns the startup command-line arguments. Override in derived classes to supply application-specific arguments.
+    /// </summary>
+    /// <returns>An array of command-line argument strings.</returns>
     protected virtual string[] GetStartupArgs()
     {
         return [];
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainWindowBase"/> class and resolves required services.
+    /// </summary>
     public MainWindowBase()
     {
         LoggingService = ServiceProvider.Get<ILoggingService>();
@@ -48,6 +55,10 @@ public class MainWindowBase : Window
         _screenshotService = ServiceProvider.Get<IScreenshotService>();
     }
 
+    /// <summary>
+    /// Initializes the main window by populating console types, wiring up logging, and registering event handlers.
+    /// Called from derived class constructors.
+    /// </summary>
     protected void InitializeMainWindow()
     {
         PopulateConsoleTypes();
@@ -113,6 +124,9 @@ public class MainWindowBase : Window
         timer.Start();
     }
 
+    /// <summary>
+    /// Handles clicks on the update banner button by opening the download URL in the default browser.
+    /// </summary>
     protected void UpdateBannerButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string url })
@@ -128,6 +142,9 @@ public class MainWindowBase : Window
         }
     }
 
+    /// <summary>
+    /// Handles clicks on the update dismiss button by collapsing the update banner.
+    /// </summary>
     protected void UpdateDismiss_Click(object sender, RoutedEventArgs e)
     {
         UpdateBanner.Visibility = Visibility.Collapsed;
@@ -219,6 +236,9 @@ public class MainWindowBase : Window
                                 && !MountService.IsMounted;
     }
 
+    /// <summary>
+    /// Handles selection changes in the console type combo box.
+    /// </summary>
     protected void ConsoleType_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ConsoleTypeComboBox.SelectedItem is ConsoleInfo ci)
@@ -229,12 +249,18 @@ public class MainWindowBase : Window
         ValidateAndEnableMount();
     }
 
+    /// <summary>
+    /// Handles text changes in the CHD file path text box.
+    /// </summary>
     protected void ChdFilePath_TextChanged(object sender, TextChangedEventArgs e)
     {
         _chdPath = ChdFilePathTextBox.Text.Trim().Trim('"');
         ValidateAndEnableMount();
     }
 
+    /// <summary>
+    /// Opens a file dialog to browse for a CHD file.
+    /// </summary>
     protected void BrowseChd_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog
@@ -250,11 +276,17 @@ public class MainWindowBase : Window
         }
     }
 
+    /// <summary>
+    /// Opens a CHD file via the file menu.
+    /// </summary>
     protected void OpenChd_Click(object sender, RoutedEventArgs e)
     {
         BrowseChd_Click(sender, e);
     }
 
+    /// <summary>
+    /// Handles the mount button click by initiating an asynchronous mount operation.
+    /// </summary>
     protected async void Mount_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -331,6 +363,9 @@ public class MainWindowBase : Window
         }
     }
 
+    /// <summary>
+    /// Handles the unmount button click by initiating an asynchronous unmount operation.
+    /// </summary>
     protected async void Unmount_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -360,11 +395,17 @@ public class MainWindowBase : Window
         }
     }
 
+    /// <summary>
+    /// Closes the application window.
+    /// </summary>
     protected void Exit_Click(object sender, RoutedEventArgs e)
     {
         Close();
     }
 
+    /// <summary>
+    /// Opens the application data folder in File Explorer.
+    /// </summary>
     protected void OpenAppDataFolder_Click(object sender, RoutedEventArgs e)
     {
         var folder = DiagnosticLogger.GetAppDataFolderForCurrentApp();
@@ -374,12 +415,18 @@ public class MainWindowBase : Window
             LoggingService.LogError($"AppData folder not found: {folder}");
     }
 
+    /// <summary>
+    /// Opens the settings dialog.
+    /// </summary>
     protected void Settings_Click(object sender, RoutedEventArgs e)
     {
         var settingsService = ServiceProvider.TryGet<ISettingsService>();
         new SettingsWindow(settingsService) { Owner = this }.ShowDialog();
     }
 
+    /// <summary>
+    /// Opens the about dialog.
+    /// </summary>
     protected void About_Click(object sender, RoutedEventArgs e)
     {
         new AboutWindow { Owner = this }.ShowDialog();

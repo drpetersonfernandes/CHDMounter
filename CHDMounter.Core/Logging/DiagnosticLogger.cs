@@ -89,6 +89,10 @@ public static class DiagnosticLogger
         return AppDataFolder;
     }
 
+    /// <summary>
+    /// Writes a visually distinct section header to the diagnostic log.
+    /// </summary>
+    /// <param name="section">The section title to display.</param>
     public static void LogSection(string section)
     {
         var line = new string('=', 60);
@@ -97,6 +101,10 @@ public static class DiagnosticLogger
         Log(line);
     }
 
+    /// <summary>
+    /// Writes a message to both the debug output and the Serilog diagnostic log.
+    /// </summary>
+    /// <param name="message">The message to log.</param>
     public static void Log(string message)
     {
         Debug.WriteLine($"[DIAG] {message}");

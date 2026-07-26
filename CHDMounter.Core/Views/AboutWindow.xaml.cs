@@ -6,8 +6,14 @@ using System.Windows.Navigation;
 
 namespace CHDMounter.Core.Views;
 
+/// <summary>
+/// A dialog window that displays application information, version, and update availability.
+/// </summary>
 public partial class AboutWindow
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AboutWindow"/> class.
+    /// </summary>
     public AboutWindow()
     {
         InitializeComponent();

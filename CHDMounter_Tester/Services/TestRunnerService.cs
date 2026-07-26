@@ -6,19 +6,45 @@ using Tester.Models;
 
 namespace Tester.Services;
 
+/// <summary>
+/// Orchestrates CHD parsing tests across a folder of CHD files, collecting results and emitting progress events.
+/// </summary>
 internal sealed class TestRunnerService
 {
     private readonly ILogger _logger;
+    private readonly List<string> _logLines = [];
 
+    /// <summary>
+    /// Raised when a log message should be displayed to the user.
+    /// </summary>
     public event Action<string>? LogMessage;
+
+    /// <summary>
+    /// Raised when a single CHD file test has completed.
+    /// </summary>
     public event Action<TestResult>? FileCompleted;
+
+    /// <summary>
+    /// Raised when all tests have completed with the final summary.
+    /// </summary>
     public event Action<TestSummary>? AllCompleted;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestRunnerService"/> class.
+    /// </summary>
+    /// <param name="logger">The Serilog logger for recording test output.</param>
     public TestRunnerService(ILogger logger)
     {
         _logger = logger;
     }
 
+    /// <summary>
+    /// Runs parsing tests on all CHD files in the specified folder.
+    /// </summary>
+    /// <param name="folderPath">The folder containing CHD files to test.</param>
+    /// <param name="consoleInfo">The console type information to use for parsing.</param>
+    /// <param name="ct">A cancellation token to abort the test run.</param>
+    /// <returns>A <see cref="TestSummary"/> containing the aggregated results.</returns>
     public async Task<TestSummary> RunTestsAsync(string folderPath, ConsoleInfo consoleInfo, CancellationToken ct = default)
     {
         var summary = new TestSummary
@@ -28,11 +54,14 @@ internal sealed class TestRunnerService
             StartTime = DateTime.Now
         };
 
+        _logLines.Clear();
+
         var chdFiles = Directory.GetFiles(folderPath, "*.chd", SearchOption.AllDirectories);
         if (chdFiles.Length == 0)
         {
             EmitLog("No .chd files found in the selected folder.");
             summary.EndTime = DateTime.Now;
+            summary.LogLines = _logLines.ToList();
             AllCompleted?.Invoke(summary);
             return summary;
         }
@@ -175,12 +204,14 @@ internal sealed class TestRunnerService
             EmitLog($"  Slowest:      {summary.Slowest.FileName} ({summary.Slowest.Duration.TotalSeconds:F2}s)");
         EmitLog(new string('=', 60));
 
+        summary.LogLines = _logLines.ToList();
         AllCompleted?.Invoke(summary);
         return summary;
     }
 
     private void EmitLog(string message)
     {
+        _logLines.Add(message);
         LogMessage?.Invoke(message);
         _logger.Information("{Message}", message);
     }

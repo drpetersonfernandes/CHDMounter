@@ -5,6 +5,9 @@ using Tester.Models;
 
 namespace Tester.Services;
 
+/// <summary>
+/// Exports CHD parsing test results to a PDF report using QuestPDF.
+/// </summary>
 internal sealed class PdfExportService
 {
     static PdfExportService()
@@ -12,7 +15,12 @@ internal sealed class PdfExportService
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public void ExportToPdf(TestSummary summary, string outputPath)
+    /// <summary>
+    /// Generates a PDF report from the specified test summary and writes it to the output path.
+    /// </summary>
+    /// <param name="summary">The test summary containing results to include in the report.</param>
+    /// <param name="outputPath">The file path where the PDF will be saved.</param>
+    internal void ExportToPdf(TestSummary summary, string outputPath)
     {
         Document.Create(container =>
         {
@@ -161,6 +169,34 @@ internal sealed class PdfExportService
                             .FontSize(11);
                     row.RelativeItem().Text($"Total Size: {FormatBytes((ulong)summary.TotalBytes)}").FontSize(11);
                 });
+            }
+
+            if (summary.LogLines.Count > 0)
+            {
+                col.Item().PaddingTop(25).Text("Full Log").FontSize(16).Bold().FontColor(Colors.Blue.Darken3);
+                col.Item().PaddingTop(5).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(8)
+                    .Column(logCol =>
+                    {
+                        foreach (var line in summary.LogLines)
+                        {
+                            var textColor = Colors.Grey.Darken3;
+                            if (line.StartsWith("  FAIL", StringComparison.Ordinal))
+                            {
+                                textColor = Colors.Red.Darken2;
+                            }
+                            else if (line.StartsWith("  OK", StringComparison.Ordinal))
+                            {
+                                textColor = Colors.Green.Darken2;
+                            }
+                            else if (line.StartsWith(new string('=', 60), StringComparison.Ordinal)
+                                     || line.StartsWith(new string('-', 60), StringComparison.Ordinal))
+                            {
+                                textColor = Colors.Blue.Darken2;
+                            }
+
+                            logCol.Item().Text(line).FontSize(7).FontFamily("Consolas").FontColor(textColor);
+                        }
+                    });
             }
         });
     }

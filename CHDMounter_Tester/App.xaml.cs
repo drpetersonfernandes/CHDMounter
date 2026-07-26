@@ -5,6 +5,10 @@ using CHDMounter.Core.Logging;
 
 namespace Tester;
 
+/// <summary>
+/// Application entry point for the CHD parsing test tool. Configures Serilog logging
+/// and handles application lifecycle.
+/// </summary>
 public partial class App
 {
     internal static ILogger? Logger { get; private set; }

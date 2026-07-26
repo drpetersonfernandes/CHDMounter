@@ -6,6 +6,10 @@ using CHDMounter.Core.Interfaces;
 
 namespace CHDMounter;
 
+/// <summary>
+/// Application entry point for the Dokan-based CHD mounter. Handles service registration,
+/// logging initialization, and application lifecycle.
+/// </summary>
 public partial class App
 {
     internal static string[] StartupArgs { get; private set; } = [];

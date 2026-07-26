@@ -9,12 +9,21 @@ using FileInfo = Fsp.Interop.FileInfo;
 
 namespace CHDMounter_WinFsp;
 
+/// <summary>
+/// Implements the WinFsp file system interface to expose a CHD container as a read-only virtual drive.
+/// </summary>
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
     private readonly bool _persistentAcls;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ChdFs"/> class.
+    /// </summary>
+    /// <param name="container">The parsed CHD container to serve files from.</param>
+    /// <param name="loggingService">The logging service (unused, reserved for future use).</param>
+    /// <param name="persistentAcls">If <c>true</c>, enables persistent ACL support for cross-integrity mounts.</param>
     // ReSharper disable once UnusedParameter.Local
     public ChdFs(ChdContainer container, ILoggingService loggingService, bool persistentAcls = false)
     {

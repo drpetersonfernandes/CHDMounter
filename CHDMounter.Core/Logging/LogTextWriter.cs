@@ -2,12 +2,21 @@ using System.Text;
 
 namespace CHDMounter.Core.Logging;
 
+/// <summary>
+/// A <see cref="TextWriter"/> that wraps the original console output and forwards
+/// <see cref="WriteLine(string?)"/> calls to the application's <see cref="ILoggingService"/>.
+/// </summary>
 internal class LogTextWriter : TextWriter
 {
     private readonly TextWriter _originalWriter;
 
+    /// <inheritdoc/>
     public override Encoding Encoding => Encoding.UTF8;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LogTextWriter"/> class.
+    /// </summary>
+    /// <param name="originalWriter">The original console text writer to delegate output to.</param>
     public LogTextWriter(TextWriter originalWriter)
     {
         _originalWriter = originalWriter;

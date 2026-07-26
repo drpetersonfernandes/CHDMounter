@@ -14,6 +14,10 @@ using Tester.Services;
 
 namespace Tester;
 
+/// <summary>
+/// The main window for the CHD parsing test tool. Provides UI for selecting CHD folders,
+/// running parsing tests, and exporting results to PDF.
+/// </summary>
 public partial class MainWindow
 {
     private readonly ILogger _logger;
@@ -24,6 +28,9 @@ public partial class MainWindow
     private readonly DispatcherTimer _elapsedTimer;
     private Stopwatch? _stopwatch;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainWindow"/> class.
+    /// </summary>
     public MainWindow()
     {
         InitializeComponent();

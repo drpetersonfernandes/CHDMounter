@@ -9,8 +9,11 @@ using VideoGameFileSystemParser.Parsers;
 
 #pragma warning disable CA1707
 namespace CHDMounter_WinFsp.Services;
-#pragma warning restore CA1707
 
+/// <summary>
+/// Mounts and unmounts CHD disc images as virtual drives using the WinFsp file system driver.
+/// Supports cross-integrity mounts when running as Administrator.
+/// </summary>
 internal class MountService : IMountService
 {
     private readonly ILoggingService _loggingService;
@@ -18,19 +21,28 @@ internal class MountService : IMountService
     private ChdFs? _currentFs;
     private ChdContainer? _container;
 
+    /// <inheritdoc/>
     public bool IsMounted { get; private set; }
+
+    /// <inheritdoc/>
     public string MountPoint { get; private set; } = "";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MountService"/> class.
+    /// </summary>
+    /// <param name="loggingService">The logging service for recording mount operations.</param>
     internal MountService(ILoggingService loggingService)
     {
         _loggingService = loggingService;
     }
 
+    /// <inheritdoc/>
     public bool CanMount()
     {
         return IsWinFspInstalled();
     }
 
+    /// <inheritdoc/>
     public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
     {
         if (IsMounted) throw new InvalidOperationException("Already mounted.");
@@ -96,6 +108,7 @@ internal class MountService : IMountService
         _loggingService.Log($"Mounted at {MountPoint} (WinFsp).");
     }
 
+    /// <inheritdoc/>
     public void Unmount()
     {
         if (!IsMounted) return;
@@ -169,12 +182,14 @@ internal class MountService : IMountService
                                           && (mountPoint.Length == 2 || mountPoint is [_, _, '\\']);
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         Unmount();
         GC.SuppressFinalize(this);
     }
 
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         Dispose();

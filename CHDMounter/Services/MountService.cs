@@ -9,6 +9,9 @@ using VideoGameFileSystemParser.Parsers;
 
 namespace CHDMounter.Services;
 
+/// <summary>
+/// Mounts and unmounts CHD disc images as virtual drives using the Dokan file system driver.
+/// </summary>
 internal class MountService : IMountService
 {
     private readonly ILoggingService _loggingService;
@@ -16,22 +19,31 @@ internal class MountService : IMountService
     private ChdFs? _currentFs;
     private ChdContainer? _container;
 
+    /// <inheritdoc/>
     public bool IsMounted { get; private set; }
+
+    /// <inheritdoc/>
     public string MountPoint { get; private set; } = "";
 
     [DllImport("dokan2.dll", ExactSpelling = true)]
     private static extern uint DokanVersion();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MountService"/> class.
+    /// </summary>
+    /// <param name="loggingService">The logging service for recording mount operations.</param>
     public MountService(ILoggingService loggingService)
     {
         _loggingService = loggingService;
     }
 
+    /// <inheritdoc/>
     public bool CanMount()
     {
         return IsDokanInstalled();
     }
 
+    /// <inheritdoc/>
     public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
     {
         if (IsMounted)
@@ -75,6 +87,7 @@ internal class MountService : IMountService
         _loggingService.Log($"Mounted at {MountPoint}. {_dokanInstance}");
     }
 
+    /// <inheritdoc/>
     public void Unmount()
     {
         if (!IsMounted) return;
@@ -101,12 +114,14 @@ internal class MountService : IMountService
         MountPoint = "";
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         Unmount();
         GC.SuppressFinalize(this);
     }
 
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         Dispose();
@@ -149,11 +164,20 @@ internal class MountService : IMountService
     }
 }
 
+/// <summary>
+/// An adapter that routes Dokan log messages to the application's <see cref="ILoggingService"/>.
+/// </summary>
 internal class DokanPrefixedLogger : ILogger
 {
     private readonly ILoggingService _loggingService;
+
+    /// <inheritdoc/>
     public bool DebugEnabled => false;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DokanPrefixedLogger"/> class.
+    /// </summary>
+    /// <param name="loggingService">The logging service to write messages to.</param>
     internal DokanPrefixedLogger(ILoggingService loggingService)
     {
         _loggingService = loggingService;
