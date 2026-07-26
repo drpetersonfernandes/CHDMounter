@@ -10,14 +10,23 @@
         <RootNamespace>VideoGameFileSystemParser</RootNamespace>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
-        <Company>PureLogicCode.com</Company>
-        <Description>Video game file system parsing library for console disc images. Supports ISO 9660, UDF, XDVDFS, OperaFS, CD-i, and other formats through CHD, ISO and raw sector readers.</Description>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <!-- NuGet Package Metadata -->
         <PackageId>VideoGameFileSystemParser</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Peterson Fernandes</Authors>
+        <Company>PureLogicCode.com</Company>
+        <Copyright>Copyright (c) 2025 Peterson Fernandes (drpetersonfernandes)</Copyright>
+        <Description>Video game file system parsing library for console disc images. Supports ISO 9660, UDF, XDVDFS, OperaFS, CD-i, and other formats through CHD, ISO and raw sector readers.</Description>
         <PackageTags>chd;mame;iso9660;udf;xdvdfs;operafs;cdi;ps1;ps2;ps3;psp;xbox;dreamcast;retro;videogame;disc;filesystem</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/purelogiccode/CSharp_SimpleChdDrive</PackageProjectUrl>
         <RepositoryUrl>https://github.com/purelogiccode/CSharp_SimpleChdDrive</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <!-- Source Link & Deterministic Builds -->
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <IncludeSymbols>true</IncludeSymbols>
@@ -42,6 +51,7 @@
 
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\" />
+        <None Include="LICENSE.txt" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>
