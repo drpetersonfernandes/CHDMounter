@@ -88,7 +88,7 @@ public class ScreenshotService : IScreenshotService
             var fileName = $"screenshot_{DateTime.Now:yyyy-MM-dd_HH-mm-ss-fff}.png";
             var savedPath = TrySaveImage(bitmap, fileName);
 
-            if (savedPath != null)
+            if (savedPath is not null)
                 _loggingService.Log($"Screenshot saved: {savedPath}");
             else
                 _loggingService.LogError("Screenshot: failed to save image.");

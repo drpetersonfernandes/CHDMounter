@@ -102,7 +102,7 @@ internal class MountService : IMountService
             _host = new FileSystemHost(_currentFs);
 
             var securityDescriptor = persistentAcls ? CreateCrossIntegritySecurityDescriptor() : null;
-            if (securityDescriptor != null)
+            if (securityDescriptor is not null)
                 _loggingService.Log("Cross-integrity: using permissive DACL (Everyone Full Access).");
 
             _host.Mount(MountPoint, securityDescriptor, true, unchecked((uint)-1));
@@ -120,7 +120,7 @@ internal class MountService : IMountService
             if (!IsMounted) return;
 
             _loggingService.Log($"Unmounting {MountPoint} (WinFsp)...");
-            if (_host != null)
+            if (_host is not null)
             {
                 try
                 {
@@ -219,7 +219,7 @@ internal class MountService : IMountService
                 return true;
 
             var binDir = FindWinFspBinDir();
-            if (binDir == null)
+            if (binDir is null)
                 return false;
 
             var dllName = Environment.Is64BitProcess ? "winfsp-x64.dll" : "winfsp-x86.dll";
@@ -242,7 +242,7 @@ internal class MountService : IMountService
         {
             using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\WinFsp")
                             ?? Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WinFsp");
-            if (key == null)
+            if (key is null)
                 return null;
 
             var sxsDir = key.GetValue("SxsDir") as string;

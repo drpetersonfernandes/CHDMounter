@@ -18,7 +18,7 @@ public class BugReportSink : ILogEventSink
         if (logEvent.Level < LogEventLevel.Warning)
             return;
 
-        if (logEvent.Exception != null)
+        if (logEvent.Exception is not null)
         {
             var context = logEvent.RenderMessage(CultureInfo.InvariantCulture);
             _ = Task.Run(() => BugReportClient.SendException(logEvent.Exception, context));

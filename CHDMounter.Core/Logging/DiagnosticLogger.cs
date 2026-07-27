@@ -95,13 +95,13 @@ public static class DiagnosticLogger
     public static void LogSection(string section)
     {
         var line = new string('=', 60);
-        Log(line);
-        Log($"  {section}");
-        Log(line);
+        SerilogLog.Debug(line);
+        SerilogLog.Debug("  {Section}", section);
+        SerilogLog.Debug(line);
     }
 
     /// <summary>
-    /// Writes a message to both the debug output and the Serilog diagnostic log.
+    /// Writes a message to the Serilog diagnostic log.
     /// </summary>
     /// <param name="message">The message to log.</param>
     public static void Log(string message)

@@ -33,7 +33,7 @@ internal class LogTextWriter : TextWriter
         try
         {
             var loggingService = ServiceProvider.TryGet<ILoggingService>();
-            if (value != null && loggingService is not null)
+            if (value is not null && loggingService is not null)
                 loggingService.Log(value);
         }
         catch (Exception ex)

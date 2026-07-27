@@ -27,6 +27,10 @@
     <ItemGroup>
         <PackageReference Include="CHDSharp" Version="1.2.0" />
         <PackageReference Include="DokanNet" Version="2.3.0.3" />
+        <PackageReference Include="Meziantou.Analyzer" Version="2.0.17">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Serilog" Version="4.4.0" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />

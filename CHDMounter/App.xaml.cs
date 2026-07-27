@@ -46,7 +46,7 @@ public partial class App
             loggingService.Log("CHDMounter - CHD Virtual Drive Mounter (Dokan)");
             loggingService.Log("Supports mounting CHD (Compressed Hunks of Data) files as virtual drives");
             loggingService.Log("");
-            if (DiagnosticLogger.LogFilePath != null)
+            if (DiagnosticLogger.LogFilePath is not null)
             {
                 loggingService.Log($"Debug log: {DiagnosticLogger.LogFilePath}");
                 loggingService.Log("");
@@ -67,7 +67,7 @@ public partial class App
         {
             try
             {
-                ErrorLogger.LogErrorSync(ex, "Critical error during application startup");
+                Serilog.Log.Error(ex, "Critical error during application startup");
             }
             catch
             {
@@ -108,8 +108,8 @@ public partial class App
                 ErrorLogger.ReportSilentException(ex, "App.OnExit: Failed to dispose services");
             }
 
-            if (_originalConsoleOut != null) Console.SetOut(_originalConsoleOut);
-            if (_originalConsoleError != null) Console.SetError(_originalConsoleError);
+            if (_originalConsoleOut is not null) Console.SetOut(_originalConsoleOut);
+            if (_originalConsoleError is not null) Console.SetError(_originalConsoleError);
 
             try
             {

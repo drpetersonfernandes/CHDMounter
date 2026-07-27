@@ -5,45 +5,11 @@ namespace CHDMounter.Core.Tests.Logging;
 public class ErrorLoggerExtendedTests
 {
     [Fact]
-    public void LogErrorSyncWithInnerExceptionDoesNotThrow()
+    public void ReportSilentExceptionWithInnerExceptionDoesNotThrow()
     {
         var inner = new ArgumentException("inner error");
         var outer = new InvalidOperationException("outer error", inner);
-        var exception = Record.Exception(() => ErrorLogger.LogErrorSync(outer, "test context"));
-        Assert.Null(exception);
-    }
-
-    [Fact]
-    public void LogErrorSyncWithEmptyContextDoesNotThrow()
-    {
-        var exception = Record.Exception(() =>
-            ErrorLogger.LogErrorSync(new Exception("test"), ""));
-        Assert.Null(exception);
-    }
-
-    [Fact]
-    public void LogErrorSyncWithNullExceptionMessageDoesNotThrow()
-    {
-        var exception = Record.Exception(() =>
-            ErrorLogger.LogErrorSync(new Exception(), "context"));
-        Assert.Null(exception);
-    }
-
-    [Fact]
-    public void ReportSilentExceptionDoesNotThrow()
-    {
-        Exception ex;
-        try
-        {
-            throw new InvalidOperationException("test");
-        }
-        catch (Exception caught)
-        {
-            ex = caught;
-        }
-
-        var exception = Record.Exception(() =>
-            ErrorLogger.ReportSilentException(ex, "context"));
+        var exception = Record.Exception(() => ErrorLogger.ReportSilentException(outer, "test context"));
         Assert.Null(exception);
     }
 
@@ -64,16 +30,33 @@ public class ErrorLoggerExtendedTests
     }
 
     [Fact]
+    public void ReportSilentExceptionDoesNotThrowWhenCaught()
+    {
+        Exception ex;
+        try
+        {
+            throw new InvalidOperationException("test");
+        }
+        catch (Exception caught)
+        {
+            ex = caught;
+        }
+
+        var exception = Record.Exception(() =>
+            ErrorLogger.ReportSilentException(ex, "context"));
+        Assert.Null(exception);
+    }
+
+    [Fact]
     public void InitializeGlobalExceptionHandlersCanBeCalledTwice()
     {
-        // Should not throw even if called multiple times
         ErrorLogger.InitializeGlobalExceptionHandlers();
         var exception = Record.Exception(() => ErrorLogger.InitializeGlobalExceptionHandlers());
         Assert.Null(exception);
     }
 
     [Fact]
-    public void LogErrorSyncWithComplexExceptionHierarchy()
+    public void ReportSilentExceptionWithComplexExceptionHierarchy()
     {
         Exception ex;
         try
@@ -92,7 +75,7 @@ public class ErrorLoggerExtendedTests
             ex = caught;
         }
 
-        var exception = Record.Exception(() => ErrorLogger.LogErrorSync(ex, "complex context"));
+        var exception = Record.Exception(() => ErrorLogger.ReportSilentException(ex, "complex context"));
         Assert.Null(exception);
     }
 }

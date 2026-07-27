@@ -31,7 +31,7 @@ public class UpdateCheckerExtendedTests
     public void GetCurrentVersionContainsDots()
     {
         var result = InvokeGetCurrentVersion();
-        Assert.Contains(".", result);
+        Assert.Contains(".", result, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -173,7 +173,7 @@ public class MainWindowBase : Window
             }
         }
 
-        if (chdPath != null)
+        if (chdPath is not null)
         {
             ChdFilePathTextBox.Text = chdPath;
             _chdPath = chdPath;
@@ -187,11 +187,11 @@ public class MainWindowBase : Window
 
         ValidateAndEnableMount();
 
-        if (ctFromNumber.HasValue && chdPath != null && File.Exists(chdPath))
+        if (ctFromNumber.HasValue && chdPath is not null && File.Exists(chdPath))
         {
             MountDisk();
         }
-        else if (chdPath != null && File.Exists(chdPath) && !ctFromNumber.HasValue)
+        else if (chdPath is not null && File.Exists(chdPath) && !ctFromNumber.HasValue)
         {
             ShowDragDropConsoleModal(chdPath);
         }

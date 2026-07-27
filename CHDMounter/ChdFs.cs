@@ -11,7 +11,7 @@ namespace CHDMounter;
 /// <summary>
 /// Implements the Dokan file system interface to expose a CHD container as a read-only virtual drive.
 /// </summary>
-internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
+internal sealed class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
     private readonly ILoggingService _loggingService;
@@ -281,12 +281,14 @@ internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
 
     public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections, IDokanFileInfo info)
     {
-        security = null!;
         try
         {
             var entry = _container.FindFile(fileName);
             if (entry is null)
+            {
+                security = null!;
                 return DokanResult.FileNotFound;
+            }
 
             var isDir = entry.IsDirectory;
 
@@ -314,6 +316,7 @@ internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
         catch (Exception ex)
         {
             Serilog.Log.Error(ex, "GetFileSecurity error for {FileName}", fileName);
+            security = null!;
             return DokanResult.Error;
         }
     }
@@ -326,9 +329,9 @@ internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
     public void Dispose()
     {
         if (_disposed) return;
+
         _disposed = true;
         _container.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     public ValueTask DisposeAsync()

@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text.Json;
 
 namespace CHDMounter.Core.Services;
@@ -45,7 +44,7 @@ public static class UpdateChecker
     {
         try
         {
-            var currentVersion = GetCurrentVersion();
+            var currentVersion = AppInfoHelper.GetVersion();
             var json = await Client.GetStringAsync(GitHubApiUrl);
 
             using var doc = JsonDocument.Parse(json);
@@ -59,8 +58,7 @@ public static class UpdateChecker
 
             if (root.TryGetProperty("assets", out var assets) && assets.GetArrayLength() > 0)
             {
-                var appName = (Assembly.GetEntryAssembly()?.GetName().Name ?? "CHDMounter")
-                    .ToLowerInvariant();
+                var appName = AppInfoHelper.GetAppName().ToLowerInvariant();
 
                 foreach (var asset in assets.EnumerateArray())
                 {
@@ -84,25 +82,14 @@ public static class UpdateChecker
                 DownloadUrl = downloadUrl
             };
         }
-        catch
+        catch (Exception ex)
         {
+            Serilog.Log.Warning(ex, "UpdateChecker: Failed to check for updates");
             Result = new UpdateCheckResult
             {
                 HasUpdate = false,
-                CurrentVersion = GetCurrentVersion()
+                CurrentVersion = AppInfoHelper.GetVersion()
             };
-        }
-    }
-
-    private static string GetCurrentVersion()
-    {
-        try
-        {
-            return Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
-        }
-        catch
-        {
-            return "1.0.0";
         }
     }
 

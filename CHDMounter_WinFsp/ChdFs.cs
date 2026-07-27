@@ -30,21 +30,21 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
         _persistentAcls = persistentAcls;
     }
 
-    public override int Init(object Host)
+    public override int Init(object host)
     {
-        if (Host is FileSystemHost host)
+        if (host is FileSystemHost fsHost)
         {
-            host.CasePreservedNames = true;
-            host.UnicodeOnDisk = true;
-            host.PersistentAcls = _persistentAcls;
-            host.PostCleanupWhenModifiedOnly = true;
-            host.FlushAndPurgeOnCleanup = true;
-            host.PassQueryDirectoryPattern = true;
-            host.MaxComponentLength = 255;
-            host.SectorSize = 2048;
-            host.FileSystemName = _container.VolumeName;
-            host.VolumeCreationTime = DateTimeToFileTimeUtc(DateTime.UtcNow);
-            host.VolumeSerialNumber = (uint)Environment.TickCount;
+            fsHost.CasePreservedNames = true;
+            fsHost.UnicodeOnDisk = true;
+            fsHost.PersistentAcls = _persistentAcls;
+            fsHost.PostCleanupWhenModifiedOnly = true;
+            fsHost.FlushAndPurgeOnCleanup = true;
+            fsHost.PassQueryDirectoryPattern = true;
+            fsHost.MaxComponentLength = 255;
+            fsHost.SectorSize = 2048;
+            fsHost.FileSystemName = _container.VolumeName;
+            fsHost.VolumeCreationTime = DateTimeToFileTimeUtc(DateTime.UtcNow);
+            fsHost.VolumeSerialNumber = (uint)Environment.TickCount;
         }
 
         return STATUS_SUCCESS;
@@ -58,6 +58,8 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 
     public override void Close(object FileNode, object FileDesc)
     {
+        FileNode = null!;
+        FileDesc = null!;
     }
 
     private int OpenOrCreate(string FileName, out object FileNode, out object FileDesc,
@@ -160,6 +162,21 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
         {
             entries = _container.ListDirectory(ResolvePath(FileNode)).ToList();
             index = 0;
+
+            if (!string.IsNullOrEmpty(Marker))
+            {
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    if (string.Equals(entries[i].Name, Marker, StringComparison.OrdinalIgnoreCase))
+                    {
+                        index = i + 3;
+                        break;
+                    }
+                }
+
+                if (index == 0)
+                    return false;
+            }
         }
 
         switch (index)
@@ -186,7 +203,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
             index++;
             Context = (entries, index);
 
-            if (!string.IsNullOrEmpty(Pattern) && Pattern != "*" && Pattern != "*.*")
+            if (!string.IsNullOrEmpty(Pattern) && !string.Equals(Pattern, "*", StringComparison.Ordinal) && !string.Equals(Pattern, "*.*", StringComparison.Ordinal))
             {
                 if (!MatchesPattern(entry.Name, Pattern))
                     continue;
@@ -265,7 +282,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
         if (_persistentAcls)
         {
             var sd = CreateDefaultSecurityDescriptor();
-            if (SecurityDescriptor == null || SecurityDescriptor.Length < sd.Length)
+            if (SecurityDescriptor is null || SecurityDescriptor.Length < sd.Length)
             {
                 SecurityDescriptor = new byte[sd.Length];
             }
@@ -280,7 +297,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 
     private byte[] CreateDefaultSecurityDescriptor()
     {
-        if (_cachedSecurityDescriptor != null)
+        if (_cachedSecurityDescriptor is not null)
             return _cachedSecurityDescriptor;
 
         const string sddl = "D:P(A;;FA;;;WD)";
@@ -330,7 +347,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
-        _container.Dispose();
+        Dispose();
         return ValueTask.CompletedTask;
     }
 }

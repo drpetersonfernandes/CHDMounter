@@ -50,8 +50,11 @@ public static class ConsoleTypeHelper
     /// </summary>
     /// <param name="arg">The console type string (e.g., "ps1", "dreamcast").</param>
     /// <returns>The matching <see cref="ConsoleType"/>.</returns>
-    public static ConsoleType ParseByName(string arg)
+    public static ConsoleType ParseByName(string? arg)
     {
+        if (string.IsNullOrWhiteSpace(arg))
+            return ConsoleType.Unknown;
+
         return arg.ToLowerInvariant() switch
         {
             "ps1" or "playstation" or "psx" => ConsoleType.Ps1,

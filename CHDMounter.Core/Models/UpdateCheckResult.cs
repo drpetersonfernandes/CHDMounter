@@ -6,27 +6,27 @@ namespace CHDMounter.Core.Models;
 public class UpdateCheckResult
 {
     /// <summary>
-    /// Gets or sets a value indicating whether a newer version is available.
+    /// Gets a value indicating whether a newer version is available.
     /// </summary>
-    public bool HasUpdate { get; set; }
+    public bool HasUpdate { get; init; }
 
     /// <summary>
-    /// Gets or sets the current application version string.
+    /// Gets the current application version string.
     /// </summary>
-    public string CurrentVersion { get; set; } = string.Empty;
+    public string CurrentVersion { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the latest available version string.
+    /// Gets the latest available version string.
     /// </summary>
-    public string LatestVersion { get; set; } = string.Empty;
+    public string LatestVersion { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the URL to the GitHub release page.
+    /// Gets the URL to the GitHub release page.
     /// </summary>
-    public string ReleaseUrl { get; set; } = string.Empty;
+    public string ReleaseUrl { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the direct download URL for the latest release asset.
+    /// Gets the direct download URL for the latest release asset.
     /// </summary>
-    public string DownloadUrl { get; set; } = string.Empty;
+    public string DownloadUrl { get; init; } = string.Empty;
 }

@@ -367,7 +367,7 @@ public partial class MainWindow
         _elapsedTimer.Stop();
         _elapsedTimer.Tick -= ElapsedTimer_Tick;
 
-        if (_testRunner != null)
+        if (_testRunner is not null)
         {
             _testRunner.LogMessage -= OnLogMessage;
             _testRunner.AllCompleted -= OnAllCompleted;

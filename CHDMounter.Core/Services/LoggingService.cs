@@ -80,7 +80,11 @@ public class LoggingService : ILoggingService
             IsError = isError
         });
 
-        while (LogEntries.Count > MaxEntries)
-            LogEntries.RemoveAt(0);
+        if (LogEntries.Count > MaxEntries)
+        {
+            var excess = LogEntries.Count - MaxEntries;
+            for (var i = 0; i < excess; i++)
+                LogEntries.RemoveAt(0);
+        }
     }
 }

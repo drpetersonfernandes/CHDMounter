@@ -50,7 +50,7 @@ public class LogTextWriterExtendedTests
         writer.WriteLine("hello world");
 
         var output = sw.ToString();
-        Assert.Contains("hello world", output);
+        Assert.Contains("hello world", output, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class LogTextWriterExtendedTests
 
         // StringWriter.WriteLine(null) writes just a newline
         var output = sw.ToString();
-        Assert.Contains(Environment.NewLine, output);
+        Assert.Contains(Environment.NewLine, output, StringComparison.Ordinal);
     }
 
     [Fact]

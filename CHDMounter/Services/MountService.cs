@@ -99,7 +99,7 @@ internal class MountService : IMountService
             if (!IsMounted) return;
 
             _loggingService.Log($"Unmounting {MountPoint}...");
-            if (_dokanInstance != null)
+            if (_dokanInstance is not null)
             {
                 try
                 {

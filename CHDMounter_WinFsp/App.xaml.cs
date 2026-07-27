@@ -49,7 +49,7 @@ public partial class App
             loggingService.Log("CHDMounter - CHD Virtual Drive Mounter (WinFsp)");
             loggingService.Log("Supports mounting CHD (Compressed Hunks of Data) files as virtual drives");
             loggingService.Log("");
-            if (DiagnosticLogger.LogFilePath != null)
+            if (DiagnosticLogger.LogFilePath is not null)
             {
                 loggingService.Log($"Debug log: {DiagnosticLogger.LogFilePath}");
                 loggingService.Log("");
@@ -70,7 +70,7 @@ public partial class App
         {
             try
             {
-                ErrorLogger.LogErrorSync(ex, "Critical error during application startup");
+                Serilog.Log.Error(ex, "Critical error during application startup");
             }
             catch
             {
@@ -104,20 +104,7 @@ public partial class App
                 }
             }
 
-            if (binDir == null)
-            {
-                var installDir = key?.GetValue("InstallDir") as string;
-                if (!string.IsNullOrEmpty(installDir))
-                {
-                    var installBin = Path.Combine(installDir, "bin");
-                    if (Directory.Exists(installBin))
-                    {
-                        binDir = installBin;
-                    }
-                }
-            }
-
-            if (binDir == null)
+            if (binDir is null)
                 return;
 
             Environment.SetEnvironmentVariable("PATH", binDir + ";" + currentPath, EnvironmentVariableTarget.Process);

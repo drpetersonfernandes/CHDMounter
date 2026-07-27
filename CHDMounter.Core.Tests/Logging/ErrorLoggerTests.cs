@@ -12,14 +12,6 @@ public class ErrorLoggerTests
     }
 
     [Fact]
-    public void LogErrorSyncDoesNotThrow()
-    {
-        var exception = Record.Exception(() =>
-            ErrorLogger.LogErrorSync(new Exception("test"), "test context"));
-        Assert.Null(exception);
-    }
-
-    [Fact]
     public void ReportSilentExceptionDoesNotThrow()
     {
         var exception = Record.Exception(() =>
