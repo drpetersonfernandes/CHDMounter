@@ -48,6 +48,7 @@ public class CDiDiagnosticTests
                     Assert.True(raw.Length > 0, $"Raw sector at LBA {lba} should not be empty");
                 }
             }
+
             _output.WriteLine($"Raw sectors read: {rawReadCount}/26");
             Assert.True(rawReadCount > 0, "Should be able to read at least some raw sectors");
 
@@ -62,6 +63,7 @@ public class CDiDiagnosticTests
                     _output.WriteLine($"  LBA={lba,3}: type={buf[0]:X2} sig1='{sig1}'");
                 }
             }
+
             _output.WriteLine($"Cooked sectors read: {cookedReadCount}/26");
 
             reader.Reset();
@@ -191,6 +193,7 @@ public class CDiDiagnosticTests
                         Assert.NotNull(raw);
                     }
                 }
+
                 _output.WriteLine($"Raw sectors read: {rawReadCount}/30");
                 Assert.True(rawReadCount > 0, "Should be able to read at least some raw sectors");
 
@@ -209,6 +212,7 @@ public class CDiDiagnosticTests
                         _output.WriteLine($"  LBA={lba} off={offset}: type={buf[0]:X2} sig1='{sig1}'");
                     }
                 }
+
                 _output.WriteLine($"Cooked sectors read: {cookedReadCount}/30");
 
                 reader.Reset();

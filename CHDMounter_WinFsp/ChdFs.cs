@@ -235,6 +235,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
                     if (MatchesPatternRecursive(name[i..], pattern))
                         return true;
                 }
+
                 return false;
             }
 

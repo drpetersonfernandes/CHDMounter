@@ -77,6 +77,7 @@ public partial class AboutWindow
         {
             Serilog.Log.Warning(ex, "Failed to open hyperlink: {Uri}", e.Uri.AbsoluteUri);
         }
+
         e.Handled = true;
     }
 }

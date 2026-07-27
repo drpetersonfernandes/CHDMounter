@@ -110,7 +110,7 @@ public class ConsoleTypeHelperExtendedTests
             "fmt", "pce", "tgcd", "megacd", "segagenesis", "cd32",
             "amiga", "iso9660", "generic", "iso", "cuebin", "cue",
             "cuebin2048", "cue2048", "cueiso", "cuebinwav", "cuewav",
-            "cueisowav", "x68k", "ngcd", "cd-i",
+            "cueisowav", "isoraw", "x68k", "ngcd", "cd-i",
             "pc98", "pc-98", "nec98", "nuon", "pippin"
         };
 

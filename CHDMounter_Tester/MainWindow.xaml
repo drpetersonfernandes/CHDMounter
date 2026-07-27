@@ -101,11 +101,11 @@
                           ToolTip="Video game console filesystem type to test" />
 
                 <Button Grid.Column="5" x:Name="RunButton" Content="Run Tests"
-                        Width="110" Height="32" FontWeight="SemiBold"
+                        Width="110" Height="32"
                         Click="RunButton_Click" Style="{StaticResource PrimaryButtonStyle}"
                         ToolTip="Run parsing tests on all CHD files in the selected folder" />
                 <Button Grid.Column="5" x:Name="CancelButton" Content="Cancel"
-                        Width="110" Height="32" FontWeight="SemiBold"
+                        Width="110" Height="32"
                         Click="CancelButton_Click" Style="{StaticResource PrimaryButtonStyle}"
                         Background="{StaticResource ErrorBrush}"
                         Visibility="Collapsed"

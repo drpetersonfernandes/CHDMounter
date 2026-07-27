@@ -85,6 +85,7 @@ public static class ConsoleTypeHelper
             "cueiso" => ConsoleType.GenericCueIso,
             "cuebinwav" or "cuewav" => ConsoleType.GenericCueBinWav,
             "cueisowav" => ConsoleType.GenericCueIsoWav,
+            "isoraw" => ConsoleType.GenericIsoRaw,
             "x68000" or "x68k" => ConsoleType.X68000,
             "pico" => ConsoleType.Pico,
             "pc98" or "pc-98" or "nec98" => ConsoleType.Pc98,
