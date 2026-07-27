@@ -86,8 +86,7 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 
 Grab the latest self-contained executable from [Releases](https://github.com/drpetersonfernandes/CHDMounter/releases):
 
-- `CHDMounter.exe` — Dokan-based
-- `CHDMounter_WinFsp.exe` — WinFsp-based
+- `CHDMounter.exe`
 
 No installation required. Just download and run.
 
@@ -103,7 +102,6 @@ Opens the main window. Click **Browse** to select a CHD file, pick a filesystem 
 
 ```
 CHDMounter.exe [/l] [/a] [/s:<index>] <chd_file> [mount_point]
-CHDMounter_WinFsp.exe [/l] [/a] [/s:<index>] <chd_file> [mount_point]
 ```
 
 | Argument | Description |
@@ -175,10 +173,10 @@ CHDMounter.exe /l /s:4 game.chd
 CHDMounter.exe /s:20 disc.chd
 
 # Mount with generic ISO 9660 parser
-CHDMounter_WinFsp.exe /s:19 data.chd N:
+CHDMounter.exe /s:19 data.chd N:
 
-# Using the WinFsp variant with console name alias
-CHDMounter_WinFsp.exe game.chd ps3
+# Mount with console name alias
+CHDMounter.exe game.chd ps3
 ```
 
 If no console type is specified, a dialog appears asking you to choose.
