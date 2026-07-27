@@ -72,9 +72,9 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 
 - **Windows 10 or later** (x64 or ARM64)
 - **.NET 10.0 Desktop Runtime** (or self-contained build ships its own)
-- **Dokan** v2.x driver — [install Dokany](https://github.com/dokan-dev/dokany/releases)  
+- **Dokan** Use latest version — [install Dokany](https://github.com/dokan-dev/dokany/releases)  
   or
-- **WinFsp** 2024+ — [download WinFsp](https://winfsp.dev/rel/)
+- **WinFsp** Use latest version — [download WinFsp](https://github.com/winfsp/winfsp/releases)
 
 > Only one driver is needed. The Dokan executable uses Dokan; the WinFsp executable uses WinFsp. Both ship side-by-side.
 
