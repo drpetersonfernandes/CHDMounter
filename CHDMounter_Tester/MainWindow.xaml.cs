@@ -212,9 +212,10 @@ public partial class MainWindow
         CancelButton.IsEnabled = false;
     }
 
-    private void OnLogMessage(string message)
+    private void OnLogMessage(object? sender, EventArgs<string> e)
     {
-        Dispatcher.InvokeAsync(() =>
+        var message = e.Value;
+        _ = Dispatcher.InvokeAsync(() =>
         {
             if (message.StartsWith("  OK", StringComparison.Ordinal))
                 AppendLog(message, GreenBrush);
@@ -227,9 +228,10 @@ public partial class MainWindow
         });
     }
 
-    private void OnAllCompleted(TestSummary summary)
+    private void OnAllCompleted(object? sender, EventArgs<TestSummary> e)
     {
-        Dispatcher.InvokeAsync(() =>
+        var summary = e.Value;
+        _ = Dispatcher.InvokeAsync(() =>
         {
             _lastSummary = summary;
             ShowSummary(summary);

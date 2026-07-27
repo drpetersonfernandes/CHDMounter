@@ -229,7 +229,7 @@ public class DiagnosticLoggerExtendedTests : IDisposable
     {
         var path1 = DiagnosticLogger.GetAppDataFolder("AppOne");
         var path2 = DiagnosticLogger.GetAppDataFolder("AppTwo");
-        Assert.NotEqual(path1, path2);
+        Assert.NotEqual(path1, path2, StringComparer.Ordinal);
     }
 
     [Fact]

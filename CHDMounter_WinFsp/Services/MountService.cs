@@ -17,7 +17,7 @@ namespace CHDMounter_WinFsp.Services;
 internal class MountService : IMountService
 {
     private readonly ILoggingService _loggingService;
-    private readonly object _mountLock = new();
+    private readonly Lock _mountLock = new();
     private FileSystemHost? _host;
     private ChdFs? _currentFs;
     private ChdContainer? _container;

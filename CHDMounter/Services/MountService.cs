@@ -15,7 +15,7 @@ namespace CHDMounter.Services;
 internal class MountService : IMountService
 {
     private readonly ILoggingService _loggingService;
-    private readonly object _mountLock = new();
+    private readonly Lock _mountLock = new();
     private DokanInstance? _dokanInstance;
     private ChdFs? _currentFs;
     private ChdContainer? _container;

@@ -44,7 +44,7 @@ internal static class SequentialTestRunner
         Func<string, ITestOutputHelper, bool> testFunc)
     {
         var failures = new ConcurrentBag<(string path, string error)>();
-        var outputLock = new object();
+        var outputLock = new Lock();
         var syncOutput = new SynchronizedTestOutputHelper(output, outputLock);
         int passed = 0, skipped = 0;
         var sw = Stopwatch.StartNew();
@@ -90,9 +90,9 @@ internal static class SequentialTestRunner
     private sealed class SynchronizedTestOutputHelper : ITestOutputHelper
     {
         private readonly ITestOutputHelper _inner;
-        private readonly object _lock;
+        private readonly Lock _lock;
 
-        public SynchronizedTestOutputHelper(ITestOutputHelper inner, object @lock)
+        public SynchronizedTestOutputHelper(ITestOutputHelper inner, Lock @lock)
         {
             _inner = inner;
             _lock = @lock;

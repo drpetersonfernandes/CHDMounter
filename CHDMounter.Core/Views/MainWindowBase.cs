@@ -74,12 +74,14 @@ public class MainWindowBase : Window
         {
             if (e.Action != NotifyCollectionChangedAction.Add) return;
 
+#pragma warning disable MA0134
             Dispatcher.InvokeAsync(() =>
             {
                 foreach (LogEntry entry in e.NewItems!)
                     LogTextBox.AppendText($"[{entry.Timestamp:HH:mm:ss}] {entry.Message}{Environment.NewLine}");
                 LogTextBox.ScrollToEnd();
             });
+#pragma warning restore MA0134
         };
     }
 
@@ -198,18 +200,25 @@ public class MainWindowBase : Window
         }
     }
 
-    private void ShowDragDropConsoleModal(string chdPath)
+    private async void ShowDragDropConsoleModal(string chdPath)
     {
-        Dispatcher.BeginInvoke(new Action(() =>
+        try
         {
-            var dialog = new ConsoleSelectionWindow(chdPath) { Owner = this };
-            if (dialog.ShowDialog() == true)
+            await Dispatcher.BeginInvoke(new Action(() =>
             {
-                _selectedConsoleType = dialog.SelectedConsoleType;
-                SelectConsoleTypeInCombo(dialog.SelectedConsoleType);
-                MountDisk();
-            }
-        }), System.Windows.Threading.DispatcherPriority.Background);
+                var dialog = new ConsoleSelectionWindow(chdPath) { Owner = this };
+                if (dialog.ShowDialog() == true)
+                {
+                    _selectedConsoleType = dialog.SelectedConsoleType;
+                    SelectConsoleTypeInCombo(dialog.SelectedConsoleType);
+                    MountDisk();
+                }
+            }), System.Windows.Threading.DispatcherPriority.Background);
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error(ex, "Failed to open modal selection window");
+        }
     }
 
     private void SelectConsoleTypeInCombo(ConsoleType type)

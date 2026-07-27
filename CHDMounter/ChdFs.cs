@@ -48,7 +48,7 @@ internal sealed class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
 
         info.IsDirectory = false;
 
-        if ((access & (DokanFileAccess.WriteData | DokanFileAccess.AppendData)) != 0)
+        if ((access & (DokanFileAccess.WriteData | DokanFileAccess.AppendData)) != DokanFileAccess.None)
             return DokanResult.AccessDenied;
 
         info.Context = entry;

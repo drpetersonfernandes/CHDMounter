@@ -11,7 +11,7 @@ public class LoggingService : ILoggingService
 {
     private const int MaxEntries = 5000;
     private readonly Dispatcher? _dispatcher;
-    private readonly object _dedupLock = new();
+    private readonly Lock _dedupLock = new();
     private string _lastMessage = "";
     private DateTime _lastMessageTime;
 
@@ -58,7 +58,7 @@ public class LoggingService : ILoggingService
         }
         else
         {
-            dispatcher.BeginInvoke(() => DoAppend(message, isError));
+            _ = dispatcher.BeginInvoke(() => DoAppend(message, isError));
         }
     }
 

@@ -63,7 +63,7 @@ public static class UpdateChecker
                 foreach (var asset in assets.EnumerateArray())
                 {
                     var name = asset.GetProperty("name").GetString()?.ToLowerInvariant() ?? "";
-                    if (name.Contains(appName))
+                    if (name.Contains(appName, StringComparison.Ordinal))
                     {
                         downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? releaseUrl;
                         break;

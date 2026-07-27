@@ -17,17 +17,17 @@ internal sealed class TestRunnerService
     /// <summary>
     /// Raised when a log message should be displayed to the user.
     /// </summary>
-    public event Action<string>? LogMessage;
+    public event EventHandler<EventArgs<string>>? LogMessage;
 
     /// <summary>
     /// Raised when a single CHD file test has completed.
     /// </summary>
-    public event Action<TestResult>? FileCompleted;
+    public event EventHandler<EventArgs<TestResult>>? FileCompleted;
 
     /// <summary>
     /// Raised when all tests have completed with the final summary.
     /// </summary>
-    public event Action<TestSummary>? AllCompleted;
+    public event EventHandler<EventArgs<TestSummary>>? AllCompleted;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestRunnerService"/> class.
@@ -62,7 +62,7 @@ internal sealed class TestRunnerService
             EmitLog("No .chd files found in the selected folder.");
             summary.EndTime = DateTime.Now;
             summary.LogLines = _logLines.ToList();
-            AllCompleted?.Invoke(summary);
+            AllCompleted?.Invoke(this, new EventArgs<TestSummary>(summary));
             return summary;
         }
 
@@ -180,7 +180,7 @@ internal sealed class TestRunnerService
             }
 
             summary.Results.Add(result);
-            FileCompleted?.Invoke(result);
+            FileCompleted?.Invoke(this, new EventArgs<TestResult>(result));
         }
 
         swTotal.Stop();
@@ -205,14 +205,14 @@ internal sealed class TestRunnerService
         EmitLog(new string('=', 60));
 
         summary.LogLines = _logLines.ToList();
-        AllCompleted?.Invoke(summary);
+        AllCompleted?.Invoke(this, new EventArgs<TestSummary>(summary));
         return summary;
     }
 
     private void EmitLog(string message)
     {
         _logLines.Add(message);
-        LogMessage?.Invoke(message);
+        LogMessage?.Invoke(this, new EventArgs<string>(message));
         _logger.Information("{Message}", message);
     }
 
