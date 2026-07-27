@@ -34,8 +34,6 @@ public class MainWindowBase : Window
     private TextBlock StatusText => (TextBlock)FindName("StatusText")!;
     private TextBlock DriveLetterText => (TextBlock)FindName("DriveLetterText")!;
     private Border UpdateBanner => (Border)FindName("UpdateBanner")!;
-    private TextBlock UpdateBannerText => (TextBlock)FindName("UpdateBannerText")!;
-    private Button UpdateBannerButton => (Button)FindName("UpdateBannerButton")!;
 
     /// <summary>
     /// Returns the startup command-line arguments. Override in derived classes to supply application-specific arguments.
@@ -120,7 +118,7 @@ public class MainWindowBase : Window
             if (result is { HasUpdate: true })
             {
                 var message = $"A new version ({result.LatestVersion}) is available!\n\nWould you like to download it?";
-                var caption = "Update Available";
+                const string caption = "Update Available";
                 if (MessageBox.Show(message, caption, MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
                 {
                     try
