@@ -22,7 +22,6 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 - **Command-line interface** for scripting and frontend integration
 - **WPF dark theme UI** with console type dropdown, real-time log output, settings dialog
 - **Settings with DPAPI encryption** — persisted across sessions
-- **Screenshot capture** (F8) — saves foreground window to PNG
 - **Update checker** — polls GitHub releases for new versions
 - **Serilog** structured logging to file and debug output
 - **Single-file self-contained publish** — distribute as one `.exe`
@@ -103,87 +102,86 @@ Opens the main window. Click **Browse** to select a CHD file, pick a filesystem 
 ### Command Line
 
 ```
-CHDMounter.exe <chd_file> <console_type> [mount_point]
-CHDMounter_WinFsp.exe <chd_file> <console_type> [mount_point]
+CHDMounter.exe [/l] [/a] [/s:<index>] <chd_file> [mount_point]
+CHDMounter_WinFsp.exe [/l] [/a] [/s:<index>] <chd_file> [mount_point]
 ```
 
-**Examples:**
-```bash
-# Mount a PS2 game as drive M:
-CHDMounter.exe game.chd ps2 M
+| Argument | Description |
+|----------|-------------|
+| `/l` | Launch Explorer after mount |
+| `/a` | Auto-select drive letter |
+| `/s:<index>` | Select console system by numeric index or name |
+| `<chd_file>` | Path to the .chd file (required) |
+| `[mount_point]` | Drive letter/path for mount (optional, auto-picks if omitted) |
 
-# Mount an Xbox 360 game (auto-select drive letter)
-CHDMounter.exe game.chd xbox360
-
-# Mount as virtual CUE/BIN
-CHDMounter.exe disc.chd cuebin
-
-# Mount with generic ISO 9660 parser
-CHDMounter_WinFsp.exe data.chd iso9660 N
-
-# Using the WinFsp variant for PS3
-CHDMounter_WinFsp.exe game.chd ps3
-```
-
-If `<console_type>` is omitted in GUI mode, a dialog appears asking you to choose.
+**Notes:**
+- Arguments can be in any order
+- Flags are prefixed with `/`
+- A bare numeric argument (not prefixed with `/`) is accepted as a console index shorthand
+- If only `<chd_file>` is provided without flags, a dialog appears asking you to choose
 
 ### Console Type Reference
 
 You can specify the console type using either a **numeric index** or a **string alias** (case-insensitive).
 
-#### Numeric Indexes (1–27)
+#### Numeric Indexes (1–31)
 
 | Index | Console Type | CLI String Aliases |
 |-------|--------------|-------------------|
 | 1 | Amiga CD | `amigacd`, `amiga` |
 | 2 | Amiga CD32 | `amigacd32`, `cd32` |
 | 3 | CD-i | `cdi`, `cd-i` |
-| 4 | Generic ISO 9660 | `iso9660`, `generic`, `iso` |
-| 5 | Generic Raw | *(GUI only)* |
-| 6 | CUE/BIN (Raw) | `cuebin`, `cue` |
-| 7 | CUE/BIN (Cooked) | `cuebin2048`, `cue2048` |
-| 8 | CUE/ISO | `cueiso` |
-| 9 | CUE/BIN/WAV | `cuebinwav`, `cuewav` |
-| 10 | CUE/ISO/WAV | `cueisowav` |
-| 11 | Dreamcast | `dreamcast`, `dc` |
-| 12 | FM Towns | `fmtowns`, `fmt` |
-| 13 | Neo Geo CD | `neogeo`, `ngcd` |
-| 14 | PC Engine CD | `pcengine`, `pce`, `tgcd` |
-| 15 | PC-FX | `pcfx` |
-| 16 | PlayStation (Auto) | `psauto`, `psdetect` |
-| 17 | PS1 | `ps1`, `playstation`, `psx` |
-| 18 | PS2 | `ps2` |
-| 19 | PS3 | `ps3` |
-| 20 | PSP | `psp` |
-| 21 | Saturn | `saturn` |
-| 22 | Sega Genesis / Mega CD | `segagenesis`, `megacd`, `segacd` |
-| 23 | 3DO | `3do` |
-| 24 | Xbox | `xbox` |
-| 25 | Xbox 360 | `xbox360`, `x360` |
-| 26 | X68000 | `x68000`, `x68k` |
-| 27 | Pico | `pico` |
+| 4 | Dreamcast | `dreamcast`, `dc` |
+| 5 | Neo Geo CD | `neogeo`, `ngcd` |
+| 6 | PC Engine CD | `pcengine`, `pce`, `tgcd` |
+| 7 | PC-FX | `pcfx` |
+| 8 | PS1 | `ps1`, `playstation`, `psx` |
+| 9 | PS2 | `ps2` |
+| 10 | PS3 | `ps3` |
+| 11 | Generic Raw | *(GUI only)* |
+| 12 | PSP | `psp` |
+| 13 | Saturn | `saturn` |
+| 14 | Sega Genesis / Mega CD | `segagenesis`, `megacd`, `segacd` |
+| 15 | 3DO | `3do` |
+| 16 | Xbox | `xbox` |
+| 17 | Xbox 360 | `xbox360`, `x360` |
+| 18 | Generic Raw | *(GUI only)* |
+| 19 | Generic ISO 9660 | `iso9660`, `generic`, `iso` |
+| 20 | CUE/BIN (Raw) | `cuebin`, `cue` |
+| 21 | CUE/BIN (Cooked) | `cuebin2048`, `cue2048` |
+| 22 | CUE/ISO | `cueiso` |
+| 23 | CUE/BIN/WAV | `cuebinwav`, `cuewav` |
+| 24 | CUE/ISO/WAV | `cueisowav` |
+| 25 | FM Towns | `fmtowns`, `fmt` |
+| 26 | PlayStation (Auto) | `psauto`, `psdetect` |
+| 27 | X68000 | `x68000`, `x68k` |
+| 28 | Pico | `pico` |
+| 29 | PC-98 | `pc98`, `pc-98`, `nec98` |
+| 30 | Nuon | `nuon` |
+| 31 | Pippin | `pippin` |
 
-#### GUI-Only Console Types
-
-These console types are only available through the GUI dropdown and cannot be specified via command line:
-
-- **PC-98** — ISO 9660
-- **Nuon** — UDF → ISO 9660 fallback (VM Labs Nuon DVD)
-- **Pippin** — HFS → HFS+ → UDF → ISO (Apple Bandai Pippin)
-
-**Examples using numeric indexes:**
+**Examples:**
 ```bash
-# Mount a PS2 game (index 18) as drive M:
-CHDMounter.exe 18 game.chd M
+# Mount a PS2 game as drive M:
+CHDMounter.exe /s:9 game.chd M:
 
-# Mount an Xbox 360 game (index 25)
-CHDMounter.exe 25 game.chd
+# Mount an Xbox 360 game (auto-select drive letter)
+CHDMounter.exe 17 game.chd
 
-# Mount as virtual CUE/BIN (index 6)
-CHDMounter.exe 6 disc.chd
+# Mount a Dreamcast game and launch Explorer
+CHDMounter.exe /l /s:4 game.chd
+
+# Mount as virtual CUE/BIN
+CHDMounter.exe /s:20 disc.chd
+
+# Mount with generic ISO 9660 parser
+CHDMounter_WinFsp.exe /s:19 data.chd N:
+
+# Using the WinFsp variant with console name alias
+CHDMounter_WinFsp.exe game.chd ps3
 ```
 
----
+If no console type is specified, a dialog appears asking you to choose.
 
 ## Build from Source
 
@@ -191,36 +189,6 @@ CHDMounter.exe 6 disc.chd
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Windows 10+ (x64 or ARM64)
-
-### Run with Command-Line Arguments
-
-After building or publishing, you can run the executables with command-line arguments:
-
-```bash
-# Using the Dokan variant
-CHDMounter.exe <chd_file> <console_type> [mount_point]
-
-# Using the WinFsp variant
-CHDMounter_WinFsp.exe <chd_file> <console_type> [mount_point]
-```
-
-**Examples:**
-```bash
-# Mount a PS2 game as drive M:
-CHDMounter.exe game.chd ps2 M
-
-# Mount an Xbox 360 game (auto-select drive letter)
-CHDMounter.exe game.chd xbox360
-
-# Mount as virtual CUE/BIN
-CHDMounter.exe disc.chd cuebin
-
-# Mount with generic ISO 9660 parser
-CHDMounter_WinFsp.exe data.chd iso9660 N
-
-# Using the WinFsp variant for PS3
-CHDMounter_WinFsp.exe game.chd ps3
-```
 
 ---
 

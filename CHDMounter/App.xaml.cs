@@ -52,9 +52,9 @@ public partial class App
                 loggingService.Log("");
             }
 
-            loggingService.Log("Usage: CHDMounter.exe <console_type> <chd_file>");
-            loggingService.Log("Example: CHDMounter.exe 17 game.chd");
-            loggingService.Log("Example: CHDMounter.exe 23 game.chd");
+            loggingService.Log("Usage: CHDMounter.exe [/l] [/a] [/s:<index>] <chd_file> [mount_point]");
+            loggingService.Log("Example: CHDMounter.exe /s:8 game.chd");
+            loggingService.Log("Example: CHDMounter.exe /l /s:4 game.chd M:");
             loggingService.Log("Run without args to open the UI and select filesystem type.");
             loggingService.Log("");
 

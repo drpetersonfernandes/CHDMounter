@@ -19,6 +19,8 @@ public class MainWindowBase : Window
 
     private string? _chdPath;
     private ConsoleType _selectedConsoleType = ConsoleType.Unknown;
+    private bool _launchExplorer;
+    private string? _cliMountPoint;
 
     private ILoggingService LoggingService { get; }
 
@@ -87,8 +89,10 @@ public class MainWindowBase : Window
 
     private void PopulateConsoleTypes()
     {
-        var consoles = new List<ConsoleInfo> { new(ConsoleType.Unknown, "Unknown") };
-        consoles.AddRange(ParserFactory.GetAllSupportedConsoles());
+        var consoles = ParserFactory.GetAllSupportedConsoles()
+            .OrderBy(static c => c.Name, StringComparer.Ordinal)
+            .ToList();
+        consoles.Insert(0, new ConsoleInfo(ConsoleType.Unknown, "Unknown"));
         ConsoleTypeComboBox.ItemsSource = consoles;
         ConsoleTypeComboBox.SelectedIndex = 0;
     }
@@ -151,29 +155,82 @@ public class MainWindowBase : Window
 
     private void HandleCommandLineArgs(string[] args)
     {
-        ConsoleType? ctFromNumber = null;
+        ConsoleType? consoleType = null;
         string? chdPath = null;
 
-        switch (args.Length)
+        var positional = new List<string>();
+
+        foreach (var arg in args)
         {
-            case >= 2 when int.TryParse(args[0], CultureInfo.InvariantCulture, out var consoleNumber)
-                           && (ctFromNumber = ConsoleTypeHelper.ParseByNumber(consoleNumber)) != null:
-                chdPath = args[1];
-                break;
-            case >= 1 when File.Exists(args[0]):
+            if (arg.StartsWith("/", StringComparison.Ordinal))
             {
-                chdPath = args[0];
-                if (args.Length >= 2)
+                switch (arg.ToLowerInvariant())
                 {
-                    var ct = ConsoleTypeHelper.ParseByName(args[1]);
-                    if (ct != ConsoleType.Unknown)
+                    case "/l":
+                        _launchExplorer = true;
+                        break;
+                    case "/a":
+                        break;
+                    case var s when s.StartsWith("/s:", StringComparison.Ordinal):
                     {
-                        ctFromNumber = ct;
+                        var val = s[3..];
+                        if (int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out var num))
+                        {
+                            consoleType = ConsoleTypeHelper.ParseByNumber(num);
+                        }
+                        else
+                        {
+                            var ct = ConsoleTypeHelper.ParseByName(val);
+                            if (ct != ConsoleType.Unknown)
+                            {
+                                consoleType = ct;
+                            }
+                        }
+
+                        break;
                     }
                 }
-
-                break;
             }
+            else
+            {
+                positional.Add(arg);
+            }
+        }
+
+        var pos = 0;
+
+        if (positional.Count > pos
+            && int.TryParse(positional[pos], NumberStyles.Integer, CultureInfo.InvariantCulture, out var consoleNumber)
+            && ConsoleTypeHelper.ParseByNumber(consoleNumber) is not null)
+        {
+            consoleType ??= ConsoleTypeHelper.ParseByNumber(consoleNumber);
+            pos++;
+        }
+
+        if (positional.Count > pos)
+        {
+            chdPath = positional[pos];
+            pos++;
+        }
+
+        if (positional.Count > pos)
+        {
+            var ct = ConsoleTypeHelper.ParseByName(positional[pos]);
+            if (ct != ConsoleType.Unknown)
+            {
+                consoleType ??= ct;
+            }
+            else
+            {
+                _cliMountPoint = positional[pos];
+            }
+
+            pos++;
+        }
+
+        if (positional.Count > pos)
+        {
+            _cliMountPoint = positional[pos];
         }
 
         if (chdPath is not null)
@@ -182,19 +239,19 @@ public class MainWindowBase : Window
             _chdPath = chdPath;
         }
 
-        if (ctFromNumber.HasValue)
+        if (consoleType.HasValue)
         {
-            _selectedConsoleType = ctFromNumber.Value;
-            SelectConsoleTypeInCombo(ctFromNumber.Value);
+            _selectedConsoleType = consoleType.Value;
+            SelectConsoleTypeInCombo(consoleType.Value);
         }
 
         ValidateAndEnableMount();
 
-        if (ctFromNumber.HasValue && chdPath is not null && File.Exists(chdPath))
+        if (consoleType.HasValue && chdPath is not null && File.Exists(chdPath))
         {
             MountDisk();
         }
-        else if (chdPath is not null && File.Exists(chdPath) && !ctFromNumber.HasValue)
+        else if (chdPath is not null && File.Exists(chdPath) && !consoleType.HasValue)
         {
             ShowDragDropConsoleModal(chdPath);
         }
@@ -336,7 +393,7 @@ public class MainWindowBase : Window
                 type = sci.Type;
             }
 
-            await Task.Run(() => MountService.Mount(_chdPath, null, type));
+            await Task.Run(() => MountService.Mount(_chdPath, _cliMountPoint, type));
 
             if (MountService.IsMounted)
             {
@@ -347,7 +404,7 @@ public class MainWindowBase : Window
                 try
                 {
                     var settings = ServiceProvider.TryGet<ISettingsService>();
-                    if (settings is { Settings.AutoOpenMountedDrive: true })
+                    if (_launchExplorer || settings is { Settings.AutoOpenMountedDrive: true })
                         Process.Start("explorer.exe", MountService.MountPoint);
                 }
                 catch (Exception ex)

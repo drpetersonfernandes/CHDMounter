@@ -55,9 +55,9 @@ public partial class App
                 loggingService.Log("");
             }
 
-            loggingService.Log("Usage: CHDMounter_WinFsp.exe <console_type> <chd_file>");
-            loggingService.Log("Example: CHDMounter_WinFsp.exe 17 game.chd");
-            loggingService.Log("Example: CHDMounter_WinFsp.exe 23 game.chd");
+            loggingService.Log("Usage: CHDMounter_WinFsp.exe [/l] [/a] [/s:<index>] <chd_file> [mount_point]");
+            loggingService.Log("Example: CHDMounter_WinFsp.exe /s:8 game.chd");
+            loggingService.Log("Example: CHDMounter_WinFsp.exe /l /s:4 game.chd M:");
             loggingService.Log("Run without args to open the UI and select filesystem type.");
             loggingService.Log("");
 

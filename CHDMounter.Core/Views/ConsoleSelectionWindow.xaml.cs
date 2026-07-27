@@ -20,7 +20,9 @@ public partial class ConsoleSelectionWindow
     {
         InitializeComponent();
 
-        var consoles = ParserFactory.GetAllSupportedConsoles();
+        var consoles = ParserFactory.GetAllSupportedConsoles()
+            .OrderBy(static c => c.Name, StringComparer.Ordinal)
+            .ToList();
         ConsoleComboBox.ItemsSource = consoles;
         ConsoleComboBox.DisplayMemberPath = "Name";
         ConsoleComboBox.SelectedIndex = 0;

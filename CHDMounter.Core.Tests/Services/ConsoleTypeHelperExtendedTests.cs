@@ -6,30 +6,34 @@ public class ConsoleTypeHelperExtendedTests
     [InlineData(1, ConsoleType.AmigaCd)]
     [InlineData(2, ConsoleType.AmigaCd32)]
     [InlineData(3, ConsoleType.CDi)]
-    [InlineData(4, ConsoleType.GenericIso9660)]
-    [InlineData(5, ConsoleType.GenericIsoRaw)]
-    [InlineData(6, ConsoleType.GenericCueBin2352Default)]
-    [InlineData(7, ConsoleType.GenericCueBin2048)]
-    [InlineData(8, ConsoleType.GenericCueIso)]
-    [InlineData(9, ConsoleType.GenericCueBinWav)]
-    [InlineData(10, ConsoleType.GenericCueIsoWav)]
-    [InlineData(11, ConsoleType.Dreamcast)]
-    [InlineData(12, ConsoleType.FmTowns)]
-    [InlineData(13, ConsoleType.NeoGeoCd)]
-    [InlineData(14, ConsoleType.PcEngineCd)]
-    [InlineData(15, ConsoleType.PcFx)]
-    [InlineData(16, ConsoleType.PlayStation)]
-    [InlineData(17, ConsoleType.Ps1)]
-    [InlineData(18, ConsoleType.Ps2)]
-    [InlineData(19, ConsoleType.Ps3)]
-    [InlineData(20, ConsoleType.Psp)]
-    [InlineData(21, ConsoleType.Saturn)]
-    [InlineData(22, ConsoleType.SegaGenesisCd)]
-    [InlineData(23, ConsoleType.ThreeDo)]
-    [InlineData(24, ConsoleType.Xbox)]
-    [InlineData(25, ConsoleType.Xbox360)]
-    [InlineData(26, ConsoleType.X68000)]
-    [InlineData(27, ConsoleType.Pico)]
+    [InlineData(4, ConsoleType.Dreamcast)]
+    [InlineData(5, ConsoleType.NeoGeoCd)]
+    [InlineData(6, ConsoleType.PcEngineCd)]
+    [InlineData(7, ConsoleType.PcFx)]
+    [InlineData(8, ConsoleType.Ps1)]
+    [InlineData(9, ConsoleType.Ps2)]
+    [InlineData(10, ConsoleType.Ps3)]
+    [InlineData(11, ConsoleType.GenericIsoRaw)]
+    [InlineData(12, ConsoleType.Psp)]
+    [InlineData(13, ConsoleType.Saturn)]
+    [InlineData(14, ConsoleType.SegaGenesisCd)]
+    [InlineData(15, ConsoleType.ThreeDo)]
+    [InlineData(16, ConsoleType.Xbox)]
+    [InlineData(17, ConsoleType.Xbox360)]
+    [InlineData(18, ConsoleType.GenericIsoRaw)]
+    [InlineData(19, ConsoleType.GenericIso9660)]
+    [InlineData(20, ConsoleType.GenericCueBin2352Default)]
+    [InlineData(21, ConsoleType.GenericCueBin2048)]
+    [InlineData(22, ConsoleType.GenericCueIso)]
+    [InlineData(23, ConsoleType.GenericCueBinWav)]
+    [InlineData(24, ConsoleType.GenericCueIsoWav)]
+    [InlineData(25, ConsoleType.FmTowns)]
+    [InlineData(26, ConsoleType.PlayStation)]
+    [InlineData(27, ConsoleType.X68000)]
+    [InlineData(28, ConsoleType.Pico)]
+    [InlineData(29, ConsoleType.Pc98)]
+    [InlineData(30, ConsoleType.Nuon)]
+    [InlineData(31, ConsoleType.Pippin)]
     public void ParseByNumberReturnsExpectedType(int number, ConsoleType expected)
     {
         var result = ConsoleTypeHelper.ParseByNumber(number);
@@ -39,7 +43,7 @@ public class ConsoleTypeHelperExtendedTests
     [Theory]
     [InlineData(-1)]
     [InlineData(0)]
-    [InlineData(28)]
+    [InlineData(32)]
     [InlineData(100)]
     [InlineData(int.MaxValue)]
     [InlineData(int.MinValue)]
@@ -91,7 +95,7 @@ public class ConsoleTypeHelperExtendedTests
     public void ParseByNumberReturnsNullForBoundaryValues()
     {
         Assert.Null(ConsoleTypeHelper.ParseByNumber(0));
-        Assert.Null(ConsoleTypeHelper.ParseByNumber(28));
+        Assert.Null(ConsoleTypeHelper.ParseByNumber(32));
     }
 
     [Fact]
@@ -106,7 +110,8 @@ public class ConsoleTypeHelperExtendedTests
             "fmt", "pce", "tgcd", "megacd", "segagenesis", "cd32",
             "amiga", "iso9660", "generic", "iso", "cuebin", "cue",
             "cuebin2048", "cue2048", "cueiso", "cuebinwav", "cuewav",
-            "cueisowav", "x68k", "ngcd", "cd-i"
+            "cueisowav", "x68k", "ngcd", "cd-i",
+            "pc98", "pc-98", "nec98", "nuon", "pippin"
         };
 
         foreach (var alias in aliases)
@@ -131,7 +136,7 @@ public class ConsoleTypeHelperExtendedTests
     [Fact]
     public void ParseByNumberSequentialReturnsAllNonNull()
     {
-        for (var i = 1; i <= 27; i++)
+        for (var i = 1; i <= 31; i++)
         {
             var result = ConsoleTypeHelper.ParseByNumber(i);
             Assert.NotNull(result);
@@ -142,13 +147,13 @@ public class ConsoleTypeHelperExtendedTests
     public void ParseByNumberReturnsDistinctValues()
     {
         var results = new List<ConsoleType>();
-        for (var i = 1; i <= 27; i++)
+        for (var i = 1; i <= 31; i++)
         {
             var result = ConsoleTypeHelper.ParseByNumber(i);
             Assert.NotNull(result);
             results.Add(result.Value);
         }
 
-        Assert.Equal(27, results.Distinct().Count());
+        Assert.Equal(30, results.Distinct().Count());
     }
 }

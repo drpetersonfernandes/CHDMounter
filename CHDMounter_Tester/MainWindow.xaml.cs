@@ -117,7 +117,9 @@ public partial class MainWindow
 
     private void PopulateConsoleTypes()
     {
-        var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
+        var consoles = ParserFactory.GetAllSupportedConsoles()
+            .OrderBy(static c => c.Name, StringComparer.Ordinal)
+            .ToList();
         ConsoleComboBox.ItemsSource = consoles;
         ConsoleComboBox.DisplayMemberPath = "Name";
         ConsoleComboBox.SelectedValuePath = "Type";
