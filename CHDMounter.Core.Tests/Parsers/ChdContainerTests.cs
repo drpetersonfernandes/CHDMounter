@@ -166,7 +166,7 @@ public class ChdContainerTests
         };
         container.BuildFromFsNode(root);
 
-        var entry = container.Entries.First(e => e.Name == "game.iso");
+        var entry = container.Entries.First(e => string.Equals(e.Name, "game.iso", StringComparison.Ordinal));
         Assert.Equal(150u, entry.Lba);
         Assert.Equal(1024000ul, entry.Size);
         Assert.Equal(2, entry.FileNumber);
@@ -225,7 +225,7 @@ public class ChdContainerTests
         };
         container.BuildFromFsNode(root);
 
-        var entry = container.Entries.First(e => e.Name == "multi.bin");
+        var entry = container.Entries.First(e => string.Equals(e.Name, "multi.bin", StringComparison.Ordinal));
         Assert.Equal(2, entry.Extents.Count);
         Assert.Equal(100u, entry.Extents[0].Lba);
         Assert.Equal(2048ul, entry.Extents[0].Size);
@@ -253,7 +253,7 @@ public class ChdContainerTests
         };
         container.BuildFromFsNode(root);
 
-        var entry = container.Entries.First(e => e.Name == "dated.bin");
+        var entry = container.Entries.First(e => string.Equals(e.Name, "dated.bin", StringComparison.Ordinal));
         Assert.Equal(modTime, entry.ModifiedTime);
     }
 
@@ -277,7 +277,7 @@ public class ChdContainerTests
         };
         container.BuildFromFsNode(root);
 
-        var entry = container.Entries.First(e => e.Name == "embedded.bin");
+        var entry = container.Entries.First(e => string.Equals(e.Name, "embedded.bin", StringComparison.Ordinal));
         Assert.True(entry.IsEmbedded);
         Assert.Equal(24u, entry.Offset);
     }
@@ -383,8 +383,8 @@ public class ChdContainerTests
 
         var children = container.ListDirectory("\\").ToList();
         Assert.Equal(2, children.Count);
-        Assert.Contains(children, e => e.Name == "a.bin");
-        Assert.Contains(children, e => e.Name == "b.bin");
+        Assert.Contains(children, e => string.Equals(e.Name, "a.bin", StringComparison.Ordinal));
+        Assert.Contains(children, e => string.Equals(e.Name, "b.bin", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -420,8 +420,8 @@ public class ChdContainerTests
         };
         container.BuildFromFsNode(root2);
         Assert.Equal(2, container.Entries.Count);
-        Assert.Contains(container.Entries, e => e.Name == "new.bin");
-        Assert.DoesNotContain(container.Entries, e => e.Name == "old.bin");
+        Assert.Contains(container.Entries, e => string.Equals(e.Name, "new.bin", StringComparison.Ordinal));
+        Assert.DoesNotContain(container.Entries, e => string.Equals(e.Name, "old.bin", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -550,8 +550,8 @@ public class ChdContainerTests
 
         var children = container.ListDirectory("\\dir").ToList();
         Assert.Equal(2, children.Count);
-        Assert.Contains(children, e => e.Name == "a.bin");
-        Assert.Contains(children, e => e.Name == "b.bin");
+        Assert.Contains(children, e => string.Equals(e.Name, "a.bin", StringComparison.Ordinal));
+        Assert.Contains(children, e => string.Equals(e.Name, "b.bin", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -574,7 +574,7 @@ public class ChdContainerTests
         };
         container.BuildFromFsNode(root);
 
-        var entry = container.Entries.First(e => e.Name == "file.bin");
+        var entry = container.Entries.First(e => string.Equals(e.Name, "file.bin", StringComparison.Ordinal));
         Assert.Equal(@"\sub\file.bin", entry.FullPath);
     }
 
@@ -593,7 +593,7 @@ public class ChdContainerTests
         };
         container.BuildFromFsNode(root);
 
-        var entry = container.Entries.First(e => e.Name == "image.iso");
+        var entry = container.Entries.First(e => string.Equals(e.Name, "image.iso", StringComparison.Ordinal));
         Assert.True(entry.IsRawPassthrough);
     }
 }

@@ -66,7 +66,7 @@ public class LoggingService : ILoggingService
     {
         lock (_dedupLock)
         {
-            if (message == _lastMessage && (DateTime.Now - _lastMessageTime).TotalMilliseconds < 100)
+            if (string.Equals(message, _lastMessage, StringComparison.Ordinal) && (DateTime.Now - _lastMessageTime).TotalMilliseconds < 100)
                 return;
 
             _lastMessage = message;

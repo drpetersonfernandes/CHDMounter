@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using CHDMounter.Core.Logging;
 
@@ -75,8 +76,8 @@ public class DiagnosticLoggerExtendedTests : IDisposable
         {
             DiagnosticLogger.Initialize(appName);
             Assert.NotNull(DiagnosticLogger.LogFilePath);
-            Assert.Contains("debug_", DiagnosticLogger.LogFilePath);
-            Assert.EndsWith(".log", DiagnosticLogger.LogFilePath);
+            Assert.Contains("debug_", DiagnosticLogger.LogFilePath, StringComparison.Ordinal);
+            Assert.EndsWith(".log", DiagnosticLogger.LogFilePath, StringComparison.Ordinal);
         }
         finally
         {
@@ -94,8 +95,8 @@ public class DiagnosticLoggerExtendedTests : IDisposable
         try
         {
             DiagnosticLogger.Initialize(appName);
-            Assert.Contains(appName, DiagnosticLogger.AppDataFolder);
-            Assert.EndsWith(appName, DiagnosticLogger.AppDataFolder);
+            Assert.Contains(appName, DiagnosticLogger.AppDataFolder, StringComparison.Ordinal);
+            Assert.EndsWith(appName, DiagnosticLogger.AppDataFolder, StringComparison.Ordinal);
         }
         finally
         {
@@ -114,7 +115,7 @@ public class DiagnosticLoggerExtendedTests : IDisposable
         {
             DiagnosticLogger.Initialize(appName);
             Assert.NotNull(DiagnosticLogger.AppDataLogFolder);
-            Assert.EndsWith("logs", DiagnosticLogger.AppDataLogFolder);
+            Assert.EndsWith("logs", DiagnosticLogger.AppDataLogFolder, StringComparison.Ordinal);
         }
         finally
         {
@@ -128,13 +129,13 @@ public class DiagnosticLoggerExtendedTests : IDisposable
     public void InitializeLogFilePathContainsTimestamp()
     {
         var appName = "CHDMounterTest_" + Guid.NewGuid().ToString("N")[..8];
-        var dateStamp = DateTime.Now.ToString("yyyyMMdd");
+        var dateStamp = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 
         try
         {
             DiagnosticLogger.Initialize(appName);
             Assert.NotNull(DiagnosticLogger.LogFilePath);
-            Assert.Contains(dateStamp, DiagnosticLogger.LogFilePath);
+            Assert.Contains(dateStamp, DiagnosticLogger.LogFilePath, StringComparison.Ordinal);
         }
         finally
         {

@@ -15,7 +15,7 @@ public class DiagnosticLoggerTests
     public void GetAppDataFolderEndsWithAppName()
     {
         var result = DiagnosticLogger.GetAppDataFolder("MyTestApp");
-        Assert.EndsWith("MyTestApp", result);
+        Assert.EndsWith("MyTestApp", result, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class DiagnosticLoggerTests
     {
         var result = DiagnosticLogger.GetAppDataFolder("TestApp");
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        Assert.StartsWith(localAppData, result);
+        Assert.StartsWith(localAppData, result, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -59,8 +59,7 @@ public class LogTextWriterExtendedTests
         using var sw = new StringWriter();
         using var writer = CreateLogTextWriter(sw);
 
-        var exception = Record.Exception(() => writer.WriteLine((string?)null));
-        Assert.Null(exception);
+        writer.WriteLine((string?)null);
     }
 
     [Fact]
@@ -106,8 +105,7 @@ public class LogTextWriterExtendedTests
         using var sw = new StringWriter();
         using var writer = CreateLogTextWriter(sw);
 
-        var exception = Record.Exception(() => writer.WriteLine(""));
-        Assert.Null(exception);
+        writer.WriteLine("");
     }
 
     [Fact]
@@ -118,16 +116,14 @@ public class LogTextWriterExtendedTests
         using var writer = CreateLogTextWriter(sw);
 
         // Just verify no exception when no ILoggingService is registered
-        var exception = Record.Exception(() => writer.Write('X'));
-        Assert.Null(exception);
+        writer.Write('X');
     }
 
     [Fact]
     public void LogTextWriterConstructorWithValidWriterDoesNotThrow()
     {
         using var sw = new StringWriter();
-        var exception = Record.Exception(() => new LogTextWriter(sw));
-        Assert.Null(exception);
+        _ = new LogTextWriter(sw);
     }
 
     [Fact]

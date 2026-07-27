@@ -1,3 +1,4 @@
+using System.Globalization;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -55,7 +56,7 @@ internal sealed class PdfExportService
                     .FontSize(22).Bold().FontColor(Colors.Blue.Darken3);
 
                 row.RelativeItem().PaddingTop(10).AlignRight()
-                    .Text(DateTime.Now.ToString("yyyy-MM-dd HH:mm"))
+                    .Text(DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture))
                     .FontSize(10).FontColor(Colors.Grey.Medium);
             });
 
@@ -80,12 +81,12 @@ internal sealed class PdfExportService
                 row.RelativeItem().Column(c =>
                 {
                     c.Item().Text("Started").FontSize(9).FontColor(Colors.Grey.Medium);
-                    c.Item().Text(summary.StartTime.ToString("yyyy-MM-dd HH:mm:ss")).FontSize(11);
+                    c.Item().Text(summary.StartTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)).FontSize(11);
                 });
                 row.RelativeItem().Column(c =>
                 {
                     c.Item().Text("Completed").FontSize(9).FontColor(Colors.Grey.Medium);
-                    c.Item().Text(summary.EndTime.ToString("yyyy-MM-dd HH:mm:ss")).FontSize(11);
+                    c.Item().Text(summary.EndTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)).FontSize(11);
                 });
                 row.RelativeItem().Column(c =>
                 {
@@ -102,9 +103,9 @@ internal sealed class PdfExportService
         {
             col.Item().PaddingBottom(15).Row(row =>
             {
-                row.RelativeItem().PaddingRight(4).Element(StatBox(Colors.Blue.Darken2, "Total Files", summary.TotalFiles.ToString()));
-                row.RelativeItem().PaddingLeft(2).PaddingRight(2).Element(StatBox(Colors.Green.Darken2, "Succeeded", summary.SuccessCount.ToString()));
-                row.RelativeItem().PaddingLeft(2).PaddingRight(2).Element(StatBox(Colors.Red.Darken2, "Failed", summary.FailCount.ToString()));
+                row.RelativeItem().PaddingRight(4).Element(StatBox(Colors.Blue.Darken2, "Total Files", summary.TotalFiles.ToString(CultureInfo.InvariantCulture)));
+                row.RelativeItem().PaddingLeft(2).PaddingRight(2).Element(StatBox(Colors.Green.Darken2, "Succeeded", summary.SuccessCount.ToString(CultureInfo.InvariantCulture)));
+                row.RelativeItem().PaddingLeft(2).PaddingRight(2).Element(StatBox(Colors.Red.Darken2, "Failed", summary.FailCount.ToString(CultureInfo.InvariantCulture)));
                 row.RelativeItem().PaddingLeft(2).PaddingRight(2).Element(StatBox(Colors.Orange.Darken2, "Avg Time", $"{summary.AverageDuration.TotalSeconds:F2}s"));
                 row.RelativeItem().PaddingLeft(4).Element(StatBox(Colors.Purple.Darken2, "Total Size", FormatBytes((ulong)summary.TotalBytes)));
             });
@@ -150,7 +151,7 @@ internal sealed class PdfExportService
                     table.Cell().Background(bgColor).Padding(4).AlignRight()
                         .Text(isSuccess ? FormatBytes(result.VolumeSize) : "-").Style(rowStyle);
                     table.Cell().Background(bgColor).Padding(4).AlignRight()
-                        .Text(isSuccess ? (result.FileCount + result.DirectoryCount).ToString("N0") : "-").Style(rowStyle);
+                        .Text(isSuccess ? (result.FileCount + result.DirectoryCount).ToString("N0", CultureInfo.InvariantCulture) : "-").Style(rowStyle);
                     table.Cell().Background(bgColor).Padding(4).AlignRight()
                         .Text($"{result.Duration.TotalSeconds:F2}s").Style(rowStyle);
                 }

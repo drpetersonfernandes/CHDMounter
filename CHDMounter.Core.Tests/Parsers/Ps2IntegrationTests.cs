@@ -98,7 +98,7 @@ public class Ps2IntegrationTests
 
                 Assert.True(files > 10, $"Suspiciously few files parsed: {files}");
 
-                var hasSystemCnf = root.Children.Any(static n => n.Name == "SYSTEM.CNF");
+                var hasSystemCnf = root.Children.Any(static n => string.Equals(n.Name, "SYSTEM.CNF", StringComparison.Ordinal));
                 var hasIop = root.Children.Any(static n => n.Name.StartsWith("IOP", StringComparison.OrdinalIgnoreCase));
                 output.WriteLine($"SYSTEM.CNF: {(hasSystemCnf ? "YES" : "NO")}  IOP modules: {(hasIop ? "YES" : "NO")}");
                 return true;
@@ -142,7 +142,7 @@ public class Ps2IntegrationTests
                     {
                         var bytesRead = container.ReadFile(systemCnf, 0, buf, 0, buf.Length);
                         var text = Encoding.ASCII.GetString(buf, 0, bytesRead);
-                        output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "").Replace("\n", " / ")}");
+                        output.WriteLine($"SYSTEM.CNF ({bytesRead} bytes): {text[..Math.Min(text.Length, 200)].Replace("\r", "", StringComparison.Ordinal).Replace("\n", " / ", StringComparison.Ordinal)}");
                     }
                 }
                 return true;

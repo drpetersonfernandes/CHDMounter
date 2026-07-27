@@ -1,6 +1,7 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -153,7 +154,7 @@ public class MainWindowBase : Window
 
         switch (args.Length)
         {
-            case >= 2 when int.TryParse(args[0], out var consoleNumber)
+            case >= 2 when int.TryParse(args[0], CultureInfo.InvariantCulture, out var consoleNumber)
                            && (ctFromNumber = ConsoleTypeHelper.ParseByNumber(consoleNumber)) != null:
                 chdPath = args[1];
                 break;

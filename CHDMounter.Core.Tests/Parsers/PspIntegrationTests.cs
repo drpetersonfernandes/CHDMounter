@@ -116,7 +116,7 @@ public class PspIntegrationTests
                 Assert.True(files > 5, $"Suspiciously few files parsed: {files}");
 
                 var hasPspGame = root.Children.Any(static n => n is { Name: "PSP_GAME", IsDirectory: true });
-                var hasUmdDataBin = root.Children.Any(static n => n.Name == "UMD_DATA.BIN");
+                var hasUmdDataBin = root.Children.Any(static n => string.Equals(n.Name, "UMD_DATA.BIN", StringComparison.Ordinal));
                 output.WriteLine($"PSP_GAME: {(hasPspGame ? "YES" : "NO")}  UMD_DATA.BIN: {(hasUmdDataBin ? "YES" : "NO")}");
             }
             finally

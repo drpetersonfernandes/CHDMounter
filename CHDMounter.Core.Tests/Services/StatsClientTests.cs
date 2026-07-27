@@ -6,21 +6,19 @@ public class StatsClientTests
 {
     private static string InvokeGetApiKey()
     {
-        var method = typeof(StatsClient).GetMethod("GetApiKey", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(AppInfoHelper).GetMethod("GetApiKey", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(method);
         return (string)method.Invoke(null, null!)!;
     }
 
     private static string InvokeGetAppId()
     {
-        var method = typeof(StatsClient).GetMethod("GetAppId", BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(method);
-        return (string)method.Invoke(null, null!)!;
+        return AppInfoHelper.GetAppName().ToLowerInvariant();
     }
 
     private static string InvokeGetVersion()
     {
-        var method = typeof(StatsClient).GetMethod("GetVersion", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(AppInfoHelper).GetMethod("GetVersion", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(method);
         return (string)method.Invoke(null, null!)!;
     }
@@ -80,7 +78,7 @@ public class StatsClientTests
     public void GetVersionReturnsVersionWithDots()
     {
         var result = InvokeGetVersion();
-        Assert.Contains(".", result);
+        Assert.Contains(".", result, StringComparison.Ordinal);
     }
 
     [Fact]

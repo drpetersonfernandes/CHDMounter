@@ -38,10 +38,7 @@ public class DriveHelperExtendedTests
     public void PickDriveLetterIsNotCurrentlyMounted()
     {
         var result = DriveHelper.PickDriveLetter();
-        var drives = DriveInfo.GetDrives().Select(d => d.Name).ToList();
 
-        // The picked drive should not be in the list of existing drives
-        // unless all drives are taken (which is unlikely in test)
         Assert.NotNull(result);
         Assert.True(result.Length == 2);
     }

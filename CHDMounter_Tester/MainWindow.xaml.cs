@@ -252,54 +252,64 @@ public partial class MainWindow
 
     private async void ExportPdfButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_lastSummary is null)
+        try
         {
-            MessageBox.Show("No test results to export.", "Export PDF",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
-        var dialog = new SaveFileDialog
-        {
-            Title = "Export Test Summary to PDF",
-            Filter = "PDF files (*.pdf)|*.pdf",
-            DefaultExt = ".pdf",
-            FileName = $"CHD_Test_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf"
-        };
-
-        if (dialog.ShowDialog() == true)
-        {
-            try
+            if (_lastSummary is null)
             {
-                ExportPdfButton.IsEnabled = false;
-                StatusText.Text = "Exporting PDF...";
+                MessageBox.Show("No test results to export.", "Export PDF",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
-                var summary = _lastSummary;
-                var path = dialog.FileName;
-                await Task.Run(() =>
+            var dialog = new SaveFileDialog
+            {
+                Title = "Export Test Summary to PDF",
+                Filter = "PDF files (*.pdf)|*.pdf",
+                DefaultExt = ".pdf",
+                FileName = $"CHD_Test_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
                 {
-                    var exporter = new PdfExportService();
-                    exporter.ExportToPdf(summary, path);
-                });
+                    ExportPdfButton.IsEnabled = false;
+                    StatusText.Text = "Exporting PDF...";
 
-                AppendLog($"[Export] Summary exported to: {path}", GreenBrush);
-                _logger.Information("Summary exported to PDF: {Path}", path);
+                    var summary = _lastSummary;
+                    var path = dialog.FileName;
+                    await Task.Run(() =>
+                    {
+                        var exporter = new PdfExportService();
+                        exporter.ExportToPdf(summary, path);
+                    });
 
-                MessageBox.Show($"Report exported successfully to:\n{path}",
-                    "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                    AppendLog($"[Export] Summary exported to: {path}", GreenBrush);
+                    _logger.Information("Summary exported to PDF: {Path}", path);
+
+                    MessageBox.Show($"Report exported successfully to:\n{path}",
+                        "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    AppendLog($"[Export Error] {ex.Message}", RedBrush);
+                    _logger.Error(ex, "Failed to export PDF");
+                    MessageBox.Show($"Failed to export PDF: {ex.Message}",
+                        "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                finally
+                {
+                    ExportPdfButton.IsEnabled = true;
+                    StatusText.Text = "Ready";
+                }
             }
-            catch (Exception ex)
-            {
-                AppendLog($"[Export Error] {ex.Message}", RedBrush);
-                _logger.Error(ex, "Failed to export PDF");
-                MessageBox.Show($"Failed to export PDF: {ex.Message}",
-                    "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                ExportPdfButton.IsEnabled = true;
-                StatusText.Text = "Ready";
-            }
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"[Export Error] {ex.Message}", RedBrush);
+            _logger.Error(ex, "Failed to export PDF");
+            MessageBox.Show($"Failed to export PDF: {ex.Message}",
+                "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

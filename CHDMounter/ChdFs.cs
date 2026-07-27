@@ -167,7 +167,7 @@ internal sealed class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
         try
         {
             return Regex.IsMatch(name,
-                "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$",
+                "^" + Regex.Escape(pattern).Replace("\\*", ".*", StringComparison.Ordinal).Replace("\\?", ".", StringComparison.Ordinal) + "$",
                 RegexOptions.IgnoreCase);
         }
         catch (Exception ex)

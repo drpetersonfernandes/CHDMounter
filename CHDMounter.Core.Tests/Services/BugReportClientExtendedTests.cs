@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 
 namespace CHDMounter.Core.Tests.Services;
@@ -27,21 +28,21 @@ public class BugReportClientExtendedTests
 
     private static string InvokeGetApiKey()
     {
-        var method = typeof(BugReportClient).GetMethod("GetApiKey", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(AppInfoHelper).GetMethod("GetApiKey", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(method);
         return (string)method.Invoke(null, null!)!;
     }
 
     private static string InvokeGetAppName()
     {
-        var method = typeof(BugReportClient).GetMethod("GetAppName", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(AppInfoHelper).GetMethod("GetAppName", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(method);
         return (string)method.Invoke(null, null!)!;
     }
 
     private static string InvokeGetVersion()
     {
-        var method = typeof(BugReportClient).GetMethod("GetVersion", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(AppInfoHelper).GetMethod("GetVersion", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(method);
         return (string)method.Invoke(null, null!)!;
     }
@@ -107,7 +108,7 @@ public class BugReportClientExtendedTests
     {
         var result = InvokeTruncate("hello\nworld\ttab", 10);
         Assert.Equal(10, result.Length);
-        Assert.EndsWith("...", result);
+        Assert.EndsWith("...", result, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -116,7 +117,7 @@ public class BugReportClientExtendedTests
         const string input = "\u00e9\u00e8\u00ea\u00eb\u00ef\u00f4\u00fb\u00fc";
         var result = InvokeTruncate(input, 5);
         Assert.Equal(5, result.Length);
-        Assert.EndsWith("...", result);
+        Assert.EndsWith("...", result, StringComparison.Ordinal);
     }
 
     // --- BuildEnvironmentDetails ---
@@ -125,70 +126,70 @@ public class BugReportClientExtendedTests
     public void BuildEnvironmentDetailsContainsDate()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Date:", result);
-        Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd"), result);
+        Assert.Contains("Date:", result, StringComparison.Ordinal);
+        Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsApplicationName()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Application Name:", result);
+        Assert.Contains("Application Name:", result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsApplicationVersion()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Application Version:", result);
+        Assert.Contains("Application Version:", result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsOsVersion()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("OS Version:", result);
-        Assert.Contains(Environment.OSVersion.ToString(), result);
+        Assert.Contains("OS Version:", result, StringComparison.Ordinal);
+        Assert.Contains(Environment.OSVersion.ToString(), result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsArchitecture()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Architecture:", result);
+        Assert.Contains("Architecture:", result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsBitness()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Bitness:", result);
+        Assert.Contains("Bitness:", result, StringComparison.Ordinal);
         var expected = Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit";
-        Assert.Contains(expected, result);
+        Assert.Contains(expected, result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsProcessorCount()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Processor Count:", result);
-        Assert.Contains(Environment.ProcessorCount.ToString(), result);
+        Assert.Contains("Processor Count:", result, StringComparison.Ordinal);
+        Assert.Contains(Environment.ProcessorCount.ToString(CultureInfo.InvariantCulture), result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsBaseDirectory()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Base Directory:", result);
-        Assert.Contains(AppContext.BaseDirectory, result);
+        Assert.Contains("Base Directory:", result, StringComparison.Ordinal);
+        Assert.Contains(AppContext.BaseDirectory, result, StringComparison.Ordinal);
     }
 
     [Fact]
     public void BuildEnvironmentDetailsContainsTempPath()
     {
         var result = InvokeBuildEnvironmentDetails();
-        Assert.Contains("Temp Path:", result);
-        Assert.Contains(Path.GetTempPath(), result);
+        Assert.Contains("Temp Path:", result, StringComparison.Ordinal);
+        Assert.Contains(Path.GetTempPath(), result, StringComparison.Ordinal);
     }
 
     // --- BuildExceptionDetails ---
@@ -198,8 +199,8 @@ public class BugReportClientExtendedTests
     {
         var ex = new InvalidOperationException("test error");
         var result = InvokeBuildExceptionDetails(ex);
-        Assert.Contains("Type:", result);
-        Assert.Contains("System.InvalidOperationException", result);
+        Assert.Contains("Type:", result, StringComparison.Ordinal);
+        Assert.Contains("System.InvalidOperationException", result, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -207,8 +208,8 @@ public class BugReportClientExtendedTests
     {
         var ex = new InvalidOperationException("test error message");
         var result = InvokeBuildExceptionDetails(ex);
-        Assert.Contains("Message:", result);
-        Assert.Contains("test error message", result);
+        Assert.Contains("Message:", result, StringComparison.Ordinal);
+        Assert.Contains("test error message", result, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -217,8 +218,8 @@ public class BugReportClientExtendedTests
         var ex = new Exception("test");
         ex.Source = "TestSource";
         var result = InvokeBuildExceptionDetails(ex);
-        Assert.Contains("Source:", result);
-        Assert.Contains("TestSource", result);
+        Assert.Contains("Source:", result, StringComparison.Ordinal);
+        Assert.Contains("TestSource", result, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -235,8 +236,8 @@ public class BugReportClientExtendedTests
         }
 
         var result = InvokeBuildExceptionDetails(ex);
-        Assert.Contains("StackTrace:", result);
-        Assert.Contains("BuildExceptionDetailsContainsStackTrace", result);
+        Assert.Contains("StackTrace:", result, StringComparison.Ordinal);
+        Assert.Contains("BuildExceptionDetailsContainsStackTrace", result, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -244,7 +245,7 @@ public class BugReportClientExtendedTests
     {
         var ex = new Exception("test") { Source = null! };
         var result = InvokeBuildExceptionDetails(ex);
-        Assert.Contains("Source:", result);
+        Assert.Contains("Source:", result, StringComparison.Ordinal);
     }
 
     // --- GetApiKey ---
@@ -296,7 +297,7 @@ public class BugReportClientExtendedTests
         var result = InvokeGetVersion();
         // Should be parseable as a version or at least a non-empty string
         Assert.NotNull(result);
-        Assert.Contains(".", result);
+        Assert.Contains(".", result, StringComparison.Ordinal);
     }
 
     // --- SendException ---

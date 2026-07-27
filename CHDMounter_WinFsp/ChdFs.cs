@@ -58,8 +58,6 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 
     public override void Close(object FileNode, object FileDesc)
     {
-        FileNode = null!;
-        FileDesc = null!;
     }
 
     private int OpenOrCreate(string FileName, out object FileNode, out object FileDesc,

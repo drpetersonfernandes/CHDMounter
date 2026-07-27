@@ -60,6 +60,6 @@ public class BugReportClientTests
         var longString = new string('a', 5000);
         var result = InvokeTruncate(longString, 4000);
         Assert.Equal(4000, result.Length);
-        Assert.EndsWith("...", result);
+        Assert.EndsWith("...", result, StringComparison.Ordinal);
     }
 }

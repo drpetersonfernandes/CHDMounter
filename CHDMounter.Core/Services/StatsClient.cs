@@ -41,7 +41,7 @@ public static class StatsClient
             request.Headers.Add("Authorization", $"Bearer {AppInfoHelper.GetApiKey()}");
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            await Client.SendAsync(request, cts.Token);
+            await Client.SendAsync(request, cts.Token).ConfigureAwait(false);
         }
         catch
         {

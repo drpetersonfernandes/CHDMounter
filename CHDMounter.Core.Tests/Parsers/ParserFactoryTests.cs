@@ -40,7 +40,7 @@ public class ParserFactoryTests
     {
         var consoles = ParserFactory.GetAllSupportedConsoles();
         var names = consoles.Select(static c => c.Name).ToList();
-        Assert.Equal(names.Distinct().Count(), names.Count);
+        Assert.Equal(names.Distinct(StringComparer.Ordinal).Count(), names.Count);
     }
 
     [Fact]

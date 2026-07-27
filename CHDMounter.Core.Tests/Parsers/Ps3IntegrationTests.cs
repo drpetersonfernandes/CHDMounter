@@ -83,7 +83,7 @@ public class Ps3IntegrationTests
                 foreach (var c in root.Children)
                     output.WriteLine($"  {(c.IsDirectory ? "<DIR>" : c.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {c.Name}  mtime={c.ModifiedTime:yyyy-MM-dd HH:mm:ss}");
 
-                var sfb = root.Children.FirstOrDefault(static n => n.Name == "PS3_DISC.SFB");
+                var sfb = root.Children.FirstOrDefault(static n => string.Equals(n.Name, "PS3_DISC.SFB", StringComparison.Ordinal));
                 Assert.NotNull(sfb);
                 Assert.NotNull(sfb.ModifiedTime);
 
@@ -343,7 +343,7 @@ public class Ps3IntegrationTests
 
                 var key = Encoding.ASCII.GetString(buf, (int)(keyTableStart + keyOff), keyEnd - (int)(keyTableStart + keyOff));
 
-                if (key == "TITLE_ID")
+                if (string.Equals(key, "TITLE_ID", StringComparison.Ordinal))
                 {
                     var dataPos = (int)(dataTableStart + dataOff);
                     var dLen = (int)Math.Min(dataLen, (uint)(length - dataPos));

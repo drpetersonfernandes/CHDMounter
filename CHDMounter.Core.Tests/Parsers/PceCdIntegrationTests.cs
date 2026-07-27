@@ -56,7 +56,7 @@ public class PceCdIntegrationTests
                     var descriptor = Encoding.ASCII.GetString(sec, 0x20, BootSignature.Length);
                     output.WriteLine($"Track {track.Index}: dataStart={dataStart} descriptor='{descriptor}'");
 
-                    if (descriptor == BootSignature)
+                    if (string.Equals(descriptor, BootSignature, StringComparison.Ordinal))
                     {
                         found = true;
                     }
@@ -169,7 +169,7 @@ public class PceCdIntegrationTests
                     var descriptor = Encoding.ASCII.GetString(buf, 0x20, BootSignature.Length);
                     output.WriteLine($"{trackIso.Name} sector 1 descriptor: '{descriptor}'");
 
-                    if (descriptor != BootSignature)
+                    if (!string.Equals(descriptor, BootSignature, StringComparison.Ordinal))
                     {
                         output.WriteLine("  SKIP: TRACK ISO does not contain boot signature (non-standard disc layout)");
                     }

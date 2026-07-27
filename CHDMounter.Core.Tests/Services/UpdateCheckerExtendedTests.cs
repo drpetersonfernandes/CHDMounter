@@ -6,7 +6,7 @@ public class UpdateCheckerExtendedTests
 {
     private static string InvokeGetCurrentVersion()
     {
-        var method = typeof(UpdateChecker).GetMethod("GetCurrentVersion", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(AppInfoHelper).GetMethod("GetVersion", BindingFlags.NonPublic | BindingFlags.Static);
         Assert.NotNull(method);
         return (string)method.Invoke(null, null!)!;
     }
@@ -100,8 +100,7 @@ public class UpdateCheckerExtendedTests
     [Fact]
     public void ResultPropertyIsReadable()
     {
-        var result = UpdateChecker.Result;
-        // May be null or set by previous tests, just verify no exception
+        _ = UpdateChecker.Result;
     }
 
     [Fact]

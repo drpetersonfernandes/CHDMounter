@@ -1,3 +1,4 @@
+using System.Globalization;
 using VideoGameFileSystemParser.Parsers;
 using Xunit.Abstractions;
 
@@ -200,7 +201,7 @@ public class FilesystemParsingTests
                 }
 
                 foreach (var e in container.ListDirectory("\\"))
-                    output.WriteLine($"    {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0")),15}  {e.Name}");
+                    output.WriteLine($"    {(e.IsDirectory ? "<DIR>" : e.Size.ToString("N0", CultureInfo.InvariantCulture)),15}  {e.Name}");
 
                 return true;
             }

@@ -13,7 +13,7 @@ public class DriveHelperTests
     public void PickDriveLetterEndsWithColon()
     {
         var result = DriveHelper.PickDriveLetter();
-        Assert.EndsWith(":", result);
+        Assert.EndsWith(":", result, StringComparison.Ordinal);
     }
 
     [Fact]
