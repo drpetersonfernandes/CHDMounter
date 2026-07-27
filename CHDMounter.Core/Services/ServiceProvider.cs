@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace CHDMounter.Core.Services;
 
 /// <summary>
@@ -61,7 +59,7 @@ public static class ServiceProvider
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"ServiceProvider: Failed to dispose {kvp.Key.Name}: {ex.Message}");
+                    Serilog.Log.Warning(ex, "ServiceProvider: Failed to dispose {ServiceType}", kvp.Key.Name);
                 }
             }
         }

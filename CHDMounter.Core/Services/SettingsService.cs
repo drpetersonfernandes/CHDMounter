@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -41,8 +42,10 @@ public class SettingsService : ISettingsService
             var json = Encoding.UTF8.GetString(decrypted);
             Settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
         }
-        catch
+        catch (Exception ex)
         {
+            Serilog.Log.Warning(ex, "SettingsService: Failed to load settings, resetting to defaults");
+            Trace.TraceWarning("SettingsService: Failed to load settings from '{0}', resetting to defaults. Error: {1}", _settingsFilePath, ex.Message);
             Settings = new AppSettings();
         }
     }
@@ -63,9 +66,10 @@ public class SettingsService : ISettingsService
             var encrypted = ProtectedData.Protect(data, null, DataProtectionScope.CurrentUser);
             File.WriteAllBytes(_settingsFilePath, encrypted);
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Serilog.Log.Warning(ex, "SettingsService: Failed to save settings");
+            Trace.TraceError("SettingsService: Failed to save settings to '{0}'. Error: {1}", _settingsFilePath, ex.Message);
         }
     }
 }

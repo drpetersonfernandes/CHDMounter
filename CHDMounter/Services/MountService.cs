@@ -15,6 +15,7 @@ namespace CHDMounter.Services;
 internal class MountService : IMountService
 {
     private readonly ILoggingService _loggingService;
+    private readonly object _mountLock = new();
     private DokanInstance? _dokanInstance;
     private ChdFs? _currentFs;
     private ChdContainer? _container;
@@ -46,72 +47,78 @@ internal class MountService : IMountService
     /// <inheritdoc/>
     public void Mount(string chdPath, string? mountPoint, ConsoleType consoleType)
     {
-        if (IsMounted)
-            throw new InvalidOperationException("Already mounted.");
-
-        if (!IsDokanInstalled())
+        lock (_mountLock)
         {
-            _loggingService.LogError("Dokan driver not found. Unable to mount CHD.");
-            ShowDokanNotInstalledDialog();
-            return;
-        }
+            if (IsMounted)
+                throw new InvalidOperationException("Already mounted.");
 
-        _loggingService.Log($"Opening and parsing CHD: {chdPath} as {consoleType}...");
-
-        _container = new ChdContainer(chdPath);
-        if (!_container.MountAndParse(consoleType))
-        {
-            _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
-            _container.Dispose();
-            _container = null;
-            return;
-        }
-
-        _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
-
-        MountPoint = mountPoint ?? DriveHelper.PickDriveLetter();
-        _loggingService.Log($"Mounting at {MountPoint}...");
-
-        _currentFs = new ChdFs(_container, _loggingService);
-
-        var dokan = new Dokan(new DokanPrefixedLogger(_loggingService));
-        var builder = new DokanInstanceBuilder(dokan)
-            .ConfigureOptions(options =>
+            if (!IsDokanInstalled())
             {
-                options.Options = DokanOptions.RemovableDrive;
-                options.MountPoint = MountPoint;
-            });
+                _loggingService.LogError("Dokan driver not found. Unable to mount CHD.");
+                ShowDokanNotInstalledDialog();
+                return;
+            }
 
-        _dokanInstance = builder.Build(_currentFs);
-        IsMounted = true;
-        _loggingService.Log($"Mounted at {MountPoint}. {_dokanInstance}");
+            _loggingService.Log($"Opening and parsing CHD: {chdPath} as {consoleType}...");
+
+            _container = new ChdContainer(chdPath);
+            if (!_container.MountAndParse(consoleType))
+            {
+                _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
+                _container.Dispose();
+                _container = null;
+                return;
+            }
+
+            _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
+
+            MountPoint = mountPoint ?? DriveHelper.PickDriveLetter();
+            _loggingService.Log($"Mounting at {MountPoint}...");
+
+            _currentFs = new ChdFs(_container, _loggingService);
+
+            var dokan = new Dokan(new DokanPrefixedLogger(_loggingService));
+            var builder = new DokanInstanceBuilder(dokan)
+                .ConfigureOptions(options =>
+                {
+                    options.Options = DokanOptions.RemovableDrive;
+                    options.MountPoint = MountPoint;
+                });
+
+            _dokanInstance = builder.Build(_currentFs);
+            IsMounted = true;
+            _loggingService.Log($"Mounted at {MountPoint}. {_dokanInstance}");
+        }
     }
 
     /// <inheritdoc/>
     public void Unmount()
     {
-        if (!IsMounted) return;
-
-        _loggingService.Log($"Unmounting {MountPoint}...");
-        if (_dokanInstance != null)
+        lock (_mountLock)
         {
-            try
-            {
-                _dokanInstance.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _loggingService.LogError($"Error during unmount: {ex.Message}");
-            }
-        }
+            if (!IsMounted) return;
 
-        _dokanInstance = null;
-        _currentFs?.Dispose();
-        _currentFs = null;
-        _container?.Dispose();
-        _container = null;
-        IsMounted = false;
-        MountPoint = "";
+            _loggingService.Log($"Unmounting {MountPoint}...");
+            if (_dokanInstance != null)
+            {
+                try
+                {
+                    _dokanInstance.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _loggingService.LogError($"Error during unmount: {ex.Message}");
+                }
+            }
+
+            _dokanInstance = null;
+            _currentFs?.Dispose();
+            _currentFs = null;
+            _container?.Dispose();
+            _container = null;
+            IsMounted = false;
+            MountPoint = "";
+        }
     }
 
     /// <inheritdoc/>

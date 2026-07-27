@@ -5,9 +5,6 @@ namespace CHDMounter.Core.Logging;
 /// <summary>
 /// Provides global exception handling and centralized error logging for unhandled exceptions.
 /// </summary>
-/// <summary>
-/// Provides global exception handling and centralized error logging for unhandled exceptions.
-/// </summary>
 public static class ErrorLogger
 {
     /// <summary>
@@ -38,13 +35,11 @@ public static class ErrorLogger
     {
         try
         {
-            DiagnosticLogger.Log($"ERROR [{context}]: {ex.Message}");
-            DiagnosticLogger.Log($"  Stack: {ex.StackTrace}");
-            Log.Error(ex, context);
+            Log.Error(ex, "{Context}", context);
         }
         catch
         {
-            // ignored
+            // Last resort - cannot log
         }
     }
 
@@ -53,18 +48,15 @@ public static class ErrorLogger
     /// </summary>
     /// <param name="ex">The exception to log.</param>
     /// <param name="context">A description of the context in which the exception occurred.</param>
-    /// <param name="includeStackTrace">If <c>true</c>, the stack trace is included in the log output.</param>
-    public static void ReportSilentException(Exception ex, string context, bool includeStackTrace)
+    public static void ReportSilentException(Exception ex, string context)
     {
         try
         {
-            DiagnosticLogger.Log($"SILENT [{context}]: {ex.Message}");
-            if (includeStackTrace)
-                DiagnosticLogger.Log($"  Stack: {ex.StackTrace}");
+            Log.Warning(ex, "{Context}", context);
         }
         catch
         {
-            // ignored
+            // Last resort - cannot log
         }
     }
 }

@@ -55,9 +55,9 @@ public partial class AboutWindow
             {
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                Serilog.Log.Warning(ex, "Failed to open update URL: {Url}", url);
             }
         }
     }
@@ -73,9 +73,9 @@ public partial class AboutWindow
         {
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Serilog.Log.Warning(ex, "Failed to open hyperlink: {Uri}", e.Uri.AbsoluteUri);
         }
         e.Handled = true;
     }

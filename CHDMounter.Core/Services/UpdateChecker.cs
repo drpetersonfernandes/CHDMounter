@@ -13,10 +13,16 @@ public static class UpdateChecker
     private static readonly HttpClient Client = new();
     private static int _started;
 
+    private static UpdateCheckResult? _result;
+
     /// <summary>
     /// Gets the result of the last update check, or <c>null</c> if no check has completed.
     /// </summary>
-    public static UpdateCheckResult? Result { get; private set; }
+    public static UpdateCheckResult? Result
+    {
+        get => Volatile.Read(ref _result);
+        private set => Volatile.Write(ref _result, value);
+    }
 
     static UpdateChecker()
     {

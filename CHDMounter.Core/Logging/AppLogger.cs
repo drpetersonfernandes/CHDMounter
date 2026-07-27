@@ -8,15 +8,13 @@ namespace CHDMounter.Core.Logging;
 /// </summary>
 public static class AppLogger
 {
-    private static ILogger? _logger;
-
     /// <summary>
     /// Initializes the Serilog logger with file output, debug output, and bug report sink.
     /// </summary>
     /// <param name="logFilePath">The file path for the rolling log file.</param>
     public static void Initialize(string logFilePath)
     {
-        _logger = new LoggerConfiguration()
+        Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.File(
                 logFilePath,
@@ -27,8 +25,6 @@ public static class AppLogger
             .WriteTo.Debug(formatProvider: CultureInfo.InvariantCulture)
             .WriteTo.Sink(new BugReportSink())
             .CreateLogger();
-
-        Log.Logger = _logger;
     }
 
     /// <summary>

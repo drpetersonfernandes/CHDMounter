@@ -23,15 +23,7 @@ public class ErrorLoggerTests
     public void ReportSilentExceptionDoesNotThrow()
     {
         var exception = Record.Exception(() =>
-            ErrorLogger.ReportSilentException(new Exception("test"), "test context", true));
-        Assert.Null(exception);
-    }
-
-    [Fact]
-    public void ReportSilentExceptionWithoutStackTraceDoesNotThrow()
-    {
-        var exception = Record.Exception(() =>
-            ErrorLogger.ReportSilentException(new Exception("test"), "test context", false));
+            ErrorLogger.ReportSilentException(new Exception("test"), "test context"));
         Assert.Null(exception);
     }
 }

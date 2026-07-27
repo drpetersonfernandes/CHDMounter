@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -124,9 +123,9 @@ public partial class App
             Environment.SetEnvironmentVariable("PATH", binDir + ";" + currentPath, EnvironmentVariableTarget.Process);
             DiagnosticLogger.Log($"  WinFsp PATH set to: {binDir}");
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Serilog.Log.Warning(ex, "Failed to configure WinFsp PATH");
         }
     }
 
@@ -156,7 +155,7 @@ public partial class App
             }
             catch (Exception ex)
             {
-                ErrorLogger.ReportSilentException(ex, "App.OnExit: Failed to dispose services", true);
+                ErrorLogger.ReportSilentException(ex, "App.OnExit: Failed to dispose services");
             }
 
             Console.SetOut(_originalConsoleOut);
@@ -168,12 +167,12 @@ public partial class App
             }
             catch (Exception ex)
             {
-                ErrorLogger.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter", true);
+                ErrorLogger.ReportSilentException(ex, "App.OnExit: Failed to dispose LogTextWriter");
             }
         }
         catch (Exception ex)
         {
-            ErrorLogger.ReportSilentException(ex, "App.OnExit: Error during exit cleanup", true);
+            ErrorLogger.ReportSilentException(ex, "App.OnExit: Error during exit cleanup");
         }
 
         try
@@ -182,7 +181,7 @@ public partial class App
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Failed to flush loggers: {ex.Message}");
+            Serilog.Log.Warning(ex, "Failed to flush loggers during shutdown");
         }
 
         base.OnExit(e);

@@ -112,9 +112,9 @@ public class ScreenshotService : IScreenshotService
             image.Save(path, ImageFormat.Png);
             return path;
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Serilog.Log.Warning(ex, "ScreenshotService: Failed to save screenshot to AppData");
         }
 
         try
@@ -126,9 +126,9 @@ public class ScreenshotService : IScreenshotService
             image.Save(path, ImageFormat.Png);
             return path;
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Serilog.Log.Warning(ex, "ScreenshotService: Failed to save screenshot to app folder");
         }
 
         return null;

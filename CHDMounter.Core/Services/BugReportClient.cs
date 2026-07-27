@@ -94,9 +94,9 @@ public static class BugReportClient
                 {
                     await sendAction();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    Serilog.Log.Warning(ex, "BugReportClient: Failed to send bug report");
                 }
 
                 await Task.Delay(6000);
@@ -104,10 +104,19 @@ public static class BugReportClient
         }
         finally
         {
-            Interlocked.Exchange(ref _isProcessing, 0);
-            if (!PendingReports.IsEmpty && Interlocked.CompareExchange(ref _isProcessing, 1, 0) == 0)
+            while (true)
             {
-                _ = Task.Run(ProcessQueueAsync);
+                if (PendingReports.IsEmpty)
+                {
+                    if (Interlocked.CompareExchange(ref _isProcessing, 0, 1) == 1)
+                        break;
+                }
+
+                if (Interlocked.CompareExchange(ref _isProcessing, 1, 0) == 0)
+                {
+                    _ = Task.Run(ProcessQueueAsync);
+                    break;
+                }
             }
         }
     }
@@ -126,9 +135,9 @@ public static class BugReportClient
             };
 
             var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, BaseUrl)
+            using var request = new HttpRequestMessage(HttpMethod.Post, BaseUrl)
             {
                 Content = content
             };
@@ -137,9 +146,9 @@ public static class BugReportClient
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             await Client.SendAsync(request, cts.Token);
         }
-        catch
+        catch (Exception ex)
         {
-            // silently fail
+            Serilog.Log.Warning(ex, "BugReportClient: Failed to send bug report to API");
         }
     }
 

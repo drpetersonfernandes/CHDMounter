@@ -36,9 +36,9 @@ public static class StatsClient
             };
 
             var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, BaseUrl)
+            using var request = new HttpRequestMessage(HttpMethod.Post, BaseUrl)
             {
                 Content = content
             };

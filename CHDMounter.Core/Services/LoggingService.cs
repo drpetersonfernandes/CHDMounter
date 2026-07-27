@@ -51,13 +51,14 @@ public class LoggingService : ILoggingService
 
     private void AppendEntry(string message, bool isError)
     {
-        if (_dispatcher == null || _dispatcher.CheckAccess())
+        var dispatcher = _dispatcher ?? Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
         {
             DoAppend(message, isError);
         }
         else
         {
-            _dispatcher.Invoke(() => DoAppend(message, isError));
+            dispatcher.BeginInvoke(() => DoAppend(message, isError));
         }
     }
 

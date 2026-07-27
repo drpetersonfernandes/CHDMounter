@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using SerilogLog = Serilog.Log;
 
 namespace CHDMounter.Core.Logging;
@@ -68,15 +67,15 @@ public static class DiagnosticLogger
                     if (fi.CreationTime < DateTime.Now.AddDays(-7))
                         File.Delete(log);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    SerilogLog.Warning(ex, "Failed to delete old log file: {LogPath}", log);
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            SerilogLog.Warning(ex, "Failed to cleanup old logs");
         }
     }
 
@@ -107,7 +106,6 @@ public static class DiagnosticLogger
     /// <param name="message">The message to log.</param>
     public static void Log(string message)
     {
-        Debug.WriteLine($"[DIAG] {message}");
         SerilogLog.Debug(message);
     }
 }

@@ -28,6 +28,23 @@ public partial class MainWindow
     private readonly DispatcherTimer _elapsedTimer;
     private Stopwatch? _stopwatch;
 
+    private static readonly SolidColorBrush GreenBrush = new(Colors.Green);
+    private static readonly SolidColorBrush RedBrush = new(Colors.Red);
+    private static readonly SolidColorBrush CyanBrush = new(Colors.Cyan);
+    private static readonly SolidColorBrush YellowBrush = new(Colors.Yellow);
+    private static readonly SolidColorBrush GrayBrush = new(Colors.Gray);
+    private static readonly SolidColorBrush LightGrayBrush = new(Colors.LightGray);
+
+    static MainWindow()
+    {
+        GreenBrush.Freeze();
+        RedBrush.Freeze();
+        CyanBrush.Freeze();
+        YellowBrush.Freeze();
+        GrayBrush.Freeze();
+        LightGrayBrush.Freeze();
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindow"/> class.
     /// </summary>
@@ -50,9 +67,9 @@ public partial class MainWindow
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        AppendLog("[Tester] CHD Parsing Test Tool", Colors.Cyan);
-        AppendLog("[Tester] Select a folder containing .chd files, choose a console type, and click Run Tests.", Colors.Gray);
-        AppendLog("", Colors.Gray);
+        AppendLog("[Tester] CHD Parsing Test Tool", CyanBrush);
+        AppendLog("[Tester] Select a folder containing .chd files, choose a console type, and click Run Tests.", GrayBrush);
+        AppendLog("", GrayBrush);
         _logger.Information("MainWindow loaded");
 
         CheckForUpdates();
@@ -86,9 +103,9 @@ public partial class MainWindow
             {
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
-            catch
+            catch (Exception ex)
             {
-                /* ignored */
+                Log.Warning(ex, "Failed to open update URL: {Url}", url);
             }
         }
     }
@@ -139,12 +156,15 @@ public partial class MainWindow
                 return;
             }
 
+            RunButton.IsEnabled = false;
             RunButton.Visibility = Visibility.Collapsed;
+            CancelButton.IsEnabled = true;
             CancelButton.Visibility = Visibility.Visible;
             ExportPdfButton.Visibility = Visibility.Collapsed;
             SummaryPanel.Visibility = Visibility.Collapsed;
 
             ClearLog();
+            _cts?.Dispose();
             _cts = new CancellationTokenSource();
             _lastSummary = null;
 
@@ -163,29 +183,26 @@ public partial class MainWindow
             }
             catch (OperationCanceledException)
             {
-                AppendLog("[Cancelled] Test run was cancelled.", Colors.Yellow);
+                AppendLog("[Cancelled] Test run was cancelled.", YellowBrush);
                 _logger.Warning("Test run cancelled");
             }
             catch (Exception ex)
             {
-                AppendLog($"[Error] {ex.Message}", Colors.Red);
+                AppendLog($"[Error] {ex.Message}", RedBrush);
                 _logger.Error(ex, "Error during test run");
-            }
-            finally
-            {
-                RunButton.Visibility = Visibility.Visible;
-                CancelButton.Visibility = Visibility.Collapsed;
-                _elapsedTimer.Stop();
-                StatusText.Text = "Ready";
-                _stopwatch = null;
-                _testRunner.LogMessage -= OnLogMessage;
-                _testRunner.AllCompleted -= OnAllCompleted;
             }
         }
         catch (Exception ex)
         {
-            AppendLog($"[Error] {ex.Message}", Colors.Red);
+            AppendLog($"[Error] {ex.Message}", RedBrush);
             _logger.Error(ex, "Error during test run");
+            RunButton.Visibility = Visibility.Visible;
+            RunButton.IsEnabled = true;
+            CancelButton.Visibility = Visibility.Collapsed;
+            CancelButton.IsEnabled = true;
+            _elapsedTimer.Stop();
+            StatusText.Text = "Ready";
+            _stopwatch = null;
         }
     }
 
@@ -200,13 +217,13 @@ public partial class MainWindow
         Dispatcher.InvokeAsync(() =>
         {
             if (message.StartsWith("  OK", StringComparison.Ordinal))
-                AppendLog(message, Colors.Green);
+                AppendLog(message, GreenBrush);
             else if (message.StartsWith("  FAIL", StringComparison.Ordinal))
-                AppendLog(message, Colors.Red);
+                AppendLog(message, RedBrush);
             else if (message.StartsWith(new string('=', 60), StringComparison.Ordinal))
-                AppendLog(message, Colors.Cyan);
+                AppendLog(message, CyanBrush);
             else
-                AppendLog(message, Colors.LightGray);
+                AppendLog(message, LightGrayBrush);
         });
     }
 
@@ -233,7 +250,7 @@ public partial class MainWindow
         ExportPdfButton.Visibility = Visibility.Visible;
     }
 
-    private void ExportPdfButton_Click(object sender, RoutedEventArgs e)
+    private async void ExportPdfButton_Click(object sender, RoutedEventArgs e)
     {
         if (_lastSummary is null)
         {
@@ -254,21 +271,34 @@ public partial class MainWindow
         {
             try
             {
-                var exporter = new PdfExportService();
-                exporter.ExportToPdf(_lastSummary, dialog.FileName);
+                ExportPdfButton.IsEnabled = false;
+                StatusText.Text = "Exporting PDF...";
 
-                AppendLog($"[Export] Summary exported to: {dialog.FileName}", Colors.Green);
-                _logger.Information("Summary exported to PDF: {Path}", dialog.FileName);
+                var summary = _lastSummary;
+                var path = dialog.FileName;
+                await Task.Run(() =>
+                {
+                    var exporter = new PdfExportService();
+                    exporter.ExportToPdf(summary, path);
+                });
 
-                MessageBox.Show($"Report exported successfully to:\n{dialog.FileName}",
+                AppendLog($"[Export] Summary exported to: {path}", GreenBrush);
+                _logger.Information("Summary exported to PDF: {Path}", path);
+
+                MessageBox.Show($"Report exported successfully to:\n{path}",
                     "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                AppendLog($"[Export Error] {ex.Message}", Colors.Red);
+                AppendLog($"[Export Error] {ex.Message}", RedBrush);
                 _logger.Error(ex, "Failed to export PDF");
                 MessageBox.Show($"Failed to export PDF: {ex.Message}",
                     "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                ExportPdfButton.IsEnabled = true;
+                StatusText.Text = "Ready";
             }
         }
     }
@@ -281,12 +311,12 @@ public partial class MainWindow
         }
     }
 
-    private void AppendLog(string message, Color color)
+    private void AppendLog(string message, SolidColorBrush brush)
     {
         var paragraph = new Paragraph();
         var run = new Run(message + Environment.NewLine)
         {
-            Foreground = new SolidColorBrush(color)
+            Foreground = brush
         };
         paragraph.Inlines.Add(run);
 
@@ -317,7 +347,7 @@ public partial class MainWindow
         if (Directory.Exists(folder))
             Process.Start("explorer.exe", folder);
         else
-            AppendLog("[Error] AppData folder not found.", Colors.Red);
+            AppendLog("[Error] AppData folder not found.", RedBrush);
     }
 
     private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -326,6 +356,21 @@ public partial class MainWindow
         {
             _screenshotService.TakeScreenshot();
             e.Handled = true;
+        }
+    }
+
+    private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+        _elapsedTimer.Stop();
+        _elapsedTimer.Tick -= ElapsedTimer_Tick;
+
+        if (_testRunner != null)
+        {
+            _testRunner.LogMessage -= OnLogMessage;
+            _testRunner.AllCompleted -= OnAllCompleted;
         }
     }
 }

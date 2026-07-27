@@ -20,6 +20,6 @@ public static class DriveHelper
             if (!drives.Contains(c))
                 return $"{c}:";
 
-        return "C:";
+        throw new InvalidOperationException("No available drive letter found. All drive letters are in use.");
     }
 }

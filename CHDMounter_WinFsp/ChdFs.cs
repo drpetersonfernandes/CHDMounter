@@ -1,9 +1,9 @@
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using Fsp;
 using Fsp.Interop;
-using CHDMounter.Core.Interfaces;
 using VideoGameFileSystemParser.Parsers;
 using FileInfo = Fsp.Interop.FileInfo;
 
@@ -17,15 +17,14 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
     private readonly bool _persistentAcls;
+    private static long _nextIndexNumber;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChdFs"/> class.
     /// </summary>
     /// <param name="container">The parsed CHD container to serve files from.</param>
-    /// <param name="loggingService">The logging service (unused, reserved for future use).</param>
     /// <param name="persistentAcls">If <c>true</c>, enables persistent ACL support for cross-integrity mounts.</param>
-    // ReSharper disable once UnusedParameter.Local
-    public ChdFs(ChdContainer container, ILoggingService loggingService, bool persistentAcls = false)
+    public ChdFs(ChdContainer container, bool persistentAcls = false)
     {
         _container = container;
         _persistentAcls = persistentAcls;
@@ -40,8 +39,11 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
             host.PersistentAcls = _persistentAcls;
             host.PostCleanupWhenModifiedOnly = true;
             host.FlushAndPurgeOnCleanup = true;
+            host.PassQueryDirectoryPattern = true;
+            host.MaxComponentLength = 255;
+            host.SectorSize = 2048;
             host.FileSystemName = _container.VolumeName;
-            host.VolumeCreationTime = DateTimeToFileTimeUtc(DateTime.Now);
+            host.VolumeCreationTime = DateTimeToFileTimeUtc(DateTime.UtcNow);
             host.VolumeSerialNumber = (uint)Environment.TickCount;
         }
 
@@ -70,7 +72,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
         if (entry is null)
             return STATUS_OBJECT_NAME_NOT_FOUND;
 
-        NormalizedName = entry.Name;
+        NormalizedName = entry.FullPath;
         FileNode = entry;
         FileDesc = entry;
         FileInfo = EntryToFileInfo(entry);
@@ -146,32 +148,96 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
         if (FileNode is not FileEntry { IsDirectory: true })
             return false;
 
-        var entries = _container.ListDirectory(ResolvePath(FileNode)).ToList();
-        var index = Context is int i ? i : 0;
+        List<FileEntry> entries;
+        int index;
+
+        if (Context is (List<FileEntry> cached, int cachedIndex))
+        {
+            entries = cached;
+            index = cachedIndex;
+        }
+        else
+        {
+            entries = _container.ListDirectory(ResolvePath(FileNode)).ToList();
+            index = 0;
+        }
 
         switch (index)
         {
             case 0:
                 FileName = ".";
                 FileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
-                Context = 1;
+                Context = (entries, 1);
                 return true;
             case 1:
                 FileName = "..";
                 FileInfo = new FileInfo { FileAttributes = (uint)FileAttributes.Directory };
-                Context = 2;
+                Context = (entries, 2);
                 return true;
         }
 
-        var entryIndex = index - 2;
-        if (entryIndex >= entries.Count)
-            return false;
+        while (true)
+        {
+            var entryIndex = index - 2;
+            if (entryIndex >= entries.Count)
+                return false;
 
-        var entry = entries[entryIndex];
-        FileName = entry.Name;
-        FileInfo = EntryToFileInfo(entry);
-        Context = index + 1;
-        return true;
+            var entry = entries[entryIndex];
+            index++;
+            Context = (entries, index);
+
+            if (!string.IsNullOrEmpty(Pattern) && Pattern != "*" && Pattern != "*.*")
+            {
+                if (!MatchesPattern(entry.Name, Pattern))
+                    continue;
+            }
+
+            FileName = entry.Name;
+            FileInfo = EntryToFileInfo(entry);
+            return true;
+        }
+    }
+
+    private static bool MatchesPattern(string name, string pattern)
+    {
+        var nameSpan = name.AsSpan();
+        var patternSpan = pattern.AsSpan();
+        return MatchesPatternRecursive(nameSpan, patternSpan);
+    }
+
+    private static bool MatchesPatternRecursive(ReadOnlySpan<char> name, ReadOnlySpan<char> pattern)
+    {
+        while (pattern.Length > 0)
+        {
+            if (pattern[0] == '*')
+            {
+                pattern = pattern[1..];
+                if (pattern.Length == 0)
+                    return true;
+
+                for (var i = 0; i <= name.Length; i++)
+                {
+                    if (MatchesPatternRecursive(name[i..], pattern))
+                        return true;
+                }
+                return false;
+            }
+
+            if (name.Length == 0)
+                return false;
+
+            if (pattern[0] == '?' || char.ToUpperInvariant(pattern[0]) == char.ToUpperInvariant(name[0]))
+            {
+                name = name[1..];
+                pattern = pattern[1..];
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return name.Length == 0;
     }
 
     public override int GetVolumeInfo(out VolumeInfo VolumeInfo)
@@ -195,9 +261,34 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
         FileAttributes = (uint)(entry.IsDirectory
             ? System.IO.FileAttributes.Directory
             : System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReadOnly);
-        SecurityDescriptor = new byte[4096];
-        SecurityDescriptor.Initialize();
+
+        if (_persistentAcls)
+        {
+            var sd = CreateDefaultSecurityDescriptor();
+            if (SecurityDescriptor == null || SecurityDescriptor.Length < sd.Length)
+            {
+                SecurityDescriptor = new byte[sd.Length];
+            }
+
+            Array.Copy(sd, SecurityDescriptor, sd.Length);
+        }
+
         return STATUS_SUCCESS;
+    }
+
+    private byte[]? _cachedSecurityDescriptor;
+
+    private byte[] CreateDefaultSecurityDescriptor()
+    {
+        if (_cachedSecurityDescriptor != null)
+            return _cachedSecurityDescriptor;
+
+        const string sddl = "D:P(A;;FA;;;WD)";
+        var sd = new RawSecurityDescriptor(sddl);
+        var bytes = new byte[sd.BinaryLength];
+        sd.GetBinaryForm(bytes, 0);
+        _cachedSecurityDescriptor = bytes;
+        return bytes;
     }
 
     private static FileInfo EntryToFileInfo(FileEntry entry)
@@ -211,7 +302,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
             LastAccessTime = DateTimeToFileTimeUtc(entry.ModifiedTime),
             LastWriteTime = DateTimeToFileTimeUtc(entry.ModifiedTime),
             ChangeTime = DateTimeToFileTimeUtc(entry.ModifiedTime),
-            IndexNumber = (ulong)entry.GetHashCode()
+            IndexNumber = (ulong)Interlocked.Increment(ref _nextIndexNumber)
         };
     }
 
@@ -222,7 +313,14 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 
     private static ulong DateTimeToFileTimeUtc(DateTime dateTime)
     {
-        return (ulong)dateTime.ToFileTimeUtc();
+        try
+        {
+            return (ulong)dateTime.ToFileTimeUtc();
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return 0;
+        }
     }
 
     public void Dispose()

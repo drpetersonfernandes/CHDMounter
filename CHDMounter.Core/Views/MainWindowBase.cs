@@ -1,8 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -77,10 +75,8 @@ public class MainWindowBase : Window
 
             Dispatcher.InvokeAsync(() =>
             {
-                var sb = new StringBuilder(LogTextBox.Text);
                 foreach (LogEntry entry in e.NewItems!)
-                    sb.AppendLine(CultureInfo.InvariantCulture, $"[{entry.Timestamp:HH:mm:ss}] {entry.Message}");
-                LogTextBox.Text = sb.ToString();
+                    LogTextBox.AppendText($"[{entry.Timestamp:HH:mm:ss}] {entry.Message}{Environment.NewLine}");
                 LogTextBox.ScrollToEnd();
             });
         };
@@ -135,9 +131,9 @@ public class MainWindowBase : Window
             {
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
-            catch
+            catch (Exception ex)
             {
-                /* ignored */
+                Serilog.Log.Warning(ex, "Failed to open update URL: {Url}", url);
             }
         }
     }
@@ -344,9 +340,9 @@ public class MainWindowBase : Window
                     if (settings is { Settings.AutoOpenMountedDrive: true })
                         Process.Start("explorer.exe", MountService.MountPoint);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    /* ignored */
+                    Serilog.Log.Warning(ex, "Failed to auto-open mounted drive in explorer");
                 }
             }
             else
@@ -450,16 +446,17 @@ public class MainWindowBase : Window
             {
                 await Task.Run(() => MountService.Unmount());
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                Serilog.Log.Warning(ex, "Failed to unmount during window close");
             }
 
+            _isClosing = false;
             Close();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // ignore
+            Serilog.Log.Error(ex, "Error during window closing");
         }
     }
 

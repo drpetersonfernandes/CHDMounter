@@ -15,6 +15,7 @@ internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
 {
     private readonly ChdContainer _container;
     private readonly ILoggingService _loggingService;
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChdFs"/> class.
@@ -171,7 +172,7 @@ internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"WildcardMatch error: {ex.Message}");
+            Serilog.Log.Warning(ex, "WildcardMatch error for pattern {Pattern}", pattern);
             return false;
         }
     }
@@ -312,7 +313,7 @@ internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"GetFileSecurity error: {ex.Message}");
+            Serilog.Log.Error(ex, "GetFileSecurity error for {FileName}", fileName);
             return DokanResult.Error;
         }
     }
@@ -324,13 +325,15 @@ internal class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _container.Dispose();
         GC.SuppressFinalize(this);
     }
 
     public ValueTask DisposeAsync()
     {
-        _container.Dispose();
+        Dispose();
         return ValueTask.CompletedTask;
     }
 }

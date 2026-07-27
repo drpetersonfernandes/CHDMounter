@@ -33,12 +33,12 @@ internal class LogTextWriter : TextWriter
         try
         {
             var loggingService = ServiceProvider.TryGet<ILoggingService>();
-            if (value != null)
+            if (value != null && loggingService is not null)
                 loggingService.Log(value);
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Serilog.Log.Warning(ex, "LogTextWriter: Failed to forward message to logging service");
         }
     }
 
@@ -47,6 +47,9 @@ internal class LogTextWriter : TextWriter
         if (disposing)
         {
             _originalWriter.Flush();
+            _originalWriter.Dispose();
         }
+
+        base.Dispose(disposing);
     }
 }

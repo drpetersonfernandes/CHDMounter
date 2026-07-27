@@ -30,26 +30,7 @@ public class ErrorLoggerExtendedTests
     }
 
     [Fact]
-    public void ReportSilentExceptionWithStackTraceIncludesStackTrace()
-    {
-        Exception ex;
-        try
-        {
-            throw new InvalidOperationException("test");
-        }
-        catch (Exception caught)
-        {
-            ex = caught;
-        }
-
-        // Should not throw; with includeStackTrace=true, it calls DiagnosticLogger.Log with stack
-        var exception = Record.Exception(() =>
-            ErrorLogger.ReportSilentException(ex, "context", true));
-        Assert.Null(exception);
-    }
-
-    [Fact]
-    public void ReportSilentExceptionWithoutStackTraceOmitsStackTrace()
+    public void ReportSilentExceptionDoesNotThrow()
     {
         Exception ex;
         try
@@ -62,7 +43,7 @@ public class ErrorLoggerExtendedTests
         }
 
         var exception = Record.Exception(() =>
-            ErrorLogger.ReportSilentException(ex, "context", false));
+            ErrorLogger.ReportSilentException(ex, "context"));
         Assert.Null(exception);
     }
 
@@ -70,7 +51,7 @@ public class ErrorLoggerExtendedTests
     public void ReportSilentExceptionWithEmptyContextDoesNotThrow()
     {
         var exception = Record.Exception(() =>
-            ErrorLogger.ReportSilentException(new Exception("test"), "", true));
+            ErrorLogger.ReportSilentException(new Exception("test"), ""));
         Assert.Null(exception);
     }
 
@@ -78,7 +59,7 @@ public class ErrorLoggerExtendedTests
     public void ReportSilentExceptionWithNullExceptionMessageDoesNotThrow()
     {
         var exception = Record.Exception(() =>
-            ErrorLogger.ReportSilentException(new Exception(), "context", true));
+            ErrorLogger.ReportSilentException(new Exception(), "context"));
         Assert.Null(exception);
     }
 
