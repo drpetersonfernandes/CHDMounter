@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace CHDMounter.Core.Services;
@@ -51,19 +52,21 @@ public static class UpdateChecker
             var root = doc.RootElement;
 
             var tagName = root.GetProperty("tag_name").GetString() ?? "0.0.0";
-            var latestVersion = tagName.StartsWith('v') ? tagName[1..] : tagName;
+            var latestVersion = tagName.StartsWith("release_", StringComparison.Ordinal) ? tagName[8..] : tagName;
             var releaseUrl = root.GetProperty("html_url").GetString() ?? ReleasesPageUrl;
 
             var downloadUrl = releaseUrl;
 
             if (root.TryGetProperty("assets", out var assets) && assets.GetArrayLength() > 0)
             {
-                var appName = AppInfoHelper.GetAppName().ToLowerInvariant();
+                var variant = GetVariant();
+                var arch = GetArchitecture();
 
                 foreach (var asset in assets.EnumerateArray())
                 {
-                    var name = asset.GetProperty("name").GetString()?.ToLowerInvariant() ?? "";
-                    if (name.Contains(appName, StringComparison.Ordinal))
+                    var name = asset.GetProperty("name").GetString() ?? "";
+                    if (name.Contains(variant, StringComparison.OrdinalIgnoreCase)
+                        && name.Contains(arch, StringComparison.OrdinalIgnoreCase))
                     {
                         downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? releaseUrl;
                         break;
@@ -91,6 +94,21 @@ public static class UpdateChecker
                 CurrentVersion = AppInfoHelper.GetVersion()
             };
         }
+    }
+
+    private static string GetVariant()
+    {
+        var appName = AppInfoHelper.GetAppName();
+        return appName.Contains("WinFsp", StringComparison.OrdinalIgnoreCase) ? "WinFsp" : "Dokan";
+    }
+
+    private static string GetArchitecture()
+    {
+        return RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.Arm64 => "arm64",
+            _ => "x64"
+        };
     }
 
     private static bool IsNewer(string latest, string current)

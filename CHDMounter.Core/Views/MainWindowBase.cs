@@ -119,9 +119,19 @@ public class MainWindowBase : Window
             var result = UpdateChecker.Result;
             if (result is { HasUpdate: true })
             {
-                UpdateBanner.Visibility = Visibility.Visible;
-                UpdateBannerText.Text = $"A new version ({result.LatestVersion}) is available!";
-                UpdateBannerButton.Tag = result.DownloadUrl;
+                var message = $"A new version ({result.LatestVersion}) is available!\n\nWould you like to download it?";
+                var caption = "Update Available";
+                if (MessageBox.Show(message, caption, MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(result.DownloadUrl) { UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        Serilog.Log.Warning(ex, "Failed to open download URL: {Url}", result.DownloadUrl);
+                    }
+                }
             }
         };
         timer.Start();
