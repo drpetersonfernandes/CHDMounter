@@ -23,7 +23,7 @@
 
     <ItemGroup>
         <PackageReference Include="CHDSharp" Version="1.2.0" />
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.132">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.138">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -31,7 +31,7 @@
         <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="WPF-UI" Version="4.3.0" />
-        <PackageReference Include="QuestPDF" Version="2026.7.1" />
+        <PackageReference Include="QuestPDF" Version="2026.7.2" />
     </ItemGroup>
 
 </Project>
