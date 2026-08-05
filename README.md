@@ -84,7 +84,7 @@ Mount CHD (Compressed Hunks of Data) CD/DVD images as virtual read-only drives o
 
 ### Download
 
-Grab the latest self-contained executable from [Releases](https://github.com/drpetersonfernandes/CHDMounter/releases):
+Grab the latest self-contained executables from [Releases](https://github.com/drpetersonfernandes/CHDMounter/releases):
 
 - `CHDMounter.exe`
 
@@ -237,7 +237,7 @@ For SingleFile mode, the container serves the entire decompressed CHD image as a
 | Aspect | Dokan | WinFsp |
 |--------|-------|--------|
 | Driver | Kernel-mode (Dokan.sys) | User-mode (WinFsp) |
-| NuGet | `DokanNet` 2.3.0.3 | `winfsp.net` 2.2.26194 |
+| NuGet | `DokanNet` 2.3.0.3 | `winfsp.net` 2.1.25156 |
 | FileSystem base | `IDokanOperations` | `FileSystemBase` |
 | Admin mount | Standard | Cross-integrity folder mounts with permissive DACL |
 
@@ -277,12 +277,12 @@ WPF desktop application for **batch testing and benchmarking** CHD disc image pa
 | `coverlet.collector` | 10.0.1    | Code coverage (Tests only)                |
 | `DokanNet`           | 2.3.0.3   | Dokan virtual filesystem driver bindings  |
 | `Microsoft.NET.Test.Sdk` | 18.8.1    | Test SDK (Tests only)                     |
-| `QuestPDF`           | 2026.7.1  | PDF report generation (Tester only)       |
+| `QuestPDF`           | 2026.7.2  | PDF report generation (Tester only)       |
 | `Serilog`            | 4.4.0     | Structured logging                        |
 | `Serilog.Sinks.Debug`| 3.0.0     | Visual Studio debug output logging        |
 | `Serilog.Sinks.File` | 7.0.0     | File-based log output                     |
 | `VideoGameFileSystemParser` | 1.0.0     | Filesystem parser                         |
-| `winfsp.net`         | 2.2.26194 | WinFsp virtual filesystem driver bindings |
+| `winfsp.net`         | 2.1.25156 | WinFsp virtual filesystem driver bindings |
 | `WPF-UI`             | 4.3.0     | Modern WPF theming (Fluent/Win11 style)   |
 | `xUnit`              | 2.9.3     | Test framework (Tests only)               |
 | `xunit.runner.visualstudio` | 3.1.5     | VS test adapter (Tests only)              |
