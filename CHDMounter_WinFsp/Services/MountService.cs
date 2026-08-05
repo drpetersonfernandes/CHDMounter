@@ -59,56 +59,112 @@ internal class MountService : IMountService
 
             _loggingService.Log($"Opening and parsing CHD: {chdPath} as {consoleType} (WinFsp)...");
 
-            _container = new ChdContainer(chdPath);
-            if (!_container.MountAndParse(consoleType))
+            try
             {
-                _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
-                _container.Dispose();
-                _container = null;
-                return;
-            }
-
-            _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
-
-            var crossIntegrity = IsRunningAsAdministrator();
-            if (crossIntegrity)
-                _loggingService.Log("Running as Administrator: Cross-integrity mount enforced so standard processes can access the drive.");
-
-            if (string.IsNullOrEmpty(mountPoint))
-            {
-                MountPoint = crossIntegrity
-                    ? GetCrossIntegrityMountPath(chdPath)
-                    : DriveHelper.PickDriveLetter();
-            }
-            else
-            {
-                if (crossIntegrity && IsDriveLetterMountPoint(mountPoint))
+                _container = new ChdContainer(chdPath);
+                if (!_container.MountAndParse(consoleType))
                 {
-                    _loggingService.Log("Cross-integrity mode: Drive letter mounts are not supported. Redirecting to folder mount.");
-                    MountPoint = GetCrossIntegrityMountPath(chdPath);
+                    _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
+                    return;
+                }
+
+                _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
+
+                var crossIntegrity = IsRunningAsAdministrator();
+                if (crossIntegrity)
+                    _loggingService.Log("Running as Administrator: Cross-integrity mount enforced so standard processes can access the drive.");
+
+                // Per-session or elevated-session drives can be invisible to
+                // DriveInfo.GetDrives(), so a picked letter may already be in use.
+                // Enumerate candidates and retry on mount failure.
+                List<string> candidates;
+                if (string.IsNullOrEmpty(mountPoint))
+                {
+                    if (crossIntegrity)
+                    {
+                        candidates = [GetCrossIntegrityMountPath(chdPath)];
+                    }
+                    else
+                    {
+                        candidates = DriveHelper.GetAvailableDriveLetters().ToList();
+                        if (candidates.Count == 0)
+                            throw new InvalidOperationException("No available drive letter found. All drive letters are in use.");
+                    }
                 }
                 else
                 {
-                    MountPoint = mountPoint;
+                    if (crossIntegrity && IsDriveLetterMountPoint(mountPoint))
+                    {
+                        _loggingService.Log("Cross-integrity mode: Drive letter mounts are not supported. Redirecting to folder mount.");
+                        candidates = [GetCrossIntegrityMountPath(chdPath)];
+                    }
+                    else
+                    {
+                        candidates = [mountPoint];
+                    }
+                }
+
+                // ChdFs wraps and owns the container, so create it once before the
+                // loop: retried mounts must reuse a live container. In the
+                // multi-candidate (auto drive letter) case crossIntegrity is false,
+                // so persistentAcls is always false there.
+                var isDriveLetter = IsDriveLetterMountPoint(candidates[0]);
+                var persistentAcls = crossIntegrity && !isDriveLetter;
+                _currentFs = new ChdFs(_container, persistentAcls);
+
+                Exception? lastError = null;
+                foreach (var candidate in candidates)
+                {
+                    MountPoint = candidate;
+                    _loggingService.Log($"Mounting at {MountPoint} (WinFsp)...");
+
+                    try
+                    {
+                        _host = new FileSystemHost(_currentFs);
+
+                        var securityDescriptor = persistentAcls ? CreateCrossIntegritySecurityDescriptor() : null;
+                        if (securityDescriptor is not null)
+                            _loggingService.Log("Cross-integrity: using permissive DACL (Everyone Full Access).");
+
+                        // Mount returns an NTSTATUS rather than throwing; a busy or
+                        // invalid mount point must be treated as a failed attempt so
+                        // the retry loop can try the next candidate.
+                        var status = _host.Mount(MountPoint, securityDescriptor, true, unchecked((uint)-1));
+                        if (status != 0)
+                            throw new IOException($"WinFsp mount failed at {MountPoint} (NTSTATUS 0x{status:X8}).");
+
+                        IsMounted = true;
+                        _loggingService.Log($"Mounted at {MountPoint} (WinFsp).");
+                        return;
+                    }
+                    catch (Exception ex) when (candidates.Count > 1)
+                    {
+                        lastError = ex;
+                        _host?.Dispose();
+                        _host = null;
+                        _loggingService.Log($"Mount point {MountPoint} is unavailable ({ex.Message}). Trying next...");
+                    }
+                }
+
+                throw lastError ?? new InvalidOperationException("No available drive letter found. All drive letters are in use.");
+            }
+            finally
+            {
+                if (!IsMounted)
+                {
+                    _host?.Dispose();
+                    _host = null;
+                    _currentFs?.Dispose();
+                    _currentFs = null;
+                    if (_container is not null)
+                    {
+                        _container.Dispose();
+                        _container = null;
+                    }
+
+                    MountPoint = "";
                 }
             }
-
-            _loggingService.Log($"Mounting at {MountPoint} (WinFsp)...");
-
-            var isDriveLetter = IsDriveLetterMountPoint(MountPoint);
-            var persistentAcls = crossIntegrity && !isDriveLetter;
-
-            _currentFs = new ChdFs(_container, persistentAcls);
-            _host = new FileSystemHost(_currentFs);
-
-            var securityDescriptor = persistentAcls ? CreateCrossIntegritySecurityDescriptor() : null;
-            if (securityDescriptor is not null)
-                _loggingService.Log("Cross-integrity: using permissive DACL (Everyone Full Access).");
-
-            _host.Mount(MountPoint, securityDescriptor, true, unchecked((uint)-1));
-
-            IsMounted = true;
-            _loggingService.Log($"Mounted at {MountPoint} (WinFsp).");
         }
     }
 

@@ -57,4 +57,30 @@ public class DriveHelperTests
             Assert.Equal('N', letter);
         }
     }
+
+    [Fact]
+    public void GetAvailableDriveLettersReturnsValidCandidates()
+    {
+        var letters = DriveHelper.GetAvailableDriveLetters().ToList();
+
+        Assert.NotEmpty(letters);
+        Assert.All(letters, l => Assert.Matches("^[A-Z]:$", l));
+    }
+
+    [Fact]
+    public void GetAvailableDriveLettersExcludesCurrentlyUsedLetters()
+    {
+        var drives = DriveInfo.GetDrives().Select(d => d.Name[0]).ToHashSet();
+        var letters = DriveHelper.GetAvailableDriveLetters().Select(l => l[0]).ToList();
+
+        Assert.DoesNotContain(letters, l => drives.Contains(l));
+    }
+
+    [Fact]
+    public void GetAvailableDriveLettersFirstCandidateMatchesPickDriveLetter()
+    {
+        var first = DriveHelper.GetAvailableDriveLetters().First();
+
+        Assert.Equal(DriveHelper.PickDriveLetter(), first);
+    }
 }

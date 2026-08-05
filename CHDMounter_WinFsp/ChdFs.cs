@@ -339,8 +339,13 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
         }
     }
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        if (_disposed) return;
+
+        _disposed = true;
         _container.Dispose();
     }
 

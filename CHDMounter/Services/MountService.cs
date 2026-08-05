@@ -61,33 +61,72 @@ internal class MountService : IMountService
 
             _loggingService.Log($"Opening and parsing CHD: {chdPath} as {consoleType}...");
 
-            _container = new ChdContainer(chdPath);
-            if (!_container.MountAndParse(consoleType))
+            try
             {
-                _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
-                _container.Dispose();
-                _container = null;
-                return;
-            }
-
-            _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
-
-            MountPoint = mountPoint ?? DriveHelper.PickDriveLetter();
-            _loggingService.Log($"Mounting at {MountPoint}...");
-
-            _currentFs = new ChdFs(_container, _loggingService);
-
-            var dokan = new Dokan(new DokanPrefixedLogger(_loggingService));
-            var builder = new DokanInstanceBuilder(dokan)
-                .ConfigureOptions(options =>
+                _container = new ChdContainer(chdPath);
+                if (!_container.MountAndParse(consoleType))
                 {
-                    options.Options = DokanOptions.RemovableDrive;
-                    options.MountPoint = MountPoint;
-                });
+                    _loggingService.LogError($"Failed to open or parse CHD as {consoleType}.");
+                    return;
+                }
 
-            _dokanInstance = builder.Build(_currentFs);
-            IsMounted = true;
-            _loggingService.Log($"Mounted at {MountPoint}. {_dokanInstance}");
+                _loggingService.Log($"Parsing complete. Volume: {_container.VolumeName}");
+
+                // Per-session or elevated-session drives can be invisible to
+                // DriveInfo.GetDrives(), so the picked letter may already be in use.
+                // Enumerate candidates and retry when Dokan cannot mount at one.
+                var candidates = string.IsNullOrEmpty(mountPoint)
+                    ? DriveHelper.GetAvailableDriveLetters().ToList()
+                    : [mountPoint];
+
+                _currentFs = new ChdFs(_container, _loggingService);
+
+                var dokan = new Dokan(new DokanPrefixedLogger(_loggingService));
+                Exception? lastError = null;
+
+                foreach (var candidate in candidates)
+                {
+                    MountPoint = candidate;
+                    _loggingService.Log($"Mounting at {MountPoint}...");
+
+                    try
+                    {
+                        var builder = new DokanInstanceBuilder(dokan)
+                            .ConfigureOptions(options =>
+                            {
+                                options.Options = DokanOptions.RemovableDrive;
+                                options.MountPoint = MountPoint;
+                            });
+
+                        _dokanInstance = builder.Build(_currentFs);
+                        IsMounted = true;
+                        _loggingService.Log($"Mounted at {MountPoint}. {_dokanInstance}");
+                        return;
+                    }
+                    catch (Exception ex) when (candidates.Count > 1)
+                    {
+                        // The drive letter may be used by another volume (per-session
+                        // drives can be invisible to DriveInfo.GetDrives()). Try the next one.
+                        lastError = ex;
+                        _loggingService.Log($"Mount point {MountPoint} is unavailable ({ex.Message}). Trying next...");
+                    }
+                }
+
+                throw lastError ?? new InvalidOperationException("No available drive letter found. All drive letters are in use.");
+            }
+            finally
+            {
+                if (!IsMounted)
+                {
+                    _dokanInstance?.Dispose();
+                    _dokanInstance = null;
+                    _currentFs?.Dispose();
+                    _currentFs = null;
+                    _container?.Dispose();
+                    _container = null;
+                    MountPoint = "";
+                }
+            }
         }
     }
 
