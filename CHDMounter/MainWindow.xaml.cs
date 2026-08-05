@@ -14,6 +14,10 @@ public partial class MainWindow
         InitializeMainWindow();
     }
 
+    /// <summary>
+    /// Returns the command-line arguments captured by <see cref="App.StartupArgs"/>.
+    /// </summary>
+    /// <returns>An array of command-line argument strings.</returns>
     protected override string[] GetStartupArgs()
     {
         return App.StartupArgs;

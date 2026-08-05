@@ -16,6 +16,8 @@
         <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
         <AssemblyVersion>1.1.0</AssemblyVersion>
         <FileVersion>1.1.0</FileVersion>
         <NeutralLanguage>en</NeutralLanguage>
@@ -28,7 +30,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CHDSharp" Version="1.2.0" />
         <PackageReference Include="Meziantou.Analyzer" Version="3.0.139">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

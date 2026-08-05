@@ -17,6 +17,11 @@ public partial class App
     private static TextWriter? _originalConsoleError;
     private static LogTextWriter? _logTextWriter;
 
+    /// <summary>
+    /// Handles application startup: captures command-line arguments, initializes logging,
+    /// configures global exception handlers, and registers shared services.
+    /// </summary>
+    /// <param name="e">The startup event arguments.</param>
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -94,6 +99,11 @@ public partial class App
         ServiceProvider.Register<ISettingsService>(settingsService);
     }
 
+    /// <summary>
+    /// Handles application shutdown: logs the shutdown section, flushes logging output,
+    /// and disposes all registered services.
+    /// </summary>
+    /// <param name="e">The exit event arguments.</param>
     protected override void OnExit(ExitEventArgs e)
     {
         DiagnosticLogger.LogSection("APPLICATION SHUTDOWN");

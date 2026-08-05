@@ -14,6 +14,10 @@ public partial class App
     internal static ILogger? Logger { get; private set; }
     internal static string LogFilePath { get; private set; } = "";
 
+    /// <summary>
+    /// Handles application startup: initializes Serilog logging and configures global exception handlers.
+    /// </summary>
+    /// <param name="e">The startup event arguments.</param>
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -57,6 +61,10 @@ public partial class App
         };
     }
 
+    /// <summary>
+    /// Handles application shutdown: logs the shutdown message and closes and flushes the Serilog logger.
+    /// </summary>
+    /// <param name="e">The exit event arguments.</param>
     protected override void OnExit(ExitEventArgs e)
     {
         Logger?.Information("Tester application shutting down");

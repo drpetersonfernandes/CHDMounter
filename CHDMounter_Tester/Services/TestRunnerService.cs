@@ -20,11 +20,6 @@ internal sealed class TestRunnerService
     public event EventHandler<EventArgs<string>>? LogMessage;
 
     /// <summary>
-    /// Raised when a single CHD file test has completed.
-    /// </summary>
-    public event EventHandler<EventArgs<TestResult>>? FileCompleted;
-
-    /// <summary>
     /// Raised when all tests have completed with the final summary.
     /// </summary>
     public event EventHandler<EventArgs<TestSummary>>? AllCompleted;
@@ -180,7 +175,6 @@ internal sealed class TestRunnerService
             }
 
             summary.Results.Add(result);
-            FileCompleted?.Invoke(this, new EventArgs<TestResult>(result));
         }
 
         swTotal.Stop();
