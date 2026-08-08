@@ -163,17 +163,30 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 
             if (!string.IsNullOrEmpty(Marker))
             {
-                for (var i = 0; i < entries.Count; i++)
+                if (string.Equals(Marker, ".", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.Equals(entries[i].Name, Marker, StringComparison.OrdinalIgnoreCase))
-                    {
-                        index = i + 3;
-                        break;
-                    }
+                    // Continue after the "." entry: next is "..".
+                    index = 1;
                 }
+                else if (string.Equals(Marker, "..", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Continue after the ".." entry: next is the first child.
+                    index = 2;
+                }
+                else
+                {
+                    for (var i = 0; i < entries.Count; i++)
+                    {
+                        if (string.Equals(entries[i].Name, Marker, StringComparison.OrdinalIgnoreCase))
+                        {
+                            index = i + 3;
+                            break;
+                        }
+                    }
 
-                if (index == 0)
-                    return false;
+                    if (index == 0)
+                        return false;
+                }
             }
         }
 
@@ -215,45 +228,7 @@ internal sealed class ChdFs : FileSystemBase, IDisposable, IAsyncDisposable
 
     private static bool MatchesPattern(string name, string pattern)
     {
-        var nameSpan = name.AsSpan();
-        var patternSpan = pattern.AsSpan();
-        return MatchesPatternRecursive(nameSpan, patternSpan);
-    }
-
-    private static bool MatchesPatternRecursive(ReadOnlySpan<char> name, ReadOnlySpan<char> pattern)
-    {
-        while (pattern.Length > 0)
-        {
-            if (pattern[0] == '*')
-            {
-                pattern = pattern[1..];
-                if (pattern.Length == 0)
-                    return true;
-
-                for (var i = 0; i <= name.Length; i++)
-                {
-                    if (MatchesPatternRecursive(name[i..], pattern))
-                        return true;
-                }
-
-                return false;
-            }
-
-            if (name.Length == 0)
-                return false;
-
-            if (pattern[0] == '?' || char.ToUpperInvariant(pattern[0]) == char.ToUpperInvariant(name[0]))
-            {
-                name = name[1..];
-                pattern = pattern[1..];
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        return name.Length == 0;
+        return FileNameMatcher.IsMatch(name, pattern);
     }
 
     public override int GetVolumeInfo(out VolumeInfo VolumeInfo)

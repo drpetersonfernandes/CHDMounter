@@ -1,6 +1,5 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
-using System.Text.RegularExpressions;
 using DokanNet;
 using CHDMounter.Core.Interfaces;
 using VideoGameFileSystemParser.Parsers;
@@ -158,23 +157,10 @@ internal sealed class ChdFs : IDokanOperations, IDisposable, IAsyncDisposable
             return DokanResult.Success;
         }
 
-        files = allFiles.Where(f => WildcardMatch(f.FileName, searchPattern)).ToList();
+        // Windows passes NT 8.3 DOS wildcard patterns (e.g. "<.cue" for
+        // "*.cue"), which the shared matcher understands.
+        files = allFiles.Where(f => FileNameMatcher.IsMatch(f.FileName, searchPattern)).ToList();
         return DokanResult.Success;
-    }
-
-    private static bool WildcardMatch(string name, string pattern)
-    {
-        try
-        {
-            return Regex.IsMatch(name,
-                "^" + Regex.Escape(pattern).Replace("\\*", ".*", StringComparison.Ordinal).Replace("\\?", ".", StringComparison.Ordinal) + "$",
-                RegexOptions.IgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            Serilog.Log.Warning(ex, "WildcardMatch error for pattern {Pattern}", pattern);
-            return false;
-        }
     }
 
     public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
