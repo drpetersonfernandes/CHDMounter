@@ -82,7 +82,7 @@ internal class MountService : IMountService
                 {
                     if (crossIntegrity)
                     {
-                        candidates = [GetCrossIntegrityMountPath(chdPath)];
+                        candidates = GetCrossIntegrityMountCandidates(chdPath);
                     }
                     else
                     {
@@ -96,7 +96,14 @@ internal class MountService : IMountService
                     if (crossIntegrity && IsDriveLetterMountPoint(mountPoint))
                     {
                         _loggingService.Log("Cross-integrity mode: Drive letter mounts are not supported. Redirecting to folder mount.");
-                        candidates = [GetCrossIntegrityMountPath(chdPath)];
+                        candidates = GetCrossIntegrityMountCandidates(chdPath);
+                    }
+                    else if (IsDriveLetterMountPoint(mountPoint))
+                    {
+                        // Try the explicitly requested letter first; if it is
+                        // unavailable (e.g. NTSTATUS 0xC000000E when the device
+                        // does not exist), fall back to auto-assigned letters.
+                        candidates = [mountPoint, .. DriveHelper.GetAvailableDriveLetters()];
                     }
                     else
                     {
@@ -117,6 +124,11 @@ internal class MountService : IMountService
                 {
                     MountPoint = candidate;
                     _loggingService.Log($"Mounting at {MountPoint} (WinFsp)...");
+
+                    // Folder mounts need the target directory to exist before
+                    // WinFsp can mount at it.
+                    if (!IsDriveLetterMountPoint(MountPoint))
+                        Directory.CreateDirectory(MountPoint);
 
                     try
                     {
@@ -215,15 +227,25 @@ internal class MountService : IMountService
         return bytes;
     }
 
-    private static string GetCrossIntegrityMountPath(string chdPath)
+    private static List<string> GetCrossIntegrityMountCandidates(string chdPath)
     {
         var baseDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "CHDMounter", "Mounts");
         var folderName = Path.GetFileNameWithoutExtension(chdPath);
-        var mountPath = Path.Combine(baseDir, SanitizeFolderName(folderName));
-        Directory.CreateDirectory(mountPath);
-        return mountPath;
+
+        // The base folder may already be an active mount point (e.g. leftover
+        // from a crashed session, or the same game mounted twice), which makes
+        // WinFsp fail with STATUS_OBJECT_NAME_COLLISION (0xC0000035). Provide
+        // suffixed fallback folders so the mount can still succeed.
+        var candidates = new List<string>();
+        for (var i = 1; i <= 5; i++)
+        {
+            var name = i == 1 ? folderName : $"{folderName} ({i})";
+            candidates.Add(Path.Combine(baseDir, SanitizeFolderName(name)));
+        }
+
+        return candidates;
     }
 
     private static string SanitizeFolderName(string name)

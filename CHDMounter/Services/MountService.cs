@@ -75,9 +75,14 @@ internal class MountService : IMountService
                 // Per-session or elevated-session drives can be invisible to
                 // DriveInfo.GetDrives(), so the picked letter may already be in use.
                 // Enumerate candidates and retry when Dokan cannot mount at one.
+                // An explicitly requested drive letter is tried first, then falls
+                // back to auto-assigned available letters if it is unavailable.
+                // Folder-path mount points are used as-is (no fallback).
                 var candidates = string.IsNullOrEmpty(mountPoint)
                     ? DriveHelper.GetAvailableDriveLetters().ToList()
-                    : [mountPoint];
+                    : IsDriveLetterMountPoint(mountPoint)
+                        ? [mountPoint, .. DriveHelper.GetAvailableDriveLetters()]
+                        : [mountPoint];
 
                 _currentFs = new ChdFs(_container, _loggingService);
 
@@ -188,6 +193,12 @@ internal class MountService : IMountService
         {
             return false;
         }
+    }
+
+    private static bool IsDriveLetterMountPoint(string mountPoint)
+    {
+        return mountPoint is [_, ':', ..] && char.IsLetter(mountPoint[0])
+                                          && (mountPoint.Length == 2 || mountPoint is [_, _, '\\']);
     }
 
     private static void ShowDokanNotInstalledDialog()

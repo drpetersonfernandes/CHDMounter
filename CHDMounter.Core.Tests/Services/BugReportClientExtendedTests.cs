@@ -300,6 +300,26 @@ public class BugReportClientExtendedTests
         Assert.Contains(".", result, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void SendMethodsDoNotThrowWhenSendingDisabled()
+    {
+        BugReportClient.IsSendingEnabled = false;
+        try
+        {
+            var ex = new InvalidOperationException("disabled test exception");
+            var exception1 = Record.Exception(() => BugReportClient.SendException(ex, "disabled context"));
+            var exception2 = Record.Exception(() => BugReportClient.SendWarning("disabled warning"));
+            var exception3 = Record.Exception(() => BugReportClient.SendError("disabled error", null));
+            Assert.Null(exception1);
+            Assert.Null(exception2);
+            Assert.Null(exception3);
+        }
+        finally
+        {
+            BugReportClient.IsSendingEnabled = true;
+        }
+    }
+
     // --- SendException ---
 
     [Fact]

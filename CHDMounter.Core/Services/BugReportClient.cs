@@ -14,6 +14,12 @@ public static class BugReportClient
     private static readonly ConcurrentQueue<Func<Task>> PendingReports = new();
     private static int _isProcessing;
 
+    /// <summary>
+    /// Gets or sets a value indicating whether bug reports are actually sent to the API.
+    /// Disabled in the test suite so unit tests never pollute the production bug database.
+    /// </summary>
+    internal static bool IsSendingEnabled { get; set; } = true;
+
     internal static void SendException(Exception ex, string context)
     {
         var envDetails = BuildEnvironmentDetails();
@@ -75,6 +81,9 @@ public static class BugReportClient
 
     private static void Enqueue(string message, string stackTrace)
     {
+        if (!IsSendingEnabled)
+            return;
+
         PendingReports.Enqueue(() => SendAsync(message, stackTrace));
         if (Interlocked.CompareExchange(ref _isProcessing, 1, 0) == 0)
         {

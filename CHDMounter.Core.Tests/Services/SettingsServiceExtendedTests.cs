@@ -109,6 +109,31 @@ public class SettingsServiceExtendedTests : IDisposable
     }
 
     [Fact]
+    public void CorruptedSettingsFileIsDeletedSoFailureDoesNotRecur()
+    {
+        var appName = "TestApp_" + Guid.NewGuid().ToString("N")[..8];
+        var settingsDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            appName);
+        var settingsFile = Path.Combine(settingsDir, "settings.dat");
+
+        try
+        {
+            Directory.CreateDirectory(settingsDir);
+            File.WriteAllText(settingsFile, "this is not valid encrypted data");
+
+            var service = new SettingsService(appName);
+            Assert.NotNull(service.Settings);
+            Assert.False(File.Exists(settingsFile), "The corrupt settings file should be deleted after resetting to defaults.");
+        }
+        finally
+        {
+            if (Directory.Exists(settingsDir))
+                Directory.Delete(settingsDir, true);
+        }
+    }
+
+    [Fact]
     public void LoadReturnsDefaultsWhenFileIsEmpty()
     {
         var appName = "TestApp_" + Guid.NewGuid().ToString("N")[..8];

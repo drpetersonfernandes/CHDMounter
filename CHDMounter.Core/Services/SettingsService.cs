@@ -44,9 +44,23 @@ public class SettingsService : ISettingsService
         }
         catch (Exception ex)
         {
-            Serilog.Log.Warning(ex, "SettingsService: Failed to load settings, resetting to defaults");
+            // A corrupt or foreign settings file is environmental data corruption,
+            // not a bug in this application. Log below Warning to keep it out of
+            // bug reports, and delete the unreadable file so the failure does not
+            // recur on every launch (the app already resets to defaults).
+            Serilog.Log.Information(ex, "SettingsService: Failed to load settings, resetting to defaults: {Message}", ex.Message);
             Trace.TraceWarning("SettingsService: Failed to load settings from '{0}', resetting to defaults. Error: {1}", _settingsFilePath, ex.Message);
             Settings = new AppSettings();
+
+            try
+            {
+                if (File.Exists(_settingsFilePath))
+                    File.Delete(_settingsFilePath);
+            }
+            catch
+            {
+                // Best-effort cleanup; the corrupt file will simply be retried next launch.
+            }
         }
     }
 
