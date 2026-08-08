@@ -21,8 +21,8 @@
         <PublishDocumentationFiles>false</PublishDocumentationFiles>
         <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
 
-        <AssemblyVersion>1.1.0</AssemblyVersion>
-        <FileVersion>1.1.0</FileVersion>
+        <AssemblyVersion>1.1.1</AssemblyVersion>
+        <FileVersion>1.1.1</FileVersion>
         <NeutralLanguage>en</NeutralLanguage>
         <Company>PureLogicCode.com</Company>
         <ApplicationIcon>Icon\chd.ico</ApplicationIcon>
