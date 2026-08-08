@@ -93,9 +93,15 @@ public static class FileNameMatcher
                 {
                     // DOS_QM matches a single character, except that a dot which
                     // is not the last dot in the name is consumed without being
-                    // matched (8.3 extension handling).
+                    // matched (8.3 extension handling). Like the Dokan C
+                    // reference, a DOS_QM cannot consume anything when the name
+                    // is exhausted: the reference advances past the NUL
+                    // terminator, which fails its final length check.
                     expression = expression[1..];
-                    if (name.Length > 0 && name[0] != '.')
+                    if (name.Length == 0)
+                        return false;
+
+                    if (name[0] != '.')
                     {
                         name = name[1..];
                     }

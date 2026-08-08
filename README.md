@@ -126,46 +126,45 @@ CHDMounter.exe [/l] [/a] [/s:<alias>] <chd_file> [mount_point]
 
 You can specify the console type using a **string alias** (case-insensitive). Numeric indexes are not supported — the alias list below is defined in the [VideoGameFileSystemParser](https://github.com/drpetersonfernandes/VideoGameFileSystemParser) library and is the single source of truth.
 
-3DO                                | `3do` |
-Amiga CD                           | `amigacd` |
-Amiga CD32                         | `amigacd32` |
-Amiga CDTV                         | `amigacdtv` |
-CD-i                               | `cdi` |
-FM Towns                           | `fmtowns` |
-Neo Geo CD                         | `neogeocd` |
-Nuon                               | `nuon` |
-PC Engine CD                       | `pcengine` |
-PC-98                              | `pc98` |
-PC-FX                              | `pcfx` |
-Pico                               | `pico` |
-Pippin                             | `pippin` |
-PlayStation (Auto)                 | `psauto` |
-PS1                                | `ps1` |
-PS2                                | `ps2` |
-PS3                                | `ps3` |
-PS3 ISO RAW 2352                   | `isoraw2352` |
-PSP                                | `psp` |
-Sega Dreamcast                     | `segadreamcast` |
-Sega Genesis                       | `segagenesis` |
-Sega Saturn                        | `segasaturn` |
-X68000                             | `x68000` |
-Xbox                               | `xbox` |
-Xbox 360                           | `xbox360` |
-Xbox ISO RAW 2352                  | `isoraw2352` |
-
-ISO 9660                           | `iso9660` |
-
-ISO RAW 2048                       | `isoraw2048` |
-CUE/ISO RAW 2048                   | `cueiso2048` |
-CUE/ISO/WAV RAW 2048               | `cueisowav2048` |
-ISO RAW 2352                       | `isoraw2352` |
-CUE/ISO RAW 2352                   | `cueiso2352` |
-CUE/ISO/WAV RAW 2352               | `cueisowav2352` |
-
-CUE/BIN RAW 2048                   | `cuebin2048` |
-CUE/BIN/WAV RAW 2048               | `cuebinwav2048` |
-CUE/BIN RAW 2352                   | `cuebin2352` |
-CUE/BIN/WAV RAW 2352               | `cuebinwav2352` |
+| Console / Format | CLI Alias |
+|---|---|
+| 3DO | `3do` |
+| Amiga CD | `amigacd` |
+| Amiga CD32 | `amigacd32` |
+| Amiga CDTV | `amigacdtv` |
+| CD-i | `cdi` |
+| FM Towns | `fmtowns` |
+| Neo Geo CD | `neogeocd` |
+| Nuon | `nuon` |
+| PC Engine CD | `pcengine` |
+| PC-98 | `pc98` |
+| PC-FX | `pcfx` |
+| Pico | `pico` |
+| Pippin | `pippin` |
+| PlayStation (Auto) | `psauto` |
+| PS1 | `ps1` |
+| PS2 | `ps2` |
+| PS3 | `ps3` |
+| PS3 ISO RAW 2352 | `isoraw2352` |
+| PSP | `psp` |
+| Sega Dreamcast | `segadreamcast` |
+| Sega Genesis | `segagenesis` |
+| Sega Saturn | `segasaturn` |
+| X68000 | `x68000` |
+| Xbox | `xbox` |
+| Xbox 360 | `xbox360` |
+| Xbox ISO RAW 2352 | `isoraw2352` |
+| ISO 9660 | `iso9660` |
+| ISO RAW 2048 | `isoraw2048` |
+| CUE/ISO RAW 2048 | `cueiso2048` |
+| CUE/ISO/WAV RAW 2048 | `cueisowav2048` |
+| ISO RAW 2352 | `isoraw2352` |
+| CUE/ISO RAW 2352 | `cueiso2352` |
+| CUE/ISO/WAV RAW 2352 | `cueisowav2352` |
+| CUE/BIN RAW 2048 | `cuebin2048` |
+| CUE/BIN/WAV RAW 2048 | `cuebinwav2048` |
+| CUE/BIN RAW 2352 | `cuebin2352` |
+| CUE/BIN/WAV RAW 2352 | `cuebinwav2352` |
 
 **Examples:**
 ```bash

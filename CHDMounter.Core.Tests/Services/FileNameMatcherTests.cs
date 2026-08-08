@@ -21,6 +21,11 @@ public class FileNameMatcherTests
     [InlineData("abcd", "???", false)]
     [InlineData("abc", "a>c", true)]
     [InlineData("a.c", "a>c", false)] // DOS_QM does not consume a trailing dot
+    [InlineData("file", "file>", false)] // trailing DOS_QM cannot match a shorter name
+    [InlineData("file1", "file>", true)]
+    [InlineData("", ">", false)] // DOS_QM with exhausted name matches nothing
+    [InlineData("a", "a*>", false)] // '*' loop must not let a trailing DOS_QM match
+    [InlineData("ab", "a*", true)]
     [InlineData("name.cue", "\"cue", false)] // DOS_DOT requires the dot
     [InlineData("name.cue", "<\"cue", true)] // "<" + DOS_DOT
     [InlineData("XENO.CUE", "<.cue", true)] // case-insensitive
