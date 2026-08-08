@@ -22,7 +22,7 @@ public class ParserFactoryTests
         Assert.Contains(consoles, static c => c.Type == ConsoleType.ThreeDo);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.X68000);
         Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericIso9660);
-        Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericCueBin2352Default);
+        Assert.Contains(consoles, static c => c.Type == ConsoleType.GenericCueBin2352);
     }
 
     [Fact]
@@ -44,10 +44,17 @@ public class ParserFactoryTests
     }
 
     [Fact]
-    public void GetAllSupportedConsolesTypesAreUnique()
+    public void GetAllSupportedConsolesEveryEntryResolvesViaItsAliases()
     {
-        var consoles = ParserFactory.GetAllSupportedConsoles();
-        var types = consoles.Select(static c => c.Type).ToList();
-        Assert.Equal(types.Distinct().Count(), types.Count);
+        // Multiple display entries may intentionally share a ConsoleType
+        // (e.g. the isoraw2352 entries), so types are not unique; instead
+        // every entry must be resolvable from the console registry.
+        var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
+        Assert.NotEmpty(consoles);
+        foreach (var console in consoles)
+        {
+            var type = ConsoleTypeRegistry.Parse(ConsoleTypeRegistry.GetAliases(console.Type).FirstOrDefault() ?? "");
+            Assert.Equal(console.Type, type);
+        }
     }
 }

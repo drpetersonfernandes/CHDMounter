@@ -1,7 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -181,18 +180,10 @@ public class MainWindowBase : Window
                         break;
                     case var s when s.StartsWith("/s:", StringComparison.Ordinal):
                     {
-                        var val = s[3..];
-                        if (int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out var num))
+                        consoleType = ConsoleTypeRegistry.Parse(s[3..]);
+                        if (consoleType == ConsoleType.Unknown)
                         {
-                            consoleType = ConsoleTypeHelper.ParseByNumber(num);
-                        }
-                        else
-                        {
-                            var ct = ConsoleTypeHelper.ParseByName(val);
-                            if (ct != ConsoleType.Unknown)
-                            {
-                                consoleType = ct;
-                            }
+                            consoleType = null;
                         }
 
                         break;
@@ -207,11 +198,15 @@ public class MainWindowBase : Window
 
         var pos = 0;
 
-        if (positional.Count > pos
-            && int.TryParse(positional[pos], NumberStyles.Integer, CultureInfo.InvariantCulture, out var consoleNumber)
-            && ConsoleTypeHelper.ParseByNumber(consoleNumber) is not null)
+        // A leading positional that is a console alias (followed by a path)
+        // selects the console type; otherwise the first positional is the
+        // CHD path. Console types are resolved exclusively through
+        // ConsoleTypeRegistry — numeric indexes are not supported.
+        if (positional.Count >= 2
+            && ConsoleTypeRegistry.Parse(positional[0]) is var firstType
+            && firstType != ConsoleType.Unknown)
         {
-            consoleType ??= ConsoleTypeHelper.ParseByNumber(consoleNumber);
+            consoleType ??= firstType;
             pos++;
         }
 
@@ -223,7 +218,7 @@ public class MainWindowBase : Window
 
         if (positional.Count > pos)
         {
-            var ct = ConsoleTypeHelper.ParseByName(positional[pos]);
+            var ct = ConsoleTypeRegistry.Parse(positional[pos]);
             if (ct != ConsoleType.Unknown)
             {
                 consoleType ??= ct;

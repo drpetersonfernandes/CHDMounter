@@ -60,9 +60,10 @@ public partial class App
                 loggingService.Log("");
             }
 
-            loggingService.Log("Usage: CHDMounter_WinFsp.exe [/l] [/a] [/s:<index>] <chd_file> [mount_point]");
-            loggingService.Log("Example: CHDMounter_WinFsp.exe /s:8 game.chd");
-            loggingService.Log("Example: CHDMounter_WinFsp.exe /l /s:4 game.chd M:");
+            loggingService.Log("Usage: CHDMounter_WinFsp.exe [/l] [/a] [/s:<alias>] <chd_file> [mount_point]");
+            loggingService.Log("Example: CHDMounter_WinFsp.exe /s:ps2 game.chd");
+            loggingService.Log("Example: CHDMounter_WinFsp.exe /l /s:segadreamcast game.chd M:");
+            loggingService.Log("Console aliases: see the Console Type Reference in the README (e.g. neogeocd, cuebin2352, cueisowav2352).");
             loggingService.Log("Run without args to open the UI and select filesystem type.");
             loggingService.Log("");
 

@@ -33,11 +33,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="3.0.140">
+        <PackageReference Include="Meziantou.Analyzer" Version="3.0.141">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="VideoGameFileSystemParser" Version="1.1.0" />
+        <ProjectReference Include="..\VideoGameFileSystemParser\VideoGameFileSystemParser.csproj" />
     </ItemGroup>
 
     <ItemGroup>

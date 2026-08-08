@@ -23,19 +23,19 @@ public class ConsoleTypeExtendedTests
     [Fact]
     public void ConsoleTypeContainsGenericCueBinWav()
     {
-        Assert.Contains(ConsoleType.GenericCueBinWav, Enum.GetValues<ConsoleType>());
+        Assert.Contains(ConsoleType.GenericCueBinWav2352, Enum.GetValues<ConsoleType>());
     }
 
     [Fact]
     public void ConsoleTypeContainsGenericCueIsoWav()
     {
-        Assert.Contains(ConsoleType.GenericCueIsoWav, Enum.GetValues<ConsoleType>());
+        Assert.Contains(ConsoleType.GenericCueIsoWav2352, Enum.GetValues<ConsoleType>());
     }
 
     [Fact]
     public void ConsoleTypeContainsGenericIsoRaw()
     {
-        Assert.Contains(ConsoleType.GenericIsoRaw, Enum.GetValues<ConsoleType>());
+        Assert.Contains(ConsoleType.GenericIsoRaw2352, Enum.GetValues<ConsoleType>());
     }
 
     [Fact]
@@ -66,9 +66,31 @@ public class ConsoleTypeExtendedTests
     }
 
     [Fact]
-    public void ConsoleTypeCountIs30()
+    public void ConsoleTypeContainsAllGenericRawVariants()
+    {
+        var values = Enum.GetValues<ConsoleType>();
+        Assert.Contains(ConsoleType.GenericIsoRaw2352, values);
+        Assert.Contains(ConsoleType.GenericIsoRaw2048, values);
+    }
+
+    [Fact]
+    public void ConsoleTypeContainsAllCueVariants()
+    {
+        var values = Enum.GetValues<ConsoleType>();
+        Assert.Contains(ConsoleType.GenericCueBin2352, values);
+        Assert.Contains(ConsoleType.GenericCueBin2048, values);
+        Assert.Contains(ConsoleType.GenericCueIso2352, values);
+        Assert.Contains(ConsoleType.GenericCueIso2048, values);
+        Assert.Contains(ConsoleType.GenericCueBinWav2352, values);
+        Assert.Contains(ConsoleType.GenericCueBinWav2048, values);
+        Assert.Contains(ConsoleType.GenericCueIsoWav2352, values);
+        Assert.Contains(ConsoleType.GenericCueIsoWav2048, values);
+    }
+
+    [Fact]
+    public void ConsoleTypeCountIs36()
     {
         var count = Enum.GetValues<ConsoleType>().Length;
-        Assert.Equal(32, count);
+        Assert.Equal(36, count);
     }
 }

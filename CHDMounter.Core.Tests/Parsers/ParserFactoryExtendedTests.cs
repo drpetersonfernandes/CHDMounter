@@ -27,11 +27,11 @@ public class ParserFactoryExtendedTests
     public void GetAllSupportedConsolesContainsGenericCueFormats()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
-        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueBin2352Default);
+        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueBin2352);
         Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueBin2048);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueIso);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueBinWav);
-        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueIsoWav);
+        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueIso2352);
+        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueBinWav2352);
+        Assert.Contains(consoles, c => c.Type == ConsoleType.GenericCueIsoWav2352);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class ParserFactoryExtendedTests
     public void GetAllSupportedConsolesReturnsCorrectCount()
     {
         var consoles = ParserFactory.GetAllSupportedConsoles().ToList();
-        // 31 entries based on the source code
-        Assert.Equal(31, consoles.Count);
+        // 37 entries from the console registry (includes the 2352/2048 variants)
+        Assert.Equal(37, consoles.Count);
     }
 }
