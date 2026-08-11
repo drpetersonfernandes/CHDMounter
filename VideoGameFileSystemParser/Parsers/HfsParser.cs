@@ -338,7 +338,7 @@ internal class HfsParser
     private bool ParseHfsPlusCatalog(List<(uint startBlock, uint blockCount)> extents)
     {
         var regionData = new List<byte>();
-        foreach ((uint extStartBlock, uint extBlockCount) in extents)
+        foreach (var (extStartBlock, extBlockCount) in extents)
         {
             if (extStartBlock == 0 || extBlockCount == 0)
                 continue;
@@ -564,7 +564,7 @@ internal class HfsParser
         var catalogExtents = new List<(uint startBlock, uint blockCount)> { (startBlock, blockCount) };
 
         var regionData = new List<byte>();
-        foreach ((uint extStartBlock, uint extBlockCount) in catalogExtents)
+        foreach (var (extStartBlock, extBlockCount) in catalogExtents)
         {
             if (extStartBlock == 0 || extBlockCount == 0)
                 continue;
@@ -901,7 +901,7 @@ internal class HfsParser
         };
 
         var remaining = (long)logicalSize;
-        foreach ((uint startBlock, uint blockCount) in extents)
+        foreach (var (startBlock, blockCount) in extents)
         {
             if (startBlock == 0 || blockCount == 0)
                 continue;
